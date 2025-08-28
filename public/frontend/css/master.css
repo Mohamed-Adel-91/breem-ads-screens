@@ -1,0 +1,842 @@
+/* 
+@font-face {
+    font-family: 'Inter';
+    src: url('../css/fonts/Inter_18pt-Medium.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('../css/fonts/Inter_24pt-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src:  url('../css/fonts/Inter_18pt-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Inter';
+    src:  url('../css/fonts/Inter_24pt-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Inter';
+    src: url("../css/fonts/Inter-Bold.ttf");
+    font-weight: 300;
+    font-style: bold;
+    font-display: swap;
+} */
+
+/* ////////////////////// */
+
+@font-face {
+  font-family: 'cairo';
+  src: url('/fonts/Cairo-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../css/fonts/Inter_18pt-Regular.ttf') format('truetype');
+}
+
+/* @font-face {
+    font-family: 'Inter';
+     src:   url('../css/fonts/Inter_18pt-SemiBold.ttf') format('truetype');
+} */
+body {
+  font-family: "cairo";
+}
+
+header {
+  box-shadow: 0px 4px 25px 0px #00000026;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(255, 255, 255, 0.2) 100%);
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 20;
+}
+
+a {
+  text-decoration: none;
+}
+
+header .pages li a {
+  position: relative;
+  font-family: "cairo";
+  font-weight: 700;
+  font-size: 16px;
+  color: white;
+  text-decoration: none;
+  padding-bottom: 5px;
+  /* مسافة صغيرة تحت النص */
+}
+
+header .pages li a:hover {
+  color: white;
+}
+
+/* الخط اللي بيظهر */
+header .pages li a::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0%;
+  height: 2px;
+  background-color: #ffffff;
+  transition: width 0.3s ease;
+}
+
+/* وقت الهوفر الخط يتمدد للشمال */
+header .pages li a:hover::after {
+  width: 100%;
+  left: 0;
+}
+
+.sidebar {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  border-radius: 12px 0 0 12px;
+  overflow: hidden;
+}
+
+.sidebar ul {
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar ul li {
+  list-style: none;
+  width: 70px;
+  height: 70px;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+  border-bottom: 1px solid #ddd;
+  /* الخط الخفيف */
+}
+
+/* آخر عنصر من غير خط */
+.sidebar ul li:last-child {
+  border-bottom: none;
+}
+
+.sidebar ul li a svg {
+  width: 30px;
+  height: 30px;
+  /* fill: #41A8A6; */
+  transition: fill 0.3s;
+}
+
+/* ألوان الهوفر لكل أيقونة */
+.sidebar ul li:nth-child(1):hover {
+  background: #3b5998;
+  /* فيسبوك */
+}
+
+.sidebar ul li:nth-child(1):hover svg {
+  fill: #fff;
+}
+
+.sidebar ul li:nth-child(2):hover {
+  background: #000;
+  /* X (تويتر الجديد) */
+}
+
+.sidebar ul li:nth-child(2):hover svg {
+  fill: #fff;
+}
+
+.sidebar ul li:nth-child(3):hover {
+  background: #ff0000;
+  /* يوتيوب */
+}
+
+.sidebar ul li:nth-child(3):hover svg {
+  fill: #41A8A6;
+}
+
+.sidebar ul li:nth-child(4):hover {
+  background: #010101;
+  /* تيك توك */
+}
+
+.sidebar ul li:nth-child(4):hover svg {
+  fill: #fff;
+}
+
+@media (min-width: 1600px) {
+  .container {
+    margin: 0 3rem;
+    padding: 0;
+    max-width: -webkit-fill-available;
+  }
+}
+
+.banner {
+  height: 100vh;
+}
+
+.banner_video {
+  width: 100%;
+  height: 100%
+}
+
+.banner_video video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.slider {
+  margin: 4rem 0;
+}
+
+.Knowmore {
+  background-image: url('../img/background.png');
+  padding: 4rem 0;
+}
+
+.Knowmore h3 {
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 3.5rem;
+  text-align: right;
+  color: #41A8A6;
+
+}
+
+.Knowmore .desc {
+  font-weight: 400;
+  font-size: 1.2rem;
+  line-height: 35px;
+  text-align: right;
+}
+
+.Knowmore .link_button {
+  padding: 0.5rem 2rem;
+  border-radius: 3rem;
+  background: #41A8A6;
+  color: white;
+  font-size: 1rem;
+  font-weight: 400;
+  text-decoration: none;
+  margin-top: 1rem;
+}
+
+.media {
+  background-color: #41A8A6;
+  padding: 2rem 0;
+}
+
+.media .box div {
+  justify-self: center;
+}
+
+.media .box .image {
+  width: 152px;
+  height: 152px;
+}
+
+.media .box span {
+  font-family: "GE SS Two";
+  font-weight: 500;
+  font-size: 3rem;
+  color: white;
+}
+
+.media .box .desc p {
+  font-family: "cairo";
+  font-weight: 600;
+  font-style: SemiBold;
+  font-size: 1.7rem;
+  color: white;
+  margin: 0;
+}
+
+.where_us {
+  margin: 4rem 0;
+}
+
+.where_us h3 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #41A8A6;
+  margin-bottom: 2rem;
+}
+
+.location-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 15px;
+}
+
+.location-card img {
+  width: 100%;
+  height: 468px;
+  object-fit: cover;
+  border-radius: 15px;
+  transition: transform 0.5s ease;
+}
+
+.location-card:hover img {
+  transform: scale(1.05);
+}
+
+.location-card .overlay {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(180deg, #0000000a 0%, rgb(0 0 0 / 96%) 100%);
+  color: white;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.where_us .swiper {
+  padding: 0 0 1rem 0;
+}
+
+.where_us .swiper-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  position: relative;
+}
+
+.where_us .swiper-button-prev,
+.where_us .swiper-button-next {
+  background-color: #41A8A6;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 50%;
+  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.where_us .swiper-button-prev::after,
+.where_us .swiper-button-next::after {
+  font-size: 16px;
+  color: white;
+}
+
+.where_us .swiper-pagination {
+  text-align: center;
+}
+
+.where_us .swiper-pagination-bullet {
+  background: #41A8A6;
+  opacity: 0.5;
+  margin: 0 4px;
+  transition: 0.3s ease;
+}
+
+.where_us .swiper-pagination-bullet-active {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.where_us .button_book {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.where_us .button_book a {
+  text-decoration: none;
+  color: black;
+  border: 1px solid #D8E2E3;
+  padding: 1rem;
+  border-radius: 2rem;
+  font-weight: bold;
+}
+
+.your_ads h3 {
+  font-family: "cairo";
+  font-weight: 700;
+  font-size: 50px;
+  text-align: right;
+  color: #41A8A6;
+}
+
+.your_ads p {
+  margin: 2rem 0;
+  font-family: Cairo;
+  font-weight: 400;
+  font-size: 22px;
+  text-align: right;
+}
+
+.your_ads .link {
+  text-decoration: none;
+  background: #41A8A6;
+  padding: 0.5rem 1.5rem;
+  border-radius: 2rem;
+  color: white;
+}
+
+.your_ads .second_image {
+  left: 6px;
+  width: 89%;
+  top: 6px;
+}
+
+/* الفوتر الأساسي */
+footer .footer {
+  position: relative;
+  padding: 4rem 0;
+  background-image: url("../img/footer.png");
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+}
+
+/* أوفرلاي */
+footer .footer .overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #014747D4;
+  z-index: 1;
+}
+
+footer .footer .container {
+  position: relative;
+  z-index: 2;
+}
+
+/* توسيط اللوجو */
+footer .footer .logo-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  flex-direction: column;
+    gap: 2rem;
+}
+
+/* اللينكات */
+footer .footer .linkss {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  gap: 2rem;
+  align-items: center;
+}
+
+footer .footer .linkss .pagess {
+  display: flex;
+  gap: 3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+footer .footer .linkss .pagess a {
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  text-decoration: none;
+}
+
+/* الريسبونسيف */
+@media (max-width: 1120px) {
+
+  /* الأعمدة تبقى تحت بعض */
+  footer .footer .row>div {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  /* الخريطة تصغر */
+  footer .footer iframe {
+    width: 100% !important;
+    height: 300px !important;
+  }
+}
+
+@media (max-width: 576px) {
+
+  /* النصوص تصغر شوية */
+  footer .footer .linkss .pagess a {
+    font-size: 14px;
+  }
+
+  footer .footer iframe {
+    height: 200px !important;
+  }
+}
+
+
+.secondheader {
+  background: white;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 20;
+  box-shadow: none;
+}
+
+.secondheader .pages li a {
+  color: #41A8A6;
+}
+
+.secondheader .pages li a::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0%;
+  height: 2px;
+  background-color: #41A8A6;
+  transition: width 0.3s ease;
+}
+
+header .pages li a:hover {
+  color: #41A8A6;
+}
+
+.banner_image {
+  height: 410px;
+  margin-top: 4rem;
+}
+
+.banner_image img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.who_we {
+  margin: 3rem 0;
+}
+
+.who_we h2 {
+  color: #41A8A6;
+  font-weight: 700;
+  font-size: 40px;
+  text-align: right;
+  margin-bottom: 1rem;
+
+}
+
+.who_we p {
+  color: #1D1D1D;
+  font-weight: 400;
+  font-size: 22px;
+  text-align: right;
+  text-align: justify;
+}
+
+.who_we h4 {
+  font-weight: 700;
+  font-size: 20px;
+  text-align: right;
+  color: #1D1D1D;
+}
+
+.who_we ul li {
+  font-weight: 400;
+  font-size: 20px;
+  text-align: right;
+  color: #1D1D1D;
+  list-style: square;
+}
+
+
+.who_we .bottom-desc p,
+.who_we ul {
+  margin-right: 2rem;
+}
+
+.port_image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+
+
+
+
+.contact_us {
+  position: relative;
+}
+
+.contact_us h2::after {
+  content: "";
+  position: absolute;
+  top: -1rem;
+  right: 0;
+  width: 3%;
+  height: 4px;
+  background: #00000080;
+  border-radius: 10px;
+}
+
+.contact_us h2 {
+  color: #41A8A6;
+  font-weight: 700;
+  font-size: 40px;
+  text-align: right;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.contact_us p {
+  color: #1D1D1D;
+  font-weight: 400;
+  font-size: 22px;
+  text-align: right;
+  text-align: justify;
+  transition: transform 0.5s ease-in-out;
+
+}
+
+.contact_us .contact_box {
+  background: linear-gradient(360deg, #399997 0%, #9BB6B6 100%);
+  opacity: 1;
+  border-radius: 20.36px;
+  padding-top: 2rem;
+  padding-right: 2rem;
+  padding-bottom: 2rem;
+  padding-left: 2rem;
+  margin: 3rem 0;
+  height: -webkit-fill-available;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.5s ease-in-out;
+
+}
+
+
+
+.contact_us .contact_box .desc p {
+  color: white;
+  margin-top: 1.5rem;
+  text-align: start;
+}
+
+.contact_us .image {
+  justify-self: anchor-center;
+  height: 155px;
+}
+
+.contact_us .image img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.contact_us .contact_box .imagetwo {
+  display: none;
+}
+
+.contact_us .contact_box:hover {
+  background: white !important;
+  box-shadow: 0px 4px 25px 0px #00000026;
+  transition: transform 0.5s ease-in-out;
+
+
+
+}
+
+.contact_us .contact_box:hover .desc p {
+  color: black !important;
+  transition: transform 0.5s ease-in-out;
+
+}
+
+.contact_us .contact_box:hover .imageone {
+  display: none;
+}
+
+.contact_us .contact_box:hover .imagetwo {
+  display: block;
+}
+
+
+
+.contact_us .modal-content {
+  border-radius: 15px;
+  background: #f8f8f8;
+}
+
+.contact_us .modal-title {
+  color: #41A8A6;
+  font-size: 22px;
+}
+
+.contact_us .form-label {
+  font-weight: 500;
+}
+
+.contact_us .btn-close {
+  background: none;
+  border: none;
+}
+
+.contact_us .form-check {
+  gap: 1rem;
+  display: flex;
+}
+
+.contact_us .form-check .form-check-input {
+  float: none;
+  margin-left: unset;
+}
+
+.contact_us .form-check label {
+  color: #41A8A6;
+}
+
+.contact_us .multiselect {
+  background: #fff !important;
+  border: 1px solid #ced4da !important;
+  border-radius: 0.375rem !important;
+  padding: 0.375rem 0.75rem !important;
+  font-size: 1rem !important;
+  width: 100% !important;
+  text-align: right !important;
+  color: #212529 !important;
+}
+
+.contact_us .multiselect-container {
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  width: 100% !important;
+  text-align: right;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.contact_us .multiselect-container>li>a {
+  padding: 0.25rem 1rem !important;
+  color: #212529 !important;
+  text-decoration: none;
+  display: block;
+  clear: both;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.contact_us .multiselect-container>li>a:hover {
+  background-color: #41A8A6 !important;
+  color: #fff !important;
+}
+
+.contact_us .multiselect-container>li.active>a {
+  background-color: #41A8A6 !important;
+  color: #fff !important;
+}
+
+.contact_us .multiselect .caret {
+  float: left !important;
+  margin-left: 0 !important;
+  margin-right: 8px !important;
+}
+
+.map .back_image {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  overflow: hidden;
+}
+
+.map .back_image .bann {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.map .back_image .overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0) 23.58%, rgba(1, 71, 71, 0.86) 64.73%);
+}
+
+.map .map_content {
+  position: absolute;
+  top: 50%;
+  right: 5%;
+  transform: translateY(-50%);
+  color: #fff;
+  max-width: 40%;
+  direction: rtl;
+  z-index: 40;
+}
+.map .map_content h3{
+font-weight: 700;
+font-size: 40px;
+margin-bottom: 24px;
+}
+.map .map_content p{
+font-weight: 500;
+font-size: 1.5rem;
+
+}
+
+.map .map_content .contact{
+font-weight: 400;
+font-size: 24px;
+}
+@media (max-width: 768px) {
+  .map .back_image {
+    height: auto;
+  }
+
+  .map .map_content {
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+    max-width: 100%;
+    padding: 20px;
+    background: rgba(1, 71, 71, 0.85); /* عشان النص يبقى واضح */
+    margin-top: -4px; /* يركب على الصورة */
+  }
+
+  .map .map_content h3 {
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .map .map_content p,
+  .map .map_content .contact {
+    font-size: 16px;
+    text-align: center;
+  }
+
+  .map .map_content img {
+    width: 20px;
+    margin-left: 8px;
+  }
+}
