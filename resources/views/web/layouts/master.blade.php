@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}" dir="ltr">
+<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'ltr' : 'rtl' }}">
 
 <head>
     <base href="{{ asset('frontend') }}/">
@@ -9,7 +9,7 @@
     @include('web.layouts.scripts.css')
 </head>
 
-<body class="bg-white text-gray-900">
+<body>
     <!-- ==================== Header ==================== -->
     @include('web.layouts.components.header')
     @include('web.layouts.components.sidebar')

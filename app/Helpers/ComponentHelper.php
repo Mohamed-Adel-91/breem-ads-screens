@@ -13,9 +13,9 @@ class ComponentHelper
      */
     public static function generalComponents()
     {
-        $setting = Setting::first();
+        // $setting = Setting::first();
         return [
-            'setting' => $setting,
+            // 'setting' => $setting,
         ];
     }
 }
