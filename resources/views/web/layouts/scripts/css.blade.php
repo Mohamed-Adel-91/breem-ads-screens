@@ -1,10 +1,17 @@
-<!-- Tailwind CSS CDN (Production Ready) -->
-<script src="https://cdn.tailwindcss.com"></script>
-<!-- Animate.css CDN - Fixed -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-<!-- Swiper CDN -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/9.4.1/swiper-bundle.min.css" />
-<!-- Custom Style -->
-<link rel="stylesheet" href="css/style.css" />
+<!-- Favicon-->
+<link rel="shortcut icon" type="image/x-icon" href="img/global/logo.ico" />
+<!-- Bootstrap v4 -->
+<!-- <link rel="stylesheet" href="css/bootstrap.min.css" /> -->
+<!-- Fontawesome -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+
+<link rel="stylesheet" href="css/all.min.css" />
+<!-- animate -->
+<link rel="stylesheet" href="css/animate.css" />
+<!-- Swiper -->
+<!-- Main Style -->
+<link rel="stylesheet" href="css/master.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <!-- Scripts Stack CSS Style -->
 @stack('scripts-css')

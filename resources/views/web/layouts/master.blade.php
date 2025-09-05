@@ -11,10 +11,8 @@
 
 <body class="bg-white text-gray-900">
     <!-- ==================== Header ==================== -->
-    @include('web.layouts.components.desktop-header')
-    @include('web.layouts.components.mobile-header')
-    @include('web.layouts.components.desktop-search-navbar')
-    @include('web.layouts.components.desktop-left-sidebar')
+    @include('web.layouts.components.header')
+    @include('web.layouts.components.sidebar')
     <!-- ==================== Header ==================== -->
 
     <!-- ==================== Main ==================== -->
@@ -22,8 +20,6 @@
     <!-- ==================== Main ==================== -->
 
     <!-- ==================== Footer ==================== -->
-    @include('web.layouts.components.mobile-navbar')
-    @include('web.layouts.components.mobile-left-sidebar')
     @include('web.layouts.components.footer')
     @include('web.layouts.components.copyright')
     <!-- ==================== Footer ==================== -->
