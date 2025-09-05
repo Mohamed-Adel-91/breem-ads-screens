@@ -2,39 +2,48 @@
 
 namespace App\Models;
 
-
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, Notifiable, HasRoles;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
     protected $fillable = [
-        'full_name',
-        'nickname',
+        'name',
         'email',
-        'mobile',
-        'image',
-        'address',
         'password',
-        'google_id',
-        'facebook_id',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
         'remember_token',
     ];
-    protected $hidden = ['password', 'remember_token'];
 
-    public const UPLOAD_FOLDER = 'upload/users/';
-
-    public function getImagePathAttribute()
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
     {
-        return $this->image ? asset(self::UPLOAD_FOLDER . $this->image) : null;
-    }
-
-    public function orders(): HasMany
-    {
-        return $this->hasMany(Order::class);
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 }

@@ -1,72 +1,60 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers;
 
-use App\Contracts\FileServiceInterface;
-use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Http\Requests\ProfileUpdateRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    protected FileServiceInterface $fileService;
-
-    public function __construct(FileServiceInterface $fileService)
+    /**
+     * Display the user's profile form.
+     */
+    public function edit(Request $request): View
     {
-        $this->fileService = $fileService;
-    }
-
-    public function index(Request $request)
-    {
-        /** @var User $user */
-        $user = Auth::guard('user')->user();
-
-        $user->load([
-            'orders' => fn($q) => $q->orderBy('created_at', 'desc'),
-            'orders.bookingCarClone',
-            'orders.term.model',
-        ]);
-
-        return view('web.pages.auth.profile')->with([
-            'user' => $user,
-            'bookingOrders' => $user->orders,
+        return view('admin.profile.edit', [
+            'user' => $request->user(),
         ]);
     }
 
-    public function update(Request $request)
+    /**
+     * Update the user's profile information.
+     */
+    public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        /** @var User|null $user */
-        $user = Auth::guard('user')->user();
-        $data = $request->validate([
-            'full_name' => ['required', 'string', 'max:255'],
-            'nickname' => ['nullable', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'mobile' => ['required', 'string', 'max:255', 'unique:users,mobile,' . $user->id],
-            'address' => ['nullable', 'string', 'max:255'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-        ]);
-        $user->fill($data)->save();
-        $folder = User::UPLOAD_FOLDER;
-        $this->fileService->updateFiles($user, $request, ['image'], $folder);
-        return redirect()->back()->with('success', 'تم تحديث الملف الشخصي بنجاح');
-    }
+        $request->user()->fill($request->validated());
 
-    public function updatePassword(Request $request)
-    {
-        /** @var User|null $user */
-        $user = Auth::guard('user')->user();
-        $request->validate([
-            'current_password' => ['required', 'current_password:user'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
-        if (! Hash::check($request->current_password, $user->password)) {
-            return back()->withErrors(['current_password' => 'كلمة المرور الحالية غير صحيحة']);
+        if ($request->user()->isDirty('email')) {
+            $request->user()->forceFill(['email_verified_at' => null]);
         }
-        $user->forceFill([
-            'password' => Hash::make($request->password),
-        ])->save();
-        return redirect()->back()->with('success', 'تم تحديث كلمة المرور بنجاح');
+
+        $request->user()->save();
+
+        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Delete the user's account.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        $request->validateWithBag('userDeletion', [
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $user = $request->user();
+
+        Auth::logout();
+
+        $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return Redirect::to('/');
     }
 }
