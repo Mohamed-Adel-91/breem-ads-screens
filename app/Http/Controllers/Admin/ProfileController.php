@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Contracts\FileServiceInterface;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ProfileRequest;
+use App\Http\Requests\Auth\ProfileRequest;
 use App\Http\Requests\ChangeAdminPasswordRequest;
 use App\Models\Admin;
 use App\Models\AdminOtp;

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Contracts\FileServiceInterface;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\AdminRequest;
+use App\Http\Requests\Auth\AdminRequest;
 use App\Models\Admin;
 
 class AdminController extends Controller
