@@ -67,11 +67,11 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $this->validate($request, [
+        $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
-        if (auth()->guard('admin')->attempt(['email' => $request['email'], 'password' => $request['password']])) {
+        if (auth()->guard('admin')->attempt(['email' => $request->email, 'password' => $request->password])) {
             $request->session()->regenerate();
             $request->session()->regenerateToken();
             return redirect()->route('admin.index');
