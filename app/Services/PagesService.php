@@ -5,13 +5,9 @@ namespace App\Services;
 
 class PagesService
 {
-    public function home(): array
+    public function home()
     {
-
-
-        return [
-
-        ];
+        $locale = app()->getLocale();
+        return view('web.pages.index')->with('locale', $locale);
     }
-
 }
