@@ -1,5 +1,11 @@
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="public/frontend/assets/logo.png" width="400" alt="breem Logo"></a></p>
 
+## About Breem
+
+- Breem is a platform for managing and monitoring social media campaigns. It is built on Laravel and Vue.js. It is a work in progress.
+- An ad screens system controls Android TV ads view, and profile landing page.
+- A dashboard for monitoring and managing social media campaigns.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
