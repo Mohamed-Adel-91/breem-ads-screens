@@ -8,7 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Screen extends Model
 {
     use HasFactory;
-    protected $fillable = ['place_id', 'code', 'device_uid', 'status', 'last_heartbeat'];
+    protected $fillable = [
+        'place_id',
+        'code',
+        'device_uid',
+        'status',
+        'last_heartbeat'
+    ];
     public function place()
     {
         return $this->belongsTo(Place::class);

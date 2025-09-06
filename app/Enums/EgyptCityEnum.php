@@ -1,5 +1,5 @@
 <?php
-// app/Enums/CityEnum.php
+// app/Enums/EgyptCityEnum.php
 
 declare(strict_types=1);
 
@@ -7,7 +7,7 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-final class CityEnum extends Enum
+final class EgyptCityEnum extends Enum
 {
     const CAIRO               = 1;  // القاهرة
     const GIZA                = 2;  // الجيزة
