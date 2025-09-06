@@ -56,6 +56,7 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $e)
     {
+        // CSRF Mismatch (Admin)
         if ($e instanceof TokenMismatchException && $request->routeIs('admin.*')) {
             Log::warning('CSRF Mismatch (Admin)', [
                 'url' => $request->fullUrl(),
@@ -81,30 +82,31 @@ class Handler extends ExceptionHandler
             return redirect()->route('admin.login_page');
         }
 
-        if ($e instanceof TokenMismatchException && $request->routeIs('web.*')) {
-            Log::warning('CSRF Mismatch (USER)', [
-                'url' => $request->fullUrl(),
-                'referer' => $request->headers->get('referer'),
-                'host' => $request->getHost(),
-                'is_secure' => $request->isSecure(),
-                'session_id' => $request->session()->getId(),
-                'has_token' => $request->session()->has('_token'),
-                'cookie_names' => array_keys($_COOKIE ?? []),
-                'cookie_session_present' => array_key_exists(config('session.cookie'), $_COOKIE ?? []),
-            ]);
-            Auth::guard('user')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            $loginUrl = route('web.login');
+        // CSRF Mismatch (User)
+        // if ($e instanceof TokenMismatchException && $request->routeIs('web.*')) {
+        //     Log::warning('CSRF Mismatch (USER)', [
+        //         'url' => $request->fullUrl(),
+        //         'referer' => $request->headers->get('referer'),
+        //         'host' => $request->getHost(),
+        //         'is_secure' => $request->isSecure(),
+        //         'session_id' => $request->session()->getId(),
+        //         'has_token' => $request->session()->has('_token'),
+        //         'cookie_names' => array_keys($_COOKIE ?? []),
+        //         'cookie_session_present' => array_key_exists(config('session.cookie'), $_COOKIE ?? []),
+        //     ]);
+        //     Auth::guard('user')->logout();
+        //     $request->session()->invalidate();
+        //     $request->session()->regenerateToken();
+        //     $loginUrl = route('web.login');
 
-            if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'login_url' => $loginUrl,
-                ], 419);
-            }
+        //     if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+        //         return response()->json([
+        //             'login_url' => $loginUrl,
+        //         ], 419);
+        //     }
 
-            return redirect()->route('web.login');
-        }
+        //     return redirect()->route('web.login');
+        // }
 
         return parent::render($request, $e);
     }

@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SettingsRequest;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
-use Spatie\Activitylog\Facades\LogBatch;
-use Spatie\Activitylog\Facades\Activity;
 
 class SettingController extends Controller
 {
