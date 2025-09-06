@@ -7,12 +7,8 @@ use App\Http\Controllers\Web\PagesController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::get('/', function () {
-    return redirect(app()->getLocale());
-});
-
 Route::group([
-    'prefix'     => '{lang}',
+    'prefix'     => '{lang?}',
     'middleware' => 'setlocale',
     'where'      => ['lang' => 'en|ar'],
 ], function () {
@@ -24,10 +20,6 @@ Route::group([
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     });
 });
-
-Route::get('/dashboard', function () {
-    return view('admin.main');
-})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
