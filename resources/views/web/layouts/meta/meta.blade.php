@@ -9,8 +9,8 @@
 <!-- upper bar color for mobile -->
 <meta name="theme-color" content="#d03b37" />
 <!-- author -->
-<meta name="author" content="Icon Creations" />
+<meta name="author" content="Mohamed Nouh" />
 <!-- Favicon -->
-<link rel="shortcut icon" href="img/homepage/logo-new.png" type="image/x-icon" />
+<link rel="shortcut icon" href="{{ asset('/favicon.ico') }}" type="image/x-icon" />
 <!-- stack meta -->
 @stack('meta')
