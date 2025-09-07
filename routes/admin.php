@@ -1,12 +1,15 @@
 <?php
-use App\Http\Controllers\Admin\AuthController;
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\ProfileController;
-use App\Http\Controllers\Admin\ActivityLogController;
-use App\Http\Controllers\Admin\SettingController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\SeoMetaController;
-use App\Http\Controllers\Admin\UserController;
+
+use App\Http\Controllers\Admin\{
+    AuthController,
+    AdminController,
+    ProfileController,
+    ActivityLogController,
+    SettingController,
+    DashboardController,
+    SeoMetaController,
+    UserController
+};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,7 +23,9 @@ use Illuminate\Support\Facades\Route;
 
 /***************************** ADMIN ROUTES **********************************/
 
-Route::group(['prefix' => 'admin-panel', 'as' => 'admin.'], function () {
+Route::group([
+    'where'      => ['lang' => 'en|ar'],
+], function () {
     Route::group(['middleware' => ['guest:admin', 'throttle:10,1']], function () {
         Route::get('/login', [AuthController::class, 'index'])->name('login_page');
         Route::post('/login', [AuthController::class, 'login'])->name('login');
