@@ -11,9 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 class Admin extends Authenticatable implements AuthenticatableContract
 {
     use HasFactory, HasRoles;
-
     protected $guard_name = 'admin';
-
     protected $table = 'admins';
     protected $fillable = [
         'first_name',

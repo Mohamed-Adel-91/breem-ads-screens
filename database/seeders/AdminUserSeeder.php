@@ -1,12 +1,8 @@
 <?php
-
 namespace Database\Seeders;
-
 use App\Models\Admin;
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-
+use Spatie\Permission\Models\Role;
 class AdminUserSeeder extends Seeder
 {
     /**
@@ -14,11 +10,6 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::firstOrCreate(
-            ['email' => 'admin@company.com'],
-            ['name' => 'Super Admin', 'password' => bcrypt('StrongPass123')]
-        );
-        $user->assignRole('super-admin');
         $admin = Admin::updateOrCreate(
             ['email' => config('admin.email')],
             [
@@ -29,6 +20,10 @@ class AdminUserSeeder extends Seeder
                 'role'       => (int) config('admin.role'),
             ]
         );
+        $role = Role::where('name', 'super-admin')->where('guard_name', 'admin')->first();
+        if (!$role) {
+            $role = Role::create(['name' => 'super-admin', 'guard_name' => 'admin']);
+        }
         $admin->assignRole('super-admin');
     }
 }
