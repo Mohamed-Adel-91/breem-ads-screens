@@ -30,10 +30,10 @@ Route::group(['prefix' => 'admin-panel', 'as' => 'admin.'], function () {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::prefix('profile')->as('profile.')->group(function () {
-            Route::get('edit', [ProfileController::class, 'edit'])->name('edit');
-            Route::put('update', [ProfileController::class, 'update'])->name('update');
-            Route::put('update-password', [ProfileController::class, 'updatePassword'])->name('updatePassword');
-            Route::post('verify-otp', [ProfileController::class, 'verifyPasswordOtp'])->name('verifyPasswordOtp');
+            Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');
+            Route::put('/update', [ProfileController::class, 'update'])->name('update');
+            Route::put('/update-password', [ProfileController::class, 'updatePassword'])->name('updatePassword');
+            Route::post('/verify-otp', [ProfileController::class, 'verifyPasswordOtp'])->name('verifyPasswordOtp');
             Route::delete('/profile', [ProfileController::class, 'destroy'])->name('destroy');
         });
         Route::middleware('role:1')->group(function () {
@@ -47,8 +47,3 @@ Route::group(['prefix' => 'admin-panel', 'as' => 'admin.'], function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
     });
 });
-
-// Route::middleware('auth')->group(function () {
-//     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-//     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-// });
