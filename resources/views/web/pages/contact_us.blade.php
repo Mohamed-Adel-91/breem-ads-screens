@@ -418,9 +418,6 @@
 @endsection
 
 @push('scripts-js')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.min.js">
-    </script>
     <script type="text/javascript">
         $(document).ready(function() {
             $('#modelselect').multiselect({
