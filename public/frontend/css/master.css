@@ -1,4 +1,4 @@
-/* 
+/*
 @font-face {
     font-family: 'Inter';
     src: url('../css/fonts/Inter_18pt-Medium.ttf') format('truetype');
@@ -41,13 +41,13 @@
 
 @font-face {
   font-family: 'cairo';
-  src: url('/fonts/Cairo-Regular.ttf') format('truetype');
+  src: url('../fonts/Cairo-Regular.ttf') format('truetype');
 }
 
-@font-face {
+/* @font-face {
   font-family: 'Inter';
   src: url('../css/fonts/Inter_18pt-Regular.ttf') format('truetype');
-}
+} */
 
 /* @font-face {
     font-family: 'Inter';
