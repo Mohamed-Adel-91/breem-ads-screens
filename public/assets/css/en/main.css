@@ -743,6 +743,7 @@ ul.header-tasks:last-child {
 .header-profile-actions a i {
     font-weight: 700;
     margin-right: .5rem;
+    margin-left: .5rem;
     font-size: 1rem;
     vertical-align: text-top;
 }

@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'defaults' => [
+        'guard' => 'admin',
+    ],
 
     'models' => [
 
