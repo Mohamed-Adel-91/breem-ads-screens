@@ -21,6 +21,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('/dashboard', function () {
+    return view('admin.main');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
 /***************************** ADMIN ROUTES **********************************/
 
 Route::group([

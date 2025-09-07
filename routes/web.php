@@ -3,7 +3,7 @@
 use App\Http\Controllers\Web\PagesController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect(app()->getLocale()));
+Route::get('/', fn() => redirect(app()->getLocale()));
 
 /***************************** Frontend ROUTES **********************************/
 
@@ -15,6 +15,8 @@ Route::group([
     });
 });
 
+
+
 /***************************** Fallback ROUTES **********************************/
 
-Route::fallback(fn () => view('404'));
+Route::fallback(fn() => view('404'));
