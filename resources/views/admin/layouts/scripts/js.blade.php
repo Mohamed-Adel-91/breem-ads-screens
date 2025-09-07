@@ -22,7 +22,7 @@
 <script src="{{ asset('/assets/vendor/apex/admin/income.js') }}"></script>
 <script src="{{ asset('/assets/vendor/apex/admin/customers.js') }}"></script>
 <!-- Main JS -->
-<script src="{{ asset('/assets/js/main.js') }}"></script>
+<script src="{{ asset('assets/js/main.js') }}"></script>
 <script src="{{ asset('/assets/vendor/particles/particles.min.js') }}"></script>
 <script src="{{ asset('/assets/vendor/particles/particles-custom-error.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"
