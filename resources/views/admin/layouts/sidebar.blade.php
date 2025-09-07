@@ -23,11 +23,11 @@
                     <div class="sidebar-submenu">
                         <ul>
                             <li class="{{ Request::is('dashboard/settings/edit') ? 'active' : '' }}">
-                                <a href="{{ route('admin.settings.edit') }}"
+                                <a href="{{ route('admin.settings.edit',['lang' => app()->getLocale()]) }}"
                                     class="{{ Request::is('dashboard/settings/edit') ? 'current-page' : '' }}">{{ __('admin.sidebar.main_settings') }}</a>
                             </li>
                             <li class="{{ Request::is('dashboard/seo_metas') ? 'active' : '' }}">
-                                <a href="{{ route('admin.seo_metas.index') }}"
+                                <a href="{{ route('admin.seo_metas.index',['lang' => app()->getLocale()]) }}"
                                     class="{{ Request::is('dashboard/seo_metas') ? 'current-page' : '' }}">{{ __('admin.sidebar.seo_metas') }}</a>
                             </li>
                         </ul>
@@ -42,7 +42,7 @@
                     <div class="sidebar-submenu">
                         <ul>
                             <li class="{{ Request::is('dashboard/users') ? 'active' : '' }}">
-                                <a href="{{ route('admin.users.index') }}"
+                                <a href="{{ route('admin.users.index',['lang' => app()->getLocale()]) }}"
                                     class="{{ Request::is('dashboard/users') ? 'current-page' : '' }}">{{ __('admin.sidebar.show') }}</a>
                             </li>
                         </ul>

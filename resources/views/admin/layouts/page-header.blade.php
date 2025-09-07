@@ -47,11 +47,11 @@
                             @endphp
                             <p>{{ RolesEnum::getDescription(Auth::guard('admin')->user()->role) }}</p>
                         </div>
-                        <a href="{{ route('admin.profile.edit') }}"><i class="icon-settings1"></i> {{ __('admin.header.my_profile') }}</a>
+                        <a href="{{ route('admin.profile.edit',['lang' => app()->getLocale()]) }}"><i class="icon-settings1"></i> {{ __('admin.header.my_profile') }}</a>
                         @if (Auth::guard('admin')->user()->isRole(1))
-                            <a href="{{ route('admin.admins.create') }}"><i class="icon-user1"></i> {{ __('admin.header.create_admin') }}</a>
-                            <a href="{{ route('admin.admins.index') }}"><i class="icon-users"></i> {{ __('admin.header.admins_list') }}</a>
-                            <a href="{{ route('admin.activity_logs.index') }}"
+                            <a href="{{ route('admin.admins.create',['lang' => app()->getLocale()]) }}"><i class="icon-user1"></i> {{ __('admin.header.create_admin') }}</a>
+                            <a href="{{ route('admin.admins.index',['lang' => app()->getLocale()]) }}"><i class="icon-users"></i> {{ __('admin.header.admins_list') }}</a>
+                            <a href="{{ route('admin.activity_logs.index',['lang' => app()->getLocale()]) }}"
                                 class="{{ Request::is('dashboard/activity-logs') ? 'current-page' : '' }}">
                                 <i><i class="fas fa-history"></i></i> {{ __('admin.header.activity_logs') }}
                             </a>
@@ -60,7 +60,7 @@
                             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="icon-log-out1"></i> {{ __('admin.header.sign_out') }}
                         </a>
-                        <form id="logout-form" action="{{ route('admin.logout') }}" method="POST"
+                        <form id="logout-form" action="{{ route('admin.logout',['lang' => app()->getLocale()]) }}" method="POST"
                             style="display: none;">
                             @csrf
                             @method('POST')
