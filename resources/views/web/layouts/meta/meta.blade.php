@@ -6,10 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <!-- IE Browser Support -->
 <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-<!-- upper bar color for mobile -->
-<meta name="theme-color" content="#41A8A6" />
 <!-- author -->
-<meta name="author" content="Mohamed Nouh" />
+<meta name="author" content="Frame&Code" />
+<!-- upper bar color for mobile -->
+<meta content="#627E90" name="theme-color" />
 <!-- Favicon -->
 <link rel="shortcut icon" href="{{ asset('/favicon.ico') }}" type="image/x-icon" />
 <!-- stack meta -->

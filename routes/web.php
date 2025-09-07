@@ -14,6 +14,8 @@ Route::group([
 ], function () {
     Route::controller(PagesController::class)->group(function () {
         Route::get('/', 'index')->name('home');
+        Route::get('/whoweare', 'whoweare')->name('whoweare');
+        Route::get('/contact-us', 'contactUs')->name('contactUs');
     });
 });
 

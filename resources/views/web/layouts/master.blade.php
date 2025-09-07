@@ -7,11 +7,16 @@
     @include('web.layouts.meta.meta')
     <!-- Style links -->
     @include('web.layouts.scripts.css')
+    @php $lang = ['lang' => app()->getLocale()] @endphp
 </head>
 
 <body>
     <!-- ==================== Header ==================== -->
-    @include('web.layouts.components.header')
+    @if (request()->routeIs('web.home'))
+        @include('web.layouts.components.transparent-header')
+    @else
+        @include('web.layouts.components.solid-header')
+    @endif
     @include('web.layouts.components.sidebar')
     <!-- ==================== Header ==================== -->
 

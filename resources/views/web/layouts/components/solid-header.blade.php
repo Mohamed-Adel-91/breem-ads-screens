@@ -12,13 +12,13 @@
                 <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-4 pages">
                         <li class="nav-item">
-                            <a class="nav-link" aria-current="page" href="#">الرئيسية</a>
+                            <a class="nav-link" aria-current="page" href="{{ route('web.home', $lang ) }}">الرئيسية</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">من نحن</a>
+                            <a class="nav-link" href="{{ route('web.whoweare', $lang ) }}">من نحن</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link " href="#">تواصل معنا</a>
+                            <a class="nav-link " href="{{ route('web.contactUs', $lang ) }}">تواصل معنا</a>
                         </li>
                     </ul>
                 </div>

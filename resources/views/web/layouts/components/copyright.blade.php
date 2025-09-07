@@ -1,6 +1,6 @@
 <div class="copyright py-1  bg-white ">
     <p class="text-center flex flex-row-reverse justify-center items-center gap-3 mb-0">
         <span> Designed and Developed by</span>
-        <a href="#" target="_blank">Mohamed Nouh</a>
+        <a href="#" target="_blank">Frame&Code</a>
     </p>
 </div>
