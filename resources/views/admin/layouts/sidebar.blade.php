@@ -2,7 +2,7 @@
 <nav id="sidebar" class="sidebar-wrapper">
     <!-- Sidebar brand start  -->
     <div class="sidebar-brand d-flex justify-content-center" style="height: 100px; margin-top: 10px; margin-bottom: 10px;">
-        <a href="{{ route('admin.index') }}" style="background-color: #fff;">
+        <a href="{{ route('admin.index',['lang' => app()->getLocale()]) }}" style="background-color: #fff;">
             <h4 class="py-4" style="color:#fff;"><img src="{{ asset('logo.png') }}" style="width: 100%; padding:20px; margin-top: 10px; margin-bottom: 10px;">
             </h4>
         </a>

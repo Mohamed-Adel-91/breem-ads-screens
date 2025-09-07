@@ -43,7 +43,7 @@ Route::group([
         Route::post('/login/verify-otp', [AuthController::class, 'verifyOtp'])->name('verifyOtp');
     });
     Route::group(['middleware' => ['auth:admin']], function () {
-        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/', [DashboardController::class, 'index'])->name('index');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::prefix('profile')->as('profile.')->group(function () {
             Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');

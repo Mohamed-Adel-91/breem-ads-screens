@@ -17,7 +17,7 @@ class AuthController extends Controller
     public function index()
     {
         if (auth()->guard('admin')->check()) {
-            return redirect()->route('admin.index');
+            return redirect()->route('admin.index',['lang' => app()->getLocale()]);
         }
         return view('admin.login');
     }
@@ -60,7 +60,7 @@ class AuthController extends Controller
             $request->session()->regenerateToken();
             AdminOtp::where('admin_id', $adminId)->delete();
             session()->forget('otp_admin_id');
-            return redirect()->route('admin.index');
+            return redirect()->route('admin.index',['lang' => app()->getLocale()]);
         }
         return back()->with('error', 'رمز التحقق غير صحيح.');
     }
@@ -74,7 +74,7 @@ class AuthController extends Controller
         if (auth()->guard('admin')->attempt(['email' => $request->email, 'password' => $request->password])) {
             $request->session()->regenerate();
             $request->session()->regenerateToken();
-            return redirect()->route('admin.index');
+            return redirect()->route('admin.index',['lang' => app()->getLocale()]);
         } else {
             session()->flash('error', 'بيانات المدخلة غير صحيحة.');
             return back();
