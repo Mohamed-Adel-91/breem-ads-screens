@@ -21,12 +21,12 @@ use Illuminate\Support\Facades\Route;
 /***************************** ADMIN ROUTES **********************************/
 
 Route::group(['prefix' => 'admin-panel', 'as' => 'admin.'], function () {
-    Route::group(['middleware' => ['guest:admin', 'throttle:10,1', 'rateLimit:10,1']], function () {
+    Route::group(['middleware' => ['guest:admin', 'throttle:10,1']], function () {
         Route::get('/login', [AuthController::class, 'index'])->name('login_page');
         Route::post('/login', [AuthController::class, 'login'])->name('login');
         Route::post('/login/verify-otp', [AuthController::class, 'verifyOtp'])->name('verifyOtp');
     });
-    Route::group(['middleware' => ['auth:admin', 'rateLimit:10,1']], function () {
+    Route::group(['middleware' => ['auth:admin']], function () {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::prefix('profile')->as('profile.')->group(function () {
