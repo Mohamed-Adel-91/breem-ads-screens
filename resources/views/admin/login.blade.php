@@ -10,7 +10,7 @@
                         <div class="login-screen">
                             <div class="login-box">
                                 <div>
-                                    <img class="w-100 mb-4" src="{{ asset('logo.png') }}">
+                                    <x-application-logo class="w-20 h-20 m-3 fill-current text-gray-500" />
                                 </div>
                                 <h5>{{ __('admin.login.welcome_back') }}<br />{{ __('admin.login.login_to_account') }}</h5>
                                 @include('admin.layouts.alerts')
