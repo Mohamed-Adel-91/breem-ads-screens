@@ -27,6 +27,7 @@ Route::get('/dashboard', function () {
 
 /***************************** ADMIN ROUTES **********************************/
 
+
 Route::group([
     'prefix'     => '{lang?}/admin-panel',
     'as'         => 'admin.',
