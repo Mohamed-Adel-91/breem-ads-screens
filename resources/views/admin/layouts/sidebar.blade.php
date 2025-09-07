@@ -1,10 +1,11 @@
 <!-- Sidebar wrapper start -->
 <nav id="sidebar" class="sidebar-wrapper">
     <!-- Sidebar brand start  -->
-    <div class="sidebar-brand d-flex justify-content-center" style="height: 100px; margin-top: 10px; margin-bottom: 10px;">
-        <a href="{{ route('admin.index',['lang' => app()->getLocale()]) }}" style="background-color: #fff;">
-            <h4 class="py-4" style="color:#fff;"><img src="{{ asset('logo.png') }}" style="width: 100%; padding:20px; margin-top: 10px; margin-bottom: 10px;">
-            </h4>
+    <div class="sidebar-brand d-flex justify-content-center"
+        style="height: 100px; margin-bottom: 10px;">
+        <a href="{{ route('admin.index', ['lang' => app()->getLocale()]) }}">
+            <img src="{{ asset('frontend/img/logo.png') }}"
+                style="width: 100%; padding:20px; margin-top: 10px; margin-bottom: 10px;">
         </a>
     </div>
     <!-- Sidebar brand end  -->
@@ -14,7 +15,7 @@
         <div class="sidebar-menu">
             <ul>
                 <li
-                    class="sidebar-dropdown {{  Request::is('dashboard/settings/edit') || Request::is('dashboard/seo_metas') ? 'active' : '' }}">
+                    class="sidebar-dropdown {{ Request::is('dashboard/settings/edit') || Request::is('dashboard/seo_metas') ? 'active' : '' }}">
                     <a href="#">
                         <i class="icon-settings1"></i>
                         <span class="menu-text">{{ __('admin.sidebar.general_settings') }}</span>

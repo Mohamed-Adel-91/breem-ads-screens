@@ -7,7 +7,7 @@
 <!-- IE Browser Support -->
 <meta http-equiv="X-UA-Compatible" content="ie=edge" />
 <!-- upper bar color for mobile -->
-<meta name="theme-color" content="#d03b37" />
+<meta name="theme-color" content="#41A8A6" />
 <!-- author -->
 <meta name="author" content="Mohamed Nouh" />
 <!-- Favicon -->

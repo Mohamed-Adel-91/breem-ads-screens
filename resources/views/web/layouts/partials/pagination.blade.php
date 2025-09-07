@@ -41,7 +41,7 @@
                             @if ($page == $paginator->currentPage())
                                 <li>
                                     <span aria-current="page"
-                                        class="px-3 py-1.5 rounded-lg text-white bg-[#d03b37]">{{ $page }}</span>
+                                        class="px-3 py-1.5 rounded-lg text-white bg-[#41A8A6]">{{ $page }}</span>
                                 </li>
                             @else
                                 <li>
