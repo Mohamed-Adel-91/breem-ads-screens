@@ -1,6 +1,11 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="{{ asset('/assets/fonts/style.css') }}">
-<link rel="stylesheet" href="{{ asset('/assets/css/main.css') }}">
+@if (app()->getLocale() === 'ar')
+<link rel="stylesheet" href="{{ asset('/assets/css/ar/main.css') }}">
+@else
+<link rel="stylesheet" href="{{ asset('/assets/css/en/main.css') }}">
+@endif
+
 <link rel="stylesheet" href="{{ asset('/assets/vendor/daterange/daterange.css') }}" />
 <link rel="stylesheet" href="{{ asset('/assets/vendor/particles/particles.css') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6/dist/css/tempus-dominus.min.css" />

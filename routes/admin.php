@@ -21,11 +21,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/dashboard', function () {
-    return view('admin.main');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/admin-panel', function () {
+    return redirect('/' . app()->getLocale() . '/admin-panel');
+})->name('admin.redirect');
 
 /***************************** ADMIN ROUTES **********************************/
+
 
 Route::group([
     'prefix'     => '{lang?}/admin-panel',
@@ -38,7 +39,7 @@ Route::group([
         Route::post('/login/verify-otp', [AuthController::class, 'verifyOtp'])->name('verifyOtp');
     });
     Route::group(['middleware' => ['auth:admin']], function () {
-        Route::get('/', [DashboardController::class, 'index'])->name('index');
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::prefix('profile')->as('profile.')->group(function () {
             Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');
