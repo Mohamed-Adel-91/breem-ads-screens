@@ -12,13 +12,13 @@
                 <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-4 pages">
                         <li class="nav-item">
-                            <a class="nav-link" aria-current="page" href="{{ route('web.home', $lang ) }}">الرئيسية</a>
+                            <a class="nav-link" aria-current="page" href="{{ route('web.home', $lang) }}">الرئيسية</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('web.whoweare', $lang ) }}">من نحن</a>
+                            <a class="nav-link" href="{{ route('web.whoweare', $lang) }}">من نحن</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link " href="{{ route('web.contactUs', $lang ) }}">تواصل معنا</a>
+                            <a class="nav-link " href="{{ route('web.contactUs', $lang) }}">تواصل معنا</a>
                         </li>
                     </ul>
                 </div>
@@ -28,7 +28,22 @@
                             <a class="nav-link" href="#">99654334+</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" aria-current="page" href="#">عربى</a>
+                            @php
+                                $switchTo = request()->segment(1) === 'ar' ? 'en' : 'ar';
+                                $params = Route::current()?->parameters() ?? [];
+                                $params['lang'] = $switchTo;
+                                $url = Route::currentRouteName()
+                                    ? route(Route::currentRouteName(), $params)
+                                    : url('/' . $switchTo);
+                                $qs = request()->getQueryString();
+                                if ($qs) {
+                                    $url .= '?' . $qs;
+                                }
+                            @endphp
+
+                            <a class="nav-link" aria-current="page" href="{{ $url }}">
+                                {{ app()->getLocale() === 'ar' ? 'English' : 'العربية' }}
+                            </a>
                         </li>
                     </ul>
                 </div>
