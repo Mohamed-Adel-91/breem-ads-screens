@@ -11,6 +11,6 @@ class PagesController extends Controller
     ) {}
     public function index(Request $request)
     {
-        return view('web.pages.index')->with($this->pages->home());
+        return $this->pages->home();
     }
 }
