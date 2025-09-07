@@ -21,13 +21,13 @@ class AuthPerson
                 return response()->json([
                     'message'   => 'Unauthenticated.',
                     'login_url' => $guard === 'admin'
-                        ? route('admin.login_page')
+                        ? route('admin.login')
                         : route('web.login'),
                 ], 401);
             }
 
             return $guard === 'admin'
-                ? redirect()->guest(route('admin.login_page'))->with('error', 'الرجاء تسجيل الدخول أولاً.')
+                ? redirect()->guest(route('admin.login'))->with('error', 'الرجاء تسجيل الدخول أولاً.')
                 : redirect()->guest(route('web.login'))->with('error', 'الرجاء تسجيل الدخول أولاً.');
         }
 

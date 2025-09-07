@@ -51,7 +51,7 @@ class AuthController extends Controller
         $request->validate(['otp' => 'required']);
         $adminId = session('otp_admin_id');
         if (!$adminId) {
-            return redirect()->route('admin.login_page');
+            return redirect()->route('admin.login');
         }
         $record = AdminOtp::where('admin_id', $adminId)->first();
         if ($record && $record->otp_code === $request->otp) {
@@ -84,11 +84,11 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         if (!auth()->guard('admin')->check()) {
-            return redirect()->route('admin.login_page');
+            return redirect()->route('admin.login');
         }
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('admin.login_page');
+        return redirect()->route('admin.login');
     }
 }

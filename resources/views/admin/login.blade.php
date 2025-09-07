@@ -3,7 +3,7 @@
     <div class="page-wrapper">
         <!-- Page content area start -->
         <div class="container">
-            <form action="{{ route('admin.login') }}" method="POST">
+            <form action="{{ route('admin.login.attempt',['lang' => request()->route('lang') ?? app()->getLocale() ?? 'ar']) }}" method="POST">
                 @csrf
                 <div class="row justify-content-md-center">
                     <div class="col-xl-4 col-lg-5 col-md-6 col-sm-12">

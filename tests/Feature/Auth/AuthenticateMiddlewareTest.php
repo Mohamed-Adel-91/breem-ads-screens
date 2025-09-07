@@ -17,7 +17,7 @@ class AuthenticateMiddlewareTest extends TestCase
     {
         $response = $this->get(route('admin.index', ['lang' => app()->getLocale()]));
 
-        $response->assertRedirect(route('admin.login_page', ['lang' => app()->getLocale()]));
+        $response->assertRedirect(route('admin.login', ['lang' => app()->getLocale()]));
     }
 }
 

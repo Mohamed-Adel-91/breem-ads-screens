@@ -24,7 +24,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/admin-panel', function () {
     return redirect('/' . app()->getLocale() . '/admin-panel');
 })->name('admin.redirect');
-// Route::get('/login', fn () => redirect()->route('admin.login'))->name('login');
+Route::get('/login-alias', function (\Illuminate\Http\Request $request) {
+    $lang = $request->route('lang') ?? app()->getLocale() ?? 'ar';
+    return redirect()->route('admin.login', ['lang' => $lang]);
+})->name('login');
 
 /***************************** ADMIN ROUTES **********************************/
 
@@ -35,8 +38,8 @@ Route::group([
     'where'      => ['lang' => 'en|ar'],
 ], function () {
     Route::group(['middleware' => ['guest:admin', 'throttle:10,1']], function () {
-        Route::get('/login', [AuthController::class, 'index'])->name('login_page');
-        Route::post('/login', [AuthController::class, 'login'])->name('login');
+        Route::get('/login', [AuthController::class, 'index'])->name('login');
+        Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
         Route::post('/login/verify-otp', [AuthController::class, 'verifyOtp'])->name('verifyOtp');
     });
     Route::group(['middleware' => ['auth:admin']], function () {
