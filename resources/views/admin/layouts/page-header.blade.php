@@ -11,6 +11,11 @@
     <div class="header-items">
         <!-- Header actions start -->
         <ul class="header-actions">
+            <li class="language-switch">
+                <a href="{{ route(Route::currentRouteName(), array_merge(request()->route()->parameters(), ['lang' => app()->getLocale() === 'ar' ? 'en' : 'ar'])) }}">
+                    {{ app()->getLocale() === 'ar' ? __('admin.header.english') : __('admin.header.arabic') }}
+                </a>
+            </li>
             <li class="dropdown">
                 <a href="#" id="userSettings" class="user-settings" data-toggle="dropdown" aria-haspopup="true">
                     <span class="user-name">

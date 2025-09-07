@@ -731,6 +731,10 @@ a.bg-pink:focus {
     .header-actions>li:first-child {
         display: none;
     }
+
+    .header-actions>li.language-switch {
+        display: block;
+    }
 }
 
 ul.header-notifications li a {

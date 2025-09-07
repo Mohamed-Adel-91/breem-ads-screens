@@ -55,6 +55,8 @@ return [
         'activity_logs' => 'سجلات النشاط',
         'sign_out' => 'تسجيل الخروج',
         'home' => 'الرئيسية',
+        'english' => 'الإنجليزية',
+        'arabic' => 'العربية',
     ],
     'table' => [
         'first_name' => 'الاسم الأول',

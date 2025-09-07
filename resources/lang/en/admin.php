@@ -55,6 +55,8 @@ return [
         'activity_logs' => 'Activity Logs',
         'sign_out' => 'Sign Out',
         'home' => 'Home',
+        'english' => 'English',
+        'arabic' => 'Arabic',
     ],
     'table' => [
         'first_name' => 'First Name',
