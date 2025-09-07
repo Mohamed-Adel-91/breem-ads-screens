@@ -20,13 +20,13 @@ use Illuminate\Support\Facades\Route;
 
 /***************************** ADMIN ROUTES **********************************/
 
-Route::group(['prefix' => 'dashboard', 'as' => 'admin.'], function () {
-    Route::group(['middleware' => ['guest:admin', 'throttle:10,1']], function () {
+Route::group(['prefix' => 'admin-panel', 'as' => 'admin.'], function () {
+    Route::group(['middleware' => ['guest:admin', 'throttle:10,1', 'rateLimit:10,1']], function () {
         Route::get('/login', [AuthController::class, 'index'])->name('login_page');
         Route::post('/login', [AuthController::class, 'login'])->name('login');
         Route::post('/login/verify-otp', [AuthController::class, 'verifyOtp'])->name('verifyOtp');
     });
-    Route::group(['middleware' => ['AuthPerson:admin']], function () {
+    Route::group(['middleware' => ['auth:admin', 'rateLimit:10,1']], function () {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::prefix('profile')->as('profile.')->group(function () {
@@ -34,6 +34,7 @@ Route::group(['prefix' => 'dashboard', 'as' => 'admin.'], function () {
             Route::put('update', [ProfileController::class, 'update'])->name('update');
             Route::put('update-password', [ProfileController::class, 'updatePassword'])->name('updatePassword');
             Route::post('verify-otp', [ProfileController::class, 'verifyPasswordOtp'])->name('verifyPasswordOtp');
+            Route::delete('/profile', [ProfileController::class, 'destroy'])->name('destroy');
         });
         Route::middleware('role:1')->group(function () {
             Route::resource('admins', AdminController::class)->except(['show']);
@@ -46,3 +47,8 @@ Route::group(['prefix' => 'dashboard', 'as' => 'admin.'], function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
     });
 });
+
+// Route::middleware('auth')->group(function () {
+//     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+//     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+// });

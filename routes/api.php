@@ -17,9 +17,3 @@ use App\Http\Controllers\Api\AuthController;
 
 /***************************** API ROUTES **********************************/
 
-// Route::controller(AuthController::class)->name('api.')->group(function () {
-//     Route::post('/register', 'register')->name('register');
-//     Route::post('/login', 'login')->name('login');
-//     Route::post('/logout', 'logout')->middleware('auth:sanctum')->name('logout');
-//     Route::post('/refresh', 'refresh')->middleware('auth:sanctum')->name('refresh');
-// });
