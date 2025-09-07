@@ -28,6 +28,8 @@ Route::get('/dashboard', function () {
 /***************************** ADMIN ROUTES **********************************/
 
 Route::group([
+    'prefix'     => '{lang?}/admin-panel',
+    'as'         => 'admin.',
     'where'      => ['lang' => 'en|ar'],
 ], function () {
     Route::group(['middleware' => ['guest:admin', 'throttle:10,1']], function () {

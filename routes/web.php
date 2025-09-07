@@ -8,6 +8,8 @@ Route::get('/', fn() => redirect(app()->getLocale()));
 /***************************** Frontend ROUTES **********************************/
 
 Route::group([
+    'prefix'     => '{lang?}',
+    'as'         => 'web.',
     'where'      => ['lang' => 'en|ar'],
 ], function () {
     Route::controller(PagesController::class)->group(function () {
