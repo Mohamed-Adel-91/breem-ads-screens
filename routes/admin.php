@@ -24,6 +24,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/admin-panel', function () {
     return redirect('/' . app()->getLocale() . '/admin-panel');
 })->name('admin.redirect');
+Route::get('/admin-panel/login', function () {
+    return redirect('/' . app()->getLocale() . '/admin-panel');
+})->name('admin.login.redirect');
 Route::get('/login-alias', function (\Illuminate\Http\Request $request) {
     $lang = $request->route('lang') ?? app()->getLocale() ?? 'ar';
     return redirect()->route('admin.login', ['lang' => $lang]);

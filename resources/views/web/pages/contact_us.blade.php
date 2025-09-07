@@ -7,7 +7,7 @@
     <!-- description -->
     <meta name="description" content="description" />
     <!-- author -->
-    <meta name="author" content="Icon Creations" />
+    <meta name="author" content="Mohamed Nouh" />
     <!-- Mobile Specific Meta -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- IE Browser Support -->
