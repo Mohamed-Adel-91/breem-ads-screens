@@ -18,7 +18,9 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->rememberToken();
             $table->string('mobile')->nullable();
             $table->string('profile_picture')->nullable();
             $table->enum('role', ['1', '2', '3', '4', '5', '6'])->default('1');
