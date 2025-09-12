@@ -7,7 +7,9 @@
             <div class="main-container">
                 @include('admin.layouts.alerts')
                 <form method="POST"
-                    action="{{ isset($data) ? route('admin.admins.update', $data->id) : route('admin.admins.store') }}"
+                    action="{{ isset($data)
+                        ? route('admin.admins.update', ['admin' => $data->id, 'lang' => app()->getLocale()])
+                        : route('admin.admins.store', ['lang' => app()->getLocale()]) }}"
                     enctype="multipart/form-data">
                     @csrf
                     @if (isset($data))
