@@ -57,10 +57,20 @@ class AdminController extends Controller
     {
         $admin = Admin::findOrFail($id);
         $validated = $request->validated();
+        if ($admin->id === 1 && isset($validated['role']) && (int)$validated['role'] !== RolesEnum::SUPER_ADMIN) {
+            return redirect()->route('admin.admins.index', $request->query())
+                ->with('error', 'لا يمكن إزالة دور super-admin من المسؤول الرئيسي.');
+        }
+        if ($admin->id === 1) {
+            $validated['role'] = RolesEnum::SUPER_ADMIN;
+        }
         if (empty($validated['password'])) {
             unset($validated['password']);
         }
         $admin->update($validated);
+        if ($admin->id === 1) {
+            $admin->assignRole('super-admin');
+        }
         $folder = Admin::UPLOAD_FOLDER;
         $this->fileService->updateFiles($admin, $request, ['profile_picture'], $folder);
         return redirect()->route('admin.admins.index', $request->query())
@@ -69,6 +79,9 @@ class AdminController extends Controller
 
     public function destroy($id)
     {
+        if ((int)$id === 1) {
+            return redirect()->route('admin.admins.index')->with('error', 'لا يمكن حذف المسؤول الرئيسي.');
+        }
         $admin = Admin::findOrFail($id);
         if ($admin->profile_picture) {
             $this->fileService->deleteFile($admin->profile_picture, Admin::UPLOAD_FOLDER);
