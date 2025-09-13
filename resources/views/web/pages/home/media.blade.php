@@ -4,7 +4,7 @@
             <div class="col-12 col-sm-6 col-md-3">
                 <div class="box">
                     <div class="image">
-                        <img src="img/pc.png" alt="">
+                        <img class="w-100" src="img/tv_with_remote.svg" alt="">
                     </div>
                     <div>
                         <span>+٦٥۸ </span>
@@ -17,7 +17,7 @@
             <div class="col-12 col-sm-6 col-md-3">
                 <div class="box">
                     <div class="image">
-                        <img src="img/social.png" alt="">
+                        <img  src="img/social.png" alt="">
                     </div>
                     <div>
                         <span>+۲۱٥ </span>
@@ -30,7 +30,7 @@
             <div class="col-12 col-sm-6 col-md-3">
                 <div class="box">
                     <div class="image">
-                        <img src="img/screen.png" alt="">
+                        <img  src="img/screen.png" alt="">
                     </div>
                     <div>
                         <span>+۳٤۷ </span>
@@ -43,13 +43,13 @@
             <div class="col-12 col-sm-6 col-md-3">
                 <div class="box">
                     <div class="image">
-                        <img src="img/pc.png" alt="">
+                        <img class="w-100" src="img/laptop.svg" alt="">
                     </div>
                     <div>
-                        <span>+٦٥۸ </span>
+                        <span>+۳۱ </span>
                     </div>
                     <div class="desc">
-                        <p>شاشات الإعلانات</p>
+                        <p>تصميم و تطوير مواقع </p>
                     </div>
                 </div>
             </div>
