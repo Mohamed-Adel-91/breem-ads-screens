@@ -33,7 +33,7 @@
                         </ul>
                     </div>
                 </li>
-                <li
+                {{-- <li
                     class="sidebar-dropdown {{ Request::is('dashboard/users') || Request::is('dashboard/users/show') ? 'active' : '' }}">
                     <a href="#">
                         <i><i class="fas fa-user-cog" aria-hidden="true"></i></i>
@@ -47,7 +47,7 @@
                             </li>
                         </ul>
                     </div>
-                </li>
+                </li> --}}
                 <li
                     class="sidebar-dropdown {{ Request::is('dashboard/admins') || Request::is('dashboard/admins/*') || Request::is('dashboard/permissions') || Request::is('dashboard/permissions/*') ? 'active' : '' }}">
                     <a href="#">
@@ -63,6 +63,10 @@
                             <li class="{{ Request::is('dashboard/permissions') || Request::is('dashboard/permissions/*') ? 'active' : '' }}">
                                 <a href="{{ route('admin.permissions.index',['lang' => app()->getLocale()]) }}"
                                     class="{{ Request::is('dashboard/permissions') || Request::is('dashboard/permissions/*') ? 'current-page' : '' }}">{{ __('admin.sidebar.permissions') }}</a>
+                            </li>
+                            <li class="{{ Request::is('dashboard/roles') || Request::is('dashboard/roles/*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.roles.index',['lang' => app()->getLocale()]) }}"
+                                    class="{{ Request::is('dashboard/roles') || Request::is('dashboard/roles/*') ? 'current-page' : '' }}">{{ __('admin.sidebar.roles') }}</a>
                             </li>
                         </ul>
                     </div>
