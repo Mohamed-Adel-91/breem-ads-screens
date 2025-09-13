@@ -62,23 +62,21 @@ class AdminController extends Controller
         return redirect()->route('admin.admins.index')->with('success', 'تم إنشاء المسؤول بنجاح.');
     }
 
-    public function edit($id)
+    public function edit(string $lang, Admin $admin)
     {
         $this->authorizeAdmin('admins.edit');
-        $data = Admin::findOrFail($id);
         return view('admin.admins.form')->with([
             'pageName' => 'تعديل مسؤول',
-            'data' => $data,
+            'data' => $admin,
             'roles' => RolesEnum::asArrayWithDescriptions(),
             'availableRoles' => SpatieRole::where('guard_name', 'admin')->pluck('name', 'id'),
             'availablePermissions' => Permission::where('guard_name', 'admin')->pluck('name', 'id'),
         ]);
     }
 
-    public function update(AdminRequest $request, $id)
+    public function update(AdminRequest $request, string $lang, Admin $admin)
     {
         $this->authorizeAdmin('admins.edit');
-        $admin = Admin::findOrFail($id);
         $validated = $request->validated();
         if ($admin->id === 1 && isset($validated['role']) && (int) $validated['role'] !== RolesEnum::SUPER_ADMIN) {
             return redirect()->route('admin.admins.index', $request->query())
@@ -106,13 +104,12 @@ class AdminController extends Controller
             ->with('success', 'تم تحديث المسؤول بنجاح.');
     }
 
-    public function destroy($id)
+    public function destroy(string $lang, Admin $admin)
     {
         $this->authorizeAdmin('admins.edit');
-        if ((int) $id === 1) {
+        if ($admin->id === 1) {
             return redirect()->route('admin.admins.index')->with('error', 'لا يمكن حذف المسؤول الرئيسي.');
         }
-        $admin = Admin::findOrFail($id);
         if ($admin->profile_picture) {
             $this->fileService->deleteFile($admin->profile_picture, Admin::UPLOAD_FOLDER);
         }
