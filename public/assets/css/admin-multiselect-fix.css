@@ -1,0 +1,56 @@
+/*! Admin Multiselect Fix (CSS)
+ *  - Keep Bootstrap 5 CSS loaded once.
+ *  - Load bootstrap-multiselect CSS BEFORE this file (or @import below).
+ */
+
+/* If you prefer @import instead of separate <link>, keep this at the top: */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css');
+
+/* Ensure multiselect button is clickable even if global .btn:disabled exists */
+.multiselect.btn { pointer-events: auto; }
+
+/* Make sure dropdown shows above cards/modals inside admin */
+.multiselect-container.dropdown-menu {
+  z-index: 2050; /* > modal backdrop (1040), > header (varies) */
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* Full width inside grid */
+.btn-group > .multiselect {
+  width: 100%;
+}
+
+/* Better RTL alignment */
+[dir="rtl"] .multiselect-container > li > a > label {
+  text-align: right;
+  padding-right: 1.75rem; /* space before checkbox */
+}
+
+/* Checkbox spacing for RTL */
+[dir="rtl"] .multiselect-container .form-check-input,
+[dir="rtl"] .multiselect-container input[type="checkbox"] {
+  margin-left: .5rem;
+  margin-right: 0;
+}
+
+/* Optional: soften the button look to match admin */
+.multiselect.btn.btn-light {
+  background-color: #e5e7eb;
+  border-color: #cfd4da;
+  color: #111827;
+}
+
+/* Hover state */
+.multiselect.btn.btn-light:hover {
+  background-color: #dfe3e8;
+}
+
+/* Selected items count text truncation */
+.multiselect .multiselect-selected-text {
+  display: inline-block;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

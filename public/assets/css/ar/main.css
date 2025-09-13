@@ -6638,7 +6638,7 @@ ul.user-messages li .delivery-details p {
 
 .breadcrumb .breadcrumb-item {
     color: #333333;
-    display: flex ;
+    display: flex;
     align-items: flex-end;
 }
 
@@ -9275,7 +9275,7 @@ code {
 }
 
 /* TODO: handle multiselect */
-.multiselect-container.dropdown-menu .show{
+.multiselect-container.dropdown-menu .show {
     display: flex;
     justify-content: flex-start;
     flex-direction: column;
@@ -9294,4 +9294,45 @@ input[type="text"].form-control.no-border {
     border: none;
     background-color: transparent;
     box-shadow: none;
+}
+
+/* Character count for Summernote editors */
+.char-counter {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.char-counter .char-count {
+    font-size: inherit;
+}
+
+.char-count.text-danger {
+    color: red !important;
+}
+
+.custom-input {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.custom-table th,
+.custom-table td {
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.custom-table img {
+    display: block;
+    margin: auto;
+}
+
+textarea.custom-input {
+    height: auto;
+    resize: vertical;
+}
+
+.note-editor .note-editable {
+    direction: rtl;
+    text-align: right;
 }

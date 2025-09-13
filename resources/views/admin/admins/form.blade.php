@@ -19,7 +19,10 @@
                         <div class="col-12">
                             <div class="card h-100">
                                 <div class="card-header">
-                                    <div class="card-title">{{ isset($data) ? __('admin.forms.edit') : __('admin.forms.create') }} {{ __('admin.forms.admin') }}</div>
+                                    <div class="card-title">
+                                        {{ isset($data) ? __('admin.forms.edit') : __('admin.forms.create') }}
+                                        {{ __('admin.forms.admin') }}
+                                    </div>
                                 </div>
                                 <div class="card-body">
                                     <div class="row gutters">
@@ -80,7 +83,8 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="password_confirmation">{{ __('admin.forms.confirm_password') }}</label>
+                                                <label
+                                                    for="password_confirmation">{{ __('admin.forms.confirm_password') }}</label>
                                                 <input type="password" name="password_confirmation"
                                                     id="password_confirmation" class="form-control"
                                                     autocomplete="new-password" />
@@ -159,7 +163,8 @@
                                     @endif
                                 </div>
                                 <div class="card-footer">
-                                    <button type="submit" class="btn btn-primary">{{ __('admin.forms.save_button') }}</button>
+                                    <button type="submit"
+                                        class="btn btn-primary">{{ __('admin.forms.save_button') }}</button>
                                 </div>
                             </div>
                         </div>
@@ -169,46 +174,3 @@
         </div>
     </div>
 @endsection
-@push('custom-js-scripts')
-    <script>
-        $(function() {
-            if (typeof $.fn.multiselect !== 'function') {
-                console.error('bootstrap-multiselect لم يتم تحميله.');
-                return;
-            }
-
-            $('#roles').multiselect({
-                includeSelectAllOption: true,
-                selectAllText: 'تحديد الكل',
-                allSelectedText: 'تم تحديد الكل',
-                nonSelectedText: 'اختر الأدوار',
-                buttonWidth: '100%',
-                buttonClass: 'btn btn-light w-100 text-start',
-                maxHeight: 200,
-                numberDisplayed: 3,
-                buttonContainer: '<div class="btn-group w-100" />',
-                templates: {
-                    button: '<button type="button" class="multiselect dropdown-toggle w-100 text-start" data-bs-toggle="dropdown">' +
-                        '<span class="multiselect-selected-text"></span> <b class="caret"></b>' +
-                        '</button>'
-                }
-            });
-            $('#permissions').multiselect({
-                includeSelectAllOption: true,
-                selectAllText: 'تحديد الكل',
-                allSelectedText: 'تم تحديد الكل',
-                nonSelectedText: 'اختر الصلاحيات',
-                buttonWidth: '100%',
-                buttonClass: 'btn btn-light w-100 text-start',
-                maxHeight: 200,
-                numberDisplayed: 3,
-                buttonContainer: '<div class="btn-group w-100" />',
-                templates: {
-                    button: '<button type="button" class="multiselect dropdown-toggle w-100 text-start" data-bs-toggle="dropdown">' +
-                        '<span class="multiselect-selected-text"></span> <b class="caret"></b>' +
-                        '</button>'
-                }
-            });
-        });
-    </script>
-@endpush

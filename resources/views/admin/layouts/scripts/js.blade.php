@@ -1,38 +1,46 @@
-<!-- Required jQuery first, then Bootstrap Bundle JS -->
+<!-- jQuery أولاً -->
 <script src="{{ asset('/assets/js/jquery.min.js') }}"></script>
+
+<!-- Axios + CSRF -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     axios.defaults.headers.common['X-CSRF-TOKEN'] =
         document.querySelector('meta[name="csrf-token"]').content;
 </script>
+
+<!-- Bootstrap 5 Bundle (مرة واحدة فقط) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- بقية الـ Vendors بترتيب سليم -->
 <script src="{{ asset('/assets/js/moment.js') }}"></script>
-<!-- Slimscroll JS -->
 <script src="{{ asset('/assets/vendor/slimscroll/slimscroll.min.js') }}"></script>
 <script src="{{ asset('/assets/vendor/slimscroll/custom-scrollbar.js') }}"></script>
-<!-- Daterange -->
+
 <script src="{{ asset('/assets/vendor/daterange/daterange.js') }}"></script>
 <script src="{{ asset('/assets/vendor/daterange/custom-daterange.js') }}"></script>
-<!-- Polyfill JS -->
+
 <script src="{{ asset('/assets/vendor/polyfill/polyfill.min.js') }}"></script>
-<!-- Apex Charts -->
+
 <script src="{{ asset('/assets/vendor/apex/apexcharts.min.js') }}"></script>
 <script src="{{ asset('/assets/vendor/apex/admin/visitors.js') }}"></script>
 <script src="{{ asset('/assets/vendor/apex/admin/deals.js') }}"></script>
 <script src="{{ asset('/assets/vendor/apex/admin/income.js') }}"></script>
 <script src="{{ asset('/assets/vendor/apex/admin/customers.js') }}"></script>
-<!-- Main JS -->
-<script src="{{ asset('assets/js/main.js') }}"></script>
+
+<script src="{{ asset('/assets/js/main.js') }}"></script>
+
 <script src="{{ asset('/assets/vendor/particles/particles.min.js') }}"></script>
 <script src="{{ asset('/assets/vendor/particles/particles-custom-error.js') }}"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"
     integrity="sha512-Ixzuzfxv1EqafeQlTCufWfaC6ful6WFqIz4G+dWvK0beHw0NVJwvCKSgafpy5gwNqKmgUfIBraVwkKI+Cz0SEQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6/dist/js/tempus-dominus.min.js"></script>
 
-{{-- cdn for sweetalert --}}
+<!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script type="text/javascript">
+<script>
     function checker(ev, item) {
         ev.preventDefault();
         Swal.fire({
@@ -48,11 +56,8 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 var form = document.getElementById('delete_form_' + item);
-                if (form) {
-                    form.submit();
-                } else {
-                    console.error('Form not found: delete_form_' + item);
-                }
+                if (form) form.submit();
+                else console.error('Form not found: delete_form_' + item);
             } else {
                 Swal.fire(
                     '{{ __('admin.sweet_alert.cancelled') }}',
@@ -63,39 +68,29 @@
         });
     }
 </script>
-{{-- cdn for Multiselect --}}
-<script type="text/javascript" src="{{ asset('assets/js/popper.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/bootstrap-multiselect.min.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js"></script>
+
+<!-- Bootstrap Multiselect (نسخة واحدة فقط) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.min.js">
 </script>
-{{-- cdn for summernote --}}
+
+<!-- Summernote -->
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+
+<!-- تهيئة Summernote + Multiselect (متوافقة مع BS5) -->
 <script>
-    $(document).ready(function() {
+    $(function() {
+        /* Summernote */
         $('.summernote').summernote({
             placeholder: 'Enter text here...',
             tabsize: 2,
             height: 200,
             toolbar: [
                 ['style', ['bold', 'underline', 'clear']],
-                // ['font', [ 'fontNames', 'color' , 'fontSizes']],
                 ['para', ['ul', 'ol']],
-                ['insert', [
-                    'link',
-                    'picture'
-                ]],
+                ['insert', ['link', 'picture']],
                 ['view', ['codeview']]
             ],
-            fontNames: [
-                'Arial',
-                'Courier New',
-                'Georgia',
-                'Segoe UI',
-                'Tahoma',
-                'Times New Roman',
+            fontNames: ['Arial', 'Courier New', 'Georgia', 'Segoe UI', 'Tahoma', 'Times New Roman',
                 'Verdana'
             ],
             fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '32', '36'],
@@ -107,44 +102,72 @@
                 }
             }
         });
-        // Add character counter below each Summernote editor
+
+        // عداد أحرف بسيط
         $('.summernote').each(function() {
             var $textarea = $(this);
             var max = $textarea.data('maxlength');
             var $editor = $textarea.next('.note-editor');
             var $countEl = $(
                 '<span class="char-counter">Max Characters (<span class="char-count text-muted">0</span>/' +
-                max + ')</span>');
+                (max || '∞') + ')</span>');
             $editor.after($countEl);
-            var $submit = $textarea.closest('form').find('button[type="submit"]');
 
             function updateCount() {
                 var plain = $('<div>').html($textarea.summernote('code')).text();
                 $countEl.find('.char-count').text(plain.length);
                 if (max && plain.length > max) {
                     $countEl.find('.char-count').addClass('text-danger');
-                    // $submit.prop('disabled', true);
                 } else {
                     $countEl.find('.char-count').removeClass('text-danger');
-                    $submit.prop('disabled', false);
                 }
             }
             $textarea.on('summernote.change keyup', updateCount);
             updateCount();
-
-            // Trim spaces and remove empty elements before submitting the form
-            $textarea.closest('form').on('submit', function() {
-                var html = $textarea.summernote('code');
-                var $wrapper = $('<div>').html(html);
-                $wrapper.find('*').each(function() {
-                    var $el = $(this);
-                    if ($el.children().length === 0 && $el.text().trim() === '') {
-                        $el.remove();
-                    }
-                });
-                html = $wrapper.html().replace(/&nbsp;/g, ' ').trim();
-                $textarea.summernote('code', html);
-            });
         });
+
+        /* Multiselect */
+        if (typeof $.fn.multiselect !== 'function') {
+            console.error('bootstrap-multiselect لم يتم تحميله.');
+            return;
+        }
+
+        function bs5ButtonTemplate() {
+            return '<button type="button" class="multiselect dropdown-toggle w-100 text-start" data-bs-toggle="dropdown">' +
+                '<span class="multiselect-selected-text"></span> <b class="caret"></b>' +
+                '</button>';
+        }
+
+        function initMulti($el, nonText) {
+            if (!$el.length) return;
+            if ($el.data('multiselect')) {
+                try {
+                    $el.multiselect('destroy');
+                } catch (e) {}
+            }
+            $el.multiselect({
+                includeSelectAllOption: true,
+                selectAllText: 'تحديد الكل',
+                allSelectedText: 'تم تحديد الكل',
+                nonSelectedText: nonText,
+                buttonWidth: '100%',
+                buttonClass: 'btn btn-light w-100 text-start',
+                maxHeight: 220,
+                numberDisplayed: 3,
+                buttonContainer: '<div class="btn-group w-100" />',
+                container: 'body',
+                templates: {
+                    button: bs5ButtonTemplate()
+                },
+                onInitialized: function($select, container) {
+                    if (document.documentElement.getAttribute('dir') === 'rtl') {
+                        container.find('.multiselect-container.dropdown-menu').addClass(
+                            'dropdown-menu-end text-end');
+                    }
+                }
+            });
+        }
+        initMulti($('#roles'), 'اختر الأدوار');
+        initMulti($('#permissions'), 'اختر الصلاحيات');
     });
 </script>
