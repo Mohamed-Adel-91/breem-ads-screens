@@ -169,7 +169,7 @@
         </div>
     </div>
 @endsection
-@push('scripts-js')
+@push('custom-js-scripts')
     <script>
         $(function() {
             if (typeof $.fn.multiselect !== 'function') {

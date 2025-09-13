@@ -34,9 +34,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script type="text/javascript">
     function checker(ev, item) {
-        // Prevent the default form submission
         ev.preventDefault();
-        // Use SweetAlert2 to display a confirmation modal
         Swal.fire({
             title: '{{ __('admin.sweet_alert.delete_title') }}',
             text: '{{ __('admin.sweet_alert.delete_text') }}',
@@ -49,7 +47,6 @@
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                // If user confirms, submit the form with the given ID
                 var form = document.getElementById('delete_form_' + item);
                 if (form) {
                     form.submit();
@@ -57,7 +54,6 @@
                     console.error('Form not found: delete_form_' + item);
                 }
             } else {
-                // Optional: handle the case when the user cancels the deletion
                 Swal.fire(
                     '{{ __('admin.sweet_alert.cancelled') }}',
                     '{{ __('admin.sweet_alert.data_safe') }}',
@@ -83,9 +79,7 @@
             placeholder: 'Enter text here...',
             tabsize: 2,
             height: 200,
-            // 1) ONLY these toolbar buttons:
             toolbar: [
-                // [groupName, [buttonList]]
                 ['style', ['bold', 'underline', 'clear']],
                 // ['font', [ 'fontNames', 'color' , 'fontSizes']],
                 ['para', ['ul', 'ol']],
@@ -95,7 +89,6 @@
                 ]],
                 ['view', ['codeview']]
             ],
-            // 2) YOUR approved fonts & sizes
             fontNames: [
                 'Arial',
                 'Courier New',
@@ -106,12 +99,10 @@
                 'Verdana'
             ],
             fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '32', '36'],
-            // 3) Strip all styling on paste, only plain text
             callbacks: {
                 onPaste: function(e) {
                     var bufferText = ((e.originalEvent || e).clipboardData).getData('Text');
                     e.preventDefault();
-                    // insert as plain text
                     document.execCommand('insertText', false, bufferText);
                 }
             }
