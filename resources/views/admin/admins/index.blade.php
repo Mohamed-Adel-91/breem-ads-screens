@@ -14,8 +14,10 @@
                                     <div class="col-md-2 d-flex justify-content-end p-0">
                                         <div class="col-md-6 d-flex justify-content-end  p-0">
                                             <button type="text" class="btn btn-primary" style="margin-top: 20px;">
-                                                  <a href="{{ route('admin.admins.create', ['lang' => app()->getLocale()]) }}" style="color: #fff;">
-                                                      <i class="icon-plus-circle mr-1"></i>{{ __('admin.table.new') }}</a></button>
+                                                <a href="{{ route('admin.admins.create', ['lang' => app()->getLocale()]) }}"
+                                                    style="color: #fff;">
+                                                    <i
+                                                        class="icon-plus-circle mr-1"></i>{{ __('admin.table.new') }}</a></button>
                                         </div>
                                     </div>
                                 </div>
@@ -53,8 +55,7 @@
                                                     <td>{{ $item->updated_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <div class="td-actions">
-                                                            @if (Auth::guard('admin')->user()->hasRole('super-admin') ||
-                                                                    Auth::guard('admin')->user()->can('admins.edit'))
+                                                            @if (Auth::guard('admin')->user()->hasRole('super-admin') || Auth::guard('admin')->user()->can('admins.edit'))
                                                                 <a href="{{ route('admin.admins.edit', ['lang' => app()->getLocale(), 'admin' => $item->id]) }}"
                                                                     class="icon bg-info" data-toggle="tooltip"
                                                                     data-placement="top" title="Edit Row">
@@ -63,10 +64,10 @@
                                                             @endif
                                                             @if (Auth::guard('admin')->user()->id != $item->id)
                                                                 @if (!$item->hasRole('super-admin'))
-                                                                      <form method="POST"
-                                                                          id="delete_form_{{ $item->id }}"
-                                                                          class="d-inline delete_form"
-                                                                          action="{{ route('admin.admins.destroy', ['lang' => app()->getLocale(), 'admin' => $item->id]) }}">
+                                                                    <form method="POST"
+                                                                        id="delete_form_{{ $item->id }}"
+                                                                        class="d-inline delete_form"
+                                                                        action="{{ route('admin.admins.destroy', ['lang' => app()->getLocale(), 'admin' => $item->id]) }}">
                                                                         @csrf
                                                                         @method('DELETE')
                                                                         <button type="submit" class="icon red"
