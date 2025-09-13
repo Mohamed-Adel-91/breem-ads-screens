@@ -9,20 +9,21 @@ use Illuminate\Support\Facades\Auth;
 
 class SettingController extends Controller
 {
-    public function edit()
+    public function edit(string $lang)
     {
         $data = Setting::firstOrFail();
         return view('admin.settings.edit')->with([
             'pageName' => 'تعديل الإعدادات',
             'data' => $data,
+            'lang' => $lang,
         ]);
     }
 
-    public function update(SettingsRequest $request)
+    public function update(SettingsRequest $request, string $lang)
     {
         $setting = Setting::firstOrFail();
         if (!$setting) {
-            return redirect()->back()->with('error', 'لم يتم العثور على الإعدادات.');
+            return redirect()->route('admin.settings.edit', ['lang' => $lang])->with('error', 'لم يتم العثور على الإعدادات.');
         }
         $setting->update($request->validated());
         activity()
@@ -31,6 +32,6 @@ class SettingController extends Controller
             ->withProperties($request->validated())
             ->log('Updated Settings');
         session()->flash('success', 'تم تحديث الإعدادات بنجاح');
-        return back();
+        return redirect()->route('admin.settings.edit', ['lang' => $lang]);
     }
 }

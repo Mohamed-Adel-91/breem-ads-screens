@@ -16,18 +16,19 @@ class AuthPerson
     public function handle(Request $request, Closure $next, string $guard = 'user')
     {
         if (!Auth::guard($guard)->check()) {
+            $lang = $request->route('lang') ?? app()->getLocale();
 
             if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'message'   => 'Unauthenticated.',
                     'login_url' => $guard === 'admin'
-                        ? route('admin.login')
+                        ? route('admin.login', ['lang' => $lang])
                         : route('web.login'),
                 ], 401);
             }
 
             return $guard === 'admin'
-                ? redirect()->guest(route('admin.login'))->with('error', 'الرجاء تسجيل الدخول أولاً.')
+                ? redirect()->guest(route('admin.login', ['lang' => $lang]))->with('error', 'الرجاء تسجيل الدخول أولاً.')
                 : redirect()->guest(route('web.login'))->with('error', 'الرجاء تسجيل الدخول أولاً.');
         }
 

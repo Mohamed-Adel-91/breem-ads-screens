@@ -51,9 +51,10 @@ class RoleController extends Controller
         return redirect()->route('admin.roles.index')->with('success', 'تم إنشاء الدور بنجاح.');
     }
 
-    public function edit($id)
+    public function edit(string $lang, Role $role)
     {
-        $role = Role::where('guard_name', 'admin')->findOrFail($id);
+        abort_if($role->guard_name !== 'admin', 404);
+
         $permissions = Permission::where('guard_name', 'admin')->pluck('name', 'id');
 
         return view('admin.roles.form')->with([
@@ -63,9 +64,9 @@ class RoleController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, string $lang, Role $role)
     {
-        $role = Role::where('guard_name', 'admin')->findOrFail($id);
+        abort_if($role->guard_name !== 'admin', 404);
 
         $data = $request->validate([
             'name' => [
@@ -87,9 +88,10 @@ class RoleController extends Controller
         return redirect()->route('admin.roles.index')->with('success', 'تم تحديث الدور بنجاح.');
     }
 
-    public function destroy($id)
+    public function destroy(string $lang, Role $role)
     {
-        $role = Role::where('guard_name', 'admin')->findOrFail($id);
+        abort_if($role->guard_name !== 'admin', 404);
+
         $role->delete();
 
         return redirect()->route('admin.roles.index')->with('success', 'تم حذف الدور بنجاح.');

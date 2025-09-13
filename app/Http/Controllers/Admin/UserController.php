@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, string $lang)
     {
         $query = User::query();
 
@@ -20,12 +20,13 @@ class UserController extends Controller
                 ->whereDate('updated_at', '<=', $request->input('to_date'));
         }
 
-        $data = $query->orderByDesc('created_at')->paginate(25);
+        $data = $query->orderByDesc('created_at')->paginate(25)->appends(['lang' => $lang]);
 
         return view('admin.users.index')->with([
             'pageName' => 'قائمة المستخدمين',
             'data' => $data,
             'filters' => $request->only(['from_date', 'to_date', 'today']),
+            'lang' => $lang,
         ]);
     }
 }

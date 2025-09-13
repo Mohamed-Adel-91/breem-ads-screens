@@ -10,9 +10,9 @@
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                         <div class="table-container">
                             @include('admin.partials.filter-form', [
-                                'action' => route('admin.activity_logs.index', ['lang' => app()->getLocale()]),
-                                'resetUrl' => route('admin.activity_logs.index', ['lang' => app()->getLocale()]),
-                                'exportUrl' => route('admin.activity_logs.download', array_merge(['lang' => app()->getLocale()], request()->query())),
+                                'action' => route('admin.activity_logs.index', ['lang' => $lang]),
+                                'resetUrl' => route('admin.activity_logs.index', ['lang' => $lang]),
+                                'exportUrl' => route('admin.activity_logs.download', array_merge(['lang' => $lang], request()->query())),
                                 'checkboxes' => ['today' =>'نتائج اليوم فقط'],
                                 'filters' => $filters,
                             ])

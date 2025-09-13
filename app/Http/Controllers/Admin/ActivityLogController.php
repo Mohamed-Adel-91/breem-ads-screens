@@ -12,7 +12,7 @@ use Carbon\Carbon;
 
 class ActivityLogController extends Controller
 {
-    public function index(Request $request)
+    public function index(string $lang, Request $request)
     {
         $query = Activity::with('causer');
 
@@ -30,6 +30,7 @@ class ActivityLogController extends Controller
         return view('admin.activity_logs.index')->with([
             'pageName' => 'سجلات النشاط',
             'data' => $data,
+            'lang' => $lang,
             'filters' => [
                 'from_date' => $request->from_date,
                 'to_date' => $request->to_date,
@@ -38,7 +39,7 @@ class ActivityLogController extends Controller
         ]);
     }
 
-    public function download(Request $request)
+    public function download(string $lang, Request $request)
     {
         activity()
             ->causedBy(Auth::guard('admin')->user())

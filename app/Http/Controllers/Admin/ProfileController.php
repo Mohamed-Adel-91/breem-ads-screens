@@ -25,7 +25,7 @@ class ProfileController extends Controller
         $this->fileService = $fileService;
     }
 
-    public function edit()
+    public function edit(string $lang)
     {
         $admin = Auth::guard('admin')->user();
 
@@ -35,7 +35,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function update(ProfileRequest $request)
+    public function update(string $lang, ProfileRequest $request)
     {
         $id    = Auth::guard('admin')->id();
         $admin = Admin::findOrFail($id);
@@ -51,17 +51,17 @@ class ProfileController extends Controller
             ->causedBy(Auth::guard('admin')->user())
             ->withProperties($validatedData)
             ->log('Updated Profile');
-        return back()->with('success', 'تم تحديث الملف الشخصي بنجاح.');
+        return redirect()->route('admin.profile.edit', ['lang' => $lang])->with('success', 'تم تحديث الملف الشخصي بنجاح.');
     }
 
-    public function updatePassword(ChangeAdminPasswordRequest $request)
+    public function updatePassword(string $lang, ChangeAdminPasswordRequest $request)
     {
         $id    = Auth::guard('admin')->id();
         $admin = Admin::findOrFail($id);
         $data  = $request->validated();
 
         if (! Hash::check($data['current_password'], $admin->password)) {
-            return back()->with('error', 'كلمة المرور الحالية غير صحيحة.');
+            return redirect()->route('admin.profile.edit', ['lang' => $lang])->with('error', 'كلمة المرور الحالية غير صحيحة.');
         }
 
         $otp = random_int(100000, 999999);
@@ -84,7 +84,7 @@ class ProfileController extends Controller
         return view('admin.profile.otp');
     }
 
-    public function verifyPasswordOtp(Request $request)
+    public function verifyPasswordOtp(string $lang, Request $request)
     {
         $request->validate(['otp' => 'required']);
 
@@ -92,7 +92,7 @@ class ProfileController extends Controller
         $newPass   = session('new_admin_password');
 
         if (!$adminId || !$newPass) {
-            return redirect()->route('admin.profile.edit');
+            return redirect()->route('admin.profile.edit', ['lang' => $lang]);
         }
 
         $record = AdminOtp::where('admin_id', $adminId)->first();
@@ -112,7 +112,7 @@ class ProfileController extends Controller
                 ->withProperties('Updated Password')
                 ->log('Updated Password');
 
-            return redirect()->route('admin.profile.edit')->with('success', 'تم تحديث كلمة المرور بنجاح.');
+            return redirect()->route('admin.profile.edit', ['lang' => $lang])->with('success', 'تم تحديث كلمة المرور بنجاح.');
         }
 
         return back()->with('error', 'رمز التحقق غير صحيح.');

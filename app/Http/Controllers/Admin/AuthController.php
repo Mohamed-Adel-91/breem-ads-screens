@@ -14,10 +14,10 @@ use App\Mail\OTPMail;
 
 class AuthController extends Controller
 {
-    public function index()
+    public function index(string $lang)
     {
         if (auth()->guard('admin')->check()) {
-            return redirect()->route('admin.index',['lang' => app()->getLocale()]);
+            return redirect()->route('admin.index', ['lang' => $lang]);
         }
         return view('admin.login');
     }
@@ -46,12 +46,12 @@ class AuthController extends Controller
     //     return back();
     // }
 
-    public function verifyOtp(Request $request)
+    public function verifyOtp(Request $request, string $lang)
     {
         $request->validate(['otp' => 'required']);
         $adminId = session('otp_admin_id');
         if (!$adminId) {
-            return redirect()->route('admin.login');
+            return redirect()->route('admin.login', ['lang' => $lang]);
         }
         $record = AdminOtp::where('admin_id', $adminId)->first();
         if ($record && $record->otp_code === $request->otp) {
@@ -60,12 +60,12 @@ class AuthController extends Controller
             $request->session()->regenerateToken();
             AdminOtp::where('admin_id', $adminId)->delete();
             session()->forget('otp_admin_id');
-            return redirect()->route('admin.index',['lang' => app()->getLocale()]);
+            return redirect()->route('admin.index', ['lang' => $lang]);
         }
         return back()->with('error', 'رمز التحقق غير صحيح.');
     }
 
-    public function login(Request $request)
+    public function login(Request $request, string $lang)
     {
         $request->validate([
             'email' => 'required|email',
@@ -74,21 +74,22 @@ class AuthController extends Controller
         if (auth()->guard('admin')->attempt(['email' => $request->email, 'password' => $request->password])) {
             $request->session()->regenerate();
             $request->session()->regenerateToken();
-            return redirect()->route('admin.index',['lang' => app()->getLocale()]);
-        } else {
-            session()->flash('error', 'بيانات المدخلة غير صحيحة.');
-            return back();
+            return redirect()->route('admin.index', ['lang' => $lang]);
         }
+
+        session()->flash('error', 'بيانات المدخلة غير صحيحة.');
+
+        return back();
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request, string $lang)
     {
         if (!auth()->guard('admin')->check()) {
-            return redirect()->route('admin.login');
+            return redirect()->route('admin.login', ['lang' => $lang]);
         }
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('admin.login');
+        return redirect()->route('admin.login', ['lang' => $lang]);
     }
 }

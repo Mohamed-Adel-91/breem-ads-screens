@@ -48,9 +48,9 @@ class PermissionController extends Controller
         return redirect()->route('admin.permissions.index')->with('success', 'تم إنشاء الصلاحية بنجاح.');
     }
 
-    public function edit($id)
+    public function edit(string $lang, Permission $permission)
     {
-        $permission = Permission::where('guard_name', 'admin')->findOrFail($id);
+        abort_unless($permission->guard_name === 'admin', 404);
 
         return view('admin.permissions.form')->with([
             'pageName' => 'تعديل صلاحية',
@@ -59,9 +59,9 @@ class PermissionController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, string $lang, Permission $permission)
     {
-        $permission = Permission::where('guard_name', 'admin')->findOrFail($id);
+        abort_unless($permission->guard_name === 'admin', 404);
         $routes = RoutesHelper::getAdminRouteNames();
 
         $data = $request->validate([
@@ -81,9 +81,9 @@ class PermissionController extends Controller
         return redirect()->route('admin.permissions.index')->with('success', 'تم تحديث الصلاحية بنجاح.');
     }
 
-    public function destroy($id)
+    public function destroy(string $lang, Permission $permission)
     {
-        $permission = Permission::where('guard_name', 'admin')->findOrFail($id);
+        abort_unless($permission->guard_name === 'admin', 404);
         $permission->delete();
 
         return redirect()->route('admin.permissions.index')->with('success', 'تم حذف الصلاحية بنجاح.');
