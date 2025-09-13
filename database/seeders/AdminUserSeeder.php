@@ -18,7 +18,6 @@ class AdminUserSeeder extends Seeder
                 'last_name'  => config('admin.last_name'),
                 'email'      => config('admin.email'),
                 'password'   => config('admin.password'),
-                'role'       => (int) config('admin.role'),
             ]
         );
         $role = Role::where('name', 'super-admin')->where('guard_name', 'admin')->first();

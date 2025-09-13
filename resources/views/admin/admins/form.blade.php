@@ -92,29 +92,6 @@
                                         </div>
                                     </div>
                                     <div class="row gutters">
-
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="role">{{ __('admin.forms.role') }}</label>
-                                                <select class="form-control" id="role" name="role" required>
-                                                    <option value="">{{ __('admin.forms.choose_role') }}</option>
-                                                    @foreach ($roles as $key => $name)
-                                                        @if (in_array($key, [4, 5]))
-                                                            @continue
-                                                        @endif
-                                                        <option value="{{ $key }}"
-                                                            {{ old('role', $data->role ?? '') == $key ? 'selected' : '' }}>
-                                                            {{ $name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                                @error('role')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row gutters">
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="roles">{{ __('admin.forms.roles') }}</label>

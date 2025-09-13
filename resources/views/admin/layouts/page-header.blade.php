@@ -48,12 +48,12 @@
                                 {{ Auth::guard('admin')->user()->last_name }}
                             </h5>
                             @php
-                                use App\Enums\RolesEnum;
+                                $roles = Auth::guard('admin')->user()->getRoleNames();
                             @endphp
-                            <p>{{ RolesEnum::getDescription(Auth::guard('admin')->user()->role) }}</p>
+                            <p>{{ $roles->implode(', ') }}</p>
                         </div>
                         <a href="{{ route('admin.profile.edit',['lang' => app()->getLocale()]) }}"><i class="icon-settings1"></i> {{ __('admin.header.my_profile') }}</a>
-                        @if (Auth::guard('admin')->user()->isRole(1))
+                        @if (Auth::guard('admin')->user()->hasRole('super-admin'))
                             <a href="{{ route('admin.admins.create',['lang' => app()->getLocale()]) }}"><i class="icon-user1"></i> {{ __('admin.header.create_admin') }}</a>
                             <a href="{{ route('admin.admins.index',['lang' => app()->getLocale()]) }}"><i class="icon-users"></i> {{ __('admin.header.admins_list') }}</a>
                             <a href="{{ route('admin.activity_logs.index',['lang' => app()->getLocale()]) }}"

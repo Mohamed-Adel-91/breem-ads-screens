@@ -1,31 +1,6 @@
 <?php
 
 /**
- * Check if the currently authenticated admin has a given role.
- *
- * @param int|array $roles Role or array of roles to check against
- * @return bool true if the role matches otherwise aborts with 403
- */
-if (!function_exists('HasRole')) {
-    function HasRole(int|array $roles): bool
-    {
-        $admin = auth()->guard('admin')->user();
-
-        if (!$admin) {
-            abort(403);
-        }
-
-        $roles = (array) $roles;
-
-        if (!in_array($admin->role, $roles, true)) {
-            abort(403);
-        }
-
-        return true;
-    }
-}
-
-/**
  * Format a number based on the current locale.
  *
  * @param int|float $number The number to format

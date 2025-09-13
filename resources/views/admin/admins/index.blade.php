@@ -48,12 +48,12 @@
                                                     <td>{{ $item->last_name }}</td>
                                                     <td>{{ $item->mobile }}</td>
                                                     <td>{{ $item->email }}</td>
-                                                    <td>{{ \App\Enums\RolesEnum::getDescription($item->role) }}</td>
+                                                    <td>{{ $item->getRoleNames()->implode(', ') }}</td>
                                                     <td>{{ $item->created_at->format('Y-m-d') }}</td>
                                                     <td>{{ $item->updated_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <div class="td-actions">
-                                                            @if (Auth::guard('admin')->user()->id === 1 ||
+                                                            @if (Auth::guard('admin')->user()->hasRole('super-admin') ||
                                                                     Auth::guard('admin')->user()->can('admins.edit'))
                                                                 <a href="{{ route('admin.admins.edit', ['lang' => app()->getLocale(), 'admin' => $item->id]) }}"
                                                                     class="icon bg-info" data-toggle="tooltip"
@@ -62,7 +62,7 @@
                                                                 </a>
                                                             @endif
                                                             @if (Auth::guard('admin')->user()->id != $item->id)
-                                                                @if ($item->role != 1)
+                                                                @if (!$item->hasRole('super-admin'))
                                                                       <form method="POST"
                                                                           id="delete_form_{{ $item->id }}"
                                                                           class="d-inline delete_form"

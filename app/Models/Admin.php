@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Gate;
 
 class Admin extends Authenticatable implements AuthenticatableContract
 {
@@ -23,7 +22,6 @@ class Admin extends Authenticatable implements AuthenticatableContract
         'password',
         'mobile',
         'profile_picture',
-        'role',
     ];
 
     public const UPLOAD_FOLDER = 'upload/admins/';
@@ -32,10 +30,6 @@ class Admin extends Authenticatable implements AuthenticatableContract
         $this->attributes['password'] = Hash::make($input);
     }
 
-    public function isRole(...$roles)
-    {
-        return in_array($this->role, $roles);
-    }
     public function getImagePathAttribute()
     {
         return $this->profile_picture ? asset(self::UPLOAD_FOLDER . $this->profile_picture) : null;

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Contracts\FileServiceInterface;
-use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AdminRequest;
 use App\Models\Admin;
@@ -25,7 +24,7 @@ class AdminController extends Controller
     public function index()
     {
         $this->authorizeAdmin('admins.view');
-        $data = Admin::orderBy('role', 'asc')->paginate(25);
+        $data = Admin::paginate(25);
         return view('admin.admins.index')->with([
             'pageName' => 'قائمة المسؤولين',
             'data' => $data,
@@ -37,7 +36,6 @@ class AdminController extends Controller
         $this->authorizeAdmin('admins.create');
         return view('admin.admins.form')->with([
             'pageName' => 'إنشاء مسؤول جديد',
-            'roles' => RolesEnum::asArrayWithDescriptions(),
             'availableRoles' => SpatieRole::where('guard_name', 'admin')->pluck('name', 'id'),
             'availablePermissions' => Permission::where('guard_name', 'admin')->pluck('name', 'id'),
         ]);
@@ -50,11 +48,10 @@ class AdminController extends Controller
         $admin = Admin::create($validated);
         $roleNames = SpatieRole::whereIn('id', $request->input('roles', []))->pluck('name')->toArray();
         $permNames = Permission::whereIn('id', $request->input('permissions', []))->pluck('name')->toArray();
-        if ($admin->id === 1) {
-            $admin->syncRoles(['super-admin']);
+        $admin->syncRoles($roleNames);
+        if ($admin->hasRole('super-admin')) {
             $admin->syncPermissions(Permission::where('guard_name', 'admin')->pluck('name'));
         } else {
-            $admin->syncRoles($roleNames);
             $admin->syncPermissions($permNames);
         }
         $folder = Admin::UPLOAD_FOLDER;
@@ -68,7 +65,6 @@ class AdminController extends Controller
         return view('admin.admins.form')->with([
             'pageName' => 'تعديل مسؤول',
             'data' => $admin,
-            'roles' => RolesEnum::asArrayWithDescriptions(),
             'availableRoles' => SpatieRole::where('guard_name', 'admin')->pluck('name', 'id'),
             'availablePermissions' => Permission::where('guard_name', 'admin')->pluck('name', 'id'),
         ]);
@@ -78,24 +74,16 @@ class AdminController extends Controller
     {
         $this->authorizeAdmin('admins.edit');
         $validated = $request->validated();
-        if ($admin->id === 1 && isset($validated['role']) && (int) $validated['role'] !== RolesEnum::SUPER_ADMIN) {
-            return redirect()->route('admin.admins.index', $request->query())
-                ->with('error', 'لا يمكن إزالة دور super-admin من المسؤول الرئيسي.');
-        }
-        if ($admin->id === 1) {
-            $validated['role'] = RolesEnum::SUPER_ADMIN;
-        }
         if (empty($validated['password'])) {
             unset($validated['password']);
         }
         $admin->update($validated);
-        if ($admin->id === 1) {
-            $admin->syncRoles(['super-admin']);
+        $roleNames = SpatieRole::whereIn('id', $request->input('roles', []))->pluck('name')->toArray();
+        $permNames = Permission::whereIn('id', $request->input('permissions', []))->pluck('name')->toArray();
+        $admin->syncRoles($roleNames);
+        if ($admin->hasRole('super-admin')) {
             $admin->syncPermissions(Permission::where('guard_name', 'admin')->pluck('name'));
         } else {
-            $roleNames = SpatieRole::whereIn('id', $request->input('roles', []))->pluck('name')->toArray();
-            $permNames = Permission::whereIn('id', $request->input('permissions', []))->pluck('name')->toArray();
-            $admin->syncRoles($roleNames);
             $admin->syncPermissions($permNames);
         }
         $folder = Admin::UPLOAD_FOLDER;
@@ -107,7 +95,7 @@ class AdminController extends Controller
     public function destroy(string $lang, Admin $admin)
     {
         $this->authorizeAdmin('admins.edit');
-        if ($admin->id === 1) {
+        if ($admin->hasRole('super-admin')) {
             return redirect()->route('admin.admins.index')->with('error', 'لا يمكن حذف المسؤول الرئيسي.');
         }
         if ($admin->profile_picture) {
@@ -120,7 +108,7 @@ class AdminController extends Controller
     protected function authorizeAdmin(string $permission): void
     {
         $user = Auth::guard('admin')->user();
-        if ($user->id !== 1 && !Gate::forUser($user)->allows($permission)) {
+        if (!$user->hasRole('super-admin') && !Gate::forUser($user)->allows($permission)) {
             abort(403);
         }
     }
