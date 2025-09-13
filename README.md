@@ -75,3 +75,5 @@ After updating the codebase, run the database migrations to apply schema changes
 ```bash
 php artisan migrate --force
 ```
+
+**Breaking Change:** The `admins` table no longer contains a `role` column. Ensure any custom code or integrations remove references to this column before deploying.
