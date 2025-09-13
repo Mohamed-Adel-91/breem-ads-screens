@@ -55,8 +55,9 @@ Route::group([
             Route::post('/verify-otp', [ProfileController::class, 'verifyPasswordOtp'])->name('verifyPasswordOtp');
             Route::delete('/profile', [ProfileController::class, 'destroy'])->name('destroy');
         });
+        Route::resource('admins', AdminController::class)->except(['show'])
+            ->middleware('role_or_permission:super-admin|admins.view|admins.create|admins.edit');
         Route::middleware('role:super-admin')->group(function () {
-            Route::resource('admins', AdminController::class)->except(['show']);
             Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');
             Route::get('activity-logs/download', [ActivityLogController::class, 'download'])->name('activity_logs.download');
         });

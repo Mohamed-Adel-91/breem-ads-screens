@@ -105,6 +105,8 @@ return [
         'confirm_new_password' => 'تأكيد كلمة المرور الجديدة',
         'role' => 'الدور',
         'choose_role' => 'اختر الدور...',
+        'roles' => 'الأدوار',
+        'permissions' => 'الصلاحيات',
         'profile_picture' => 'الصورة الشخصية',
         'name' => 'الاسم',
         'show_status' => 'حالة العرض علي الموقع',

@@ -105,6 +105,8 @@ return [
         'confirm_new_password' => 'Confirm New Password',
         'role' => 'Role',
         'choose_role' => 'Choose Role...',
+        'roles' => 'Roles',
+        'permissions' => 'Permissions',
         'profile_picture' => 'Profile Picture',
         'name' => 'Name',
         'show_status' => 'Show Status',

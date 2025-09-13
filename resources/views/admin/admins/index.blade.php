@@ -53,11 +53,14 @@
                                                     <td>{{ $item->updated_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <div class="td-actions">
-                                                            {{-- <a href="{{ route('admin.admins.edit', $item->id) }}"
-                                                                class="icon bg-info" data-toggle="tooltip"
-                                                                data-placement="top" title="Edit Row">
-                                                                <i class="icon-edit"></i>
-                                                            </a> --}}
+                                                            @if (Auth::guard('admin')->user()->id === 1 ||
+                                                                    Auth::guard('admin')->user()->can('admins.edit'))
+                                                                <a href="{{ route('admin.admins.edit', ['lang' => app()->getLocale(), 'admin' => $item->id]) }}"
+                                                                    class="icon bg-info" data-toggle="tooltip"
+                                                                    data-placement="top" title="Edit Row">
+                                                                    <i class="icon-edit"></i>
+                                                                </a>
+                                                            @endif
                                                             @if (Auth::guard('admin')->user()->id != $item->id)
                                                                 @if ($item->role != 1)
                                                                     <form method="POST"

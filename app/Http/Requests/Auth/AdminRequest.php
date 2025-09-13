@@ -4,6 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use App\Enums\RolesEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AdminRequest extends FormRequest
 {
@@ -24,6 +25,10 @@ class AdminRequest extends FormRequest
             'mobile'     => ['nullable', 'string', 'max:255'],
             'profile_picture' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:5000'],
             'role'       => ['required', 'in:' . implode(',', RolesEnum::getValues())],
+            'roles'      => ['nullable', 'array'],
+            'roles.*'    => ['integer', Rule::exists('roles', 'id')->where('guard_name', 'admin')],
+            'permissions'   => ['nullable', 'array'],
+            'permissions.*' => ['integer', Rule::exists('permissions', 'id')->where('guard_name', 'admin')],
         ];
     }
 }

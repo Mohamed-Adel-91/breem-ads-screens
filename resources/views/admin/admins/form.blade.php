@@ -110,6 +110,40 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="row gutters">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="roles">{{ __('admin.forms.roles') }}</label>
+                                                <select class="form-control" id="roles" name="roles[]" multiple>
+                                                    @foreach ($availableRoles as $id => $name)
+                                                        <option value="{{ $id }}"
+                                                            {{ in_array($id, old('roles', isset($data) ? $data->roles->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
+                                                            {{ $name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                @error('roles')
+                                                    <span class="text-danger">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="permissions">{{ __('admin.forms.permissions') }}</label>
+                                                <select class="form-control" id="permissions" name="permissions[]" multiple>
+                                                    @foreach ($availablePermissions as $id => $name)
+                                                        <option value="{{ $id }}"
+                                                            {{ in_array($id, old('permissions', isset($data) ? $data->permissions->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
+                                                            {{ $name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                @error('permissions')
+                                                    <span class="text-danger">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
                                     @if (isset($data))
                                         <div class="row gutters">
                                             <div class="form-group col-6">
