@@ -107,6 +107,8 @@ return [
         'choose_role' => 'اختر الدور...',
         'roles' => 'الأدوار',
         'permissions' => 'الصلاحيات',
+        'route' => 'المسار',
+        'choose_route' => 'اختر المسار...',
         'profile_picture' => 'الصورة الشخصية',
         'name' => 'الاسم',
         'show_status' => 'حالة العرض علي الموقع',

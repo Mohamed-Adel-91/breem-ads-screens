@@ -107,6 +107,8 @@ return [
         'choose_role' => 'Choose Role...',
         'roles' => 'Roles',
         'permissions' => 'Permissions',
+        'route' => 'Route',
+        'choose_route' => 'Choose route...',
         'profile_picture' => 'Profile Picture',
         'name' => 'Name',
         'show_status' => 'Show Status',
