@@ -14,8 +14,8 @@
                                     <div class="col-md-2 d-flex justify-content-end p-0">
                                         <div class="col-md-6 d-flex justify-content-end  p-0">
                                             <button type="text" class="btn btn-primary" style="margin-top: 20px;">
-                                                <a href="{{ route('admin.admins.create') }}" style="color: #fff;">
-                                                    <i class="icon-plus-circle mr-1"></i>{{ __('admin.table.new') }}</a></button>
+                                                  <a href="{{ route('admin.admins.create', ['lang' => app()->getLocale()]) }}" style="color: #fff;">
+                                                      <i class="icon-plus-circle mr-1"></i>{{ __('admin.table.new') }}</a></button>
                                         </div>
                                     </div>
                                 </div>
@@ -63,10 +63,10 @@
                                                             @endif
                                                             @if (Auth::guard('admin')->user()->id != $item->id)
                                                                 @if ($item->role != 1)
-                                                                    <form method="POST"
-                                                                        id="delete_form_{{ $item->id }}"
-                                                                        class="d-inline delete_form"
-                                                                        action="{{ route('admin.admins.destroy', ['admin' => $item->id]) }}">
+                                                                      <form method="POST"
+                                                                          id="delete_form_{{ $item->id }}"
+                                                                          class="d-inline delete_form"
+                                                                          action="{{ route('admin.admins.destroy', ['lang' => app()->getLocale(), 'admin' => $item->id]) }}">
                                                                         @csrf
                                                                         @method('DELETE')
                                                                         <button type="submit" class="icon red"
