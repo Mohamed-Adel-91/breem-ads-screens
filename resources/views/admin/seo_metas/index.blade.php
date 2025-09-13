@@ -14,7 +14,7 @@
                                     <div class="col-md-2 d-flex justify-content-end p-0">
                                         <div class="col-md-6 d-flex justify-content-end p-0">
                                             <button type="button" class="btn btn-primary" style="margin-top: 20px;">
-                                                <a href="{{ route('admin.seo_metas.create') }}" style="color: #fff;">
+                                                <a href="{{ route('admin.seo_metas.create', ['lang' => app()->getLocale()]) }}" style="color: #fff;">
                                                     <i class="icon-plus-circle mr-1"></i> New
                                                 </a>
                                             </button>
@@ -46,14 +46,14 @@
                                                     <td>{{ $seoMeta->updated_at }}</td>
                                                     <td>
                                                         <div class="td-actions">
-                                                            <a href="{{ route('admin.seo_metas.edit', $seoMeta->id) }}"
+                                                            <a href="{{ route('admin.seo_metas.edit', ['lang' => app()->getLocale(), 'seo_meta' => $seoMeta->id]) }}"
                                                                 class="icon bg-info" data-toggle="tooltip"
                                                                 data-placement="top" title="Edit SEO Meta">
                                                                 <i class="icon-edit"></i>
                                                             </a>
                                                             <form method="POST" id="delete_form_{{ $seoMeta->id }}"
                                                                 class="d-inline delete_form"
-                                                                action="{{ route('admin.seo_metas.destroy', $seoMeta->id) }}">
+                                                                action="{{ route('admin.seo_metas.destroy', ['lang' => app()->getLocale(), 'seo_meta' => $seoMeta->id]) }}">
                                                                 @csrf
                                                                 @method('DELETE')
                                                                 <button type="submit" class="icon red"

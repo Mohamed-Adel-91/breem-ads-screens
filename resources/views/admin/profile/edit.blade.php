@@ -6,7 +6,7 @@
             @include('admin.layouts.page-header')
             <div class="main-container">
                 @include('admin.layouts.alerts')
-                <form method="POST" action="{{ route('admin.profile.update') }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('admin.profile.update', ['lang' => app()->getLocale()]) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="row gutters">
@@ -59,7 +59,7 @@
                         </div>
                     </div>
                 </form>
-                <form method="POST" action="{{ route('admin.profile.updatePassword') }}" class="mt-4" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('admin.profile.updatePassword', ['lang' => app()->getLocale()]) }}" class="mt-4" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="row gutters">

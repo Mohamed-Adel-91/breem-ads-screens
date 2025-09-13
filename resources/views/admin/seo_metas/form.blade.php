@@ -10,7 +10,7 @@
                     $languages = ['en', 'ar'];
                 @endphp
                 <form method="POST"
-                    action="{{ isset($seoMeta) ? route('admin.seo_metas.update', $seoMeta->id) : route('admin.seo_metas.store') }}"
+                    action="{{ isset($seoMeta) ? route('admin.seo_metas.update', ['lang' => app()->getLocale(), 'seo_meta' => $seoMeta->id]) : route('admin.seo_metas.store', ['lang' => app()->getLocale()]) }}"
                     enctype="multipart/form-data">
                     @csrf
                     @if (isset($seoMeta))

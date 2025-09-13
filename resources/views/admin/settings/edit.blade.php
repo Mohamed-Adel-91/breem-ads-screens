@@ -14,7 +14,7 @@
             <div class="main-container">
                 @include('admin.layouts.alerts')
                 <!-- Row start -->
-                <form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('admin.settings.update', ['lang' => app()->getLocale()]) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="row gutters">

@@ -18,8 +18,8 @@
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                         <div class="table-container">
                             @include('admin.partials.filter-form', [
-                                'action' => route('admin.users.index'),
-                                'resetUrl' => route('admin.users.index'),
+                                'action' => route('admin.users.index', ['lang' => app()->getLocale()]),
+                                'resetUrl' => route('admin.users.index', ['lang' => app()->getLocale()]),
                                 'exportUrl' => '',
                                 'filters' => $filters,
                                 'checkboxes' => ['today' => 'نتائج اليوم فقط'],

@@ -2,7 +2,7 @@
 @section('content')
     <div class="page-wrapper">
         <div class="container">
-            <form action="{{ route('admin.profile.verifyPasswordOtp') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('admin.profile.verifyPasswordOtp', ['lang' => app()->getLocale()]) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="row justify-content-md-center">
                     <div class="col-xl-4 col-lg-5 col-md-6 col-sm-12">
