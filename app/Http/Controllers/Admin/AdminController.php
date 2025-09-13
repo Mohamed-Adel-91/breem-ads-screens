@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AdminRequest;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Spatie\Permission\Models\Role as SpatieRole;
 use Spatie\Permission\Models\Permission;
 
@@ -122,7 +123,7 @@ class AdminController extends Controller
     protected function authorizeAdmin(string $permission): void
     {
         $user = Auth::guard('admin')->user();
-        if ($user->id !== 1 && !$user->can($permission)) {
+        if ($user->id !== 1 && !Gate::forUser($user)->allows($permission)) {
             abort(403);
         }
     }
