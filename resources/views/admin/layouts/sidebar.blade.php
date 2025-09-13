@@ -48,6 +48,25 @@
                         </ul>
                     </div>
                 </li>
+                <li
+                    class="sidebar-dropdown {{ Request::is('dashboard/admins') || Request::is('dashboard/admins/*') || Request::is('dashboard/permissions') || Request::is('dashboard/permissions/*') ? 'active' : '' }}">
+                    <a href="#">
+                        <i><i class="fas fa-user-shield" aria-hidden="true"></i></i>
+                        <span class="menu-text">{{ __('admin.sidebar.admins_management') }}</span>
+                    </a>
+                    <div class="sidebar-submenu">
+                        <ul>
+                            <li class="{{ Request::is('dashboard/admins') || Request::is('dashboard/admins/*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.admins.index',['lang' => app()->getLocale()]) }}"
+                                    class="{{ Request::is('dashboard/admins') || Request::is('dashboard/admins/*') ? 'current-page' : '' }}">{{ __('admin.sidebar.admins') }}</a>
+                            </li>
+                            <li class="{{ Request::is('dashboard/permissions') || Request::is('dashboard/permissions/*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.permissions.index',['lang' => app()->getLocale()]) }}"
+                                    class="{{ Request::is('dashboard/permissions') || Request::is('dashboard/permissions/*') ? 'current-page' : '' }}">{{ __('admin.sidebar.permissions') }}</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
             </ul>
         </div>
         <!-- sidebar menu end -->
