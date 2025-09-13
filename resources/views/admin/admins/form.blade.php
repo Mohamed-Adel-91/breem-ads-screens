@@ -114,7 +114,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="roles">{{ __('admin.forms.roles') }}</label>
-                                                <select class="form-control" id="roles" name="roles[]" multiple>
+                                                <select id="roles" name="roles[]" multiple="multiple">
                                                     @foreach ($availableRoles as $id => $name)
                                                         <option value="{{ $id }}"
                                                             {{ in_array($id, old('roles', isset($data) ? $data->roles->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
@@ -130,7 +130,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="permissions">{{ __('admin.forms.permissions') }}</label>
-                                                <select class="form-control" id="permissions" name="permissions[]" multiple>
+                                                <select class="form-control" id="permissions" name="permissions[]" multiple="multiple">
                                                     @foreach ($availablePermissions as $id => $name)
                                                         <option value="{{ $id }}"
                                                             {{ in_array($id, old('permissions', isset($data) ? $data->permissions->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
@@ -169,3 +169,46 @@
         </div>
     </div>
 @endsection
+@push('scripts-js')
+    <script>
+        $(function() {
+            if (typeof $.fn.multiselect !== 'function') {
+                console.error('bootstrap-multiselect لم يتم تحميله.');
+                return;
+            }
+
+            $('#roles').multiselect({
+                includeSelectAllOption: true,
+                selectAllText: 'تحديد الكل',
+                allSelectedText: 'تم تحديد الكل',
+                nonSelectedText: 'اختر الأدوار',
+                buttonWidth: '100%',
+                buttonClass: 'btn btn-light w-100 text-start',
+                maxHeight: 200,
+                numberDisplayed: 3,
+                buttonContainer: '<div class="btn-group w-100" />',
+                templates: {
+                    button: '<button type="button" class="multiselect dropdown-toggle w-100 text-start" data-bs-toggle="dropdown">' +
+                        '<span class="multiselect-selected-text"></span> <b class="caret"></b>' +
+                        '</button>'
+                }
+            });
+            $('#permissions').multiselect({
+                includeSelectAllOption: true,
+                selectAllText: 'تحديد الكل',
+                allSelectedText: 'تم تحديد الكل',
+                nonSelectedText: 'اختر الصلاحيات',
+                buttonWidth: '100%',
+                buttonClass: 'btn btn-light w-100 text-start',
+                maxHeight: 200,
+                numberDisplayed: 3,
+                buttonContainer: '<div class="btn-group w-100" />',
+                templates: {
+                    button: '<button type="button" class="multiselect dropdown-toggle w-100 text-start" data-bs-toggle="dropdown">' +
+                        '<span class="multiselect-selected-text"></span> <b class="caret"></b>' +
+                        '</button>'
+                }
+            });
+        });
+    </script>
+@endpush

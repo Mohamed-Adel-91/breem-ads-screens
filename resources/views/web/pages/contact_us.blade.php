@@ -80,7 +80,6 @@
                 allSelectedText: 'تم تحديد الكل',
                 nonSelectedText: 'اختر الأماكن',
                 buttonWidth: '100%',
-                // خليه زرار Bootstrap عادي، مش form-select
                 buttonClass: 'btn btn-light w-100 text-start',
                 maxHeight: 200,
                 numberDisplayed: 3,
