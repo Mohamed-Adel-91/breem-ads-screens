@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -45,5 +46,36 @@ class RoutesHelper
             }
         }
         return $pagesRoutes;
+    }
+
+    /**
+     * Get all admin route names used for permissions.
+     *
+     * Excludes auth and redirect routes to keep the permission list clean.
+     *
+     * Excluded routes: admin.login, admin.login.attempt, admin.verifyOtp,
+     * admin.logout, admin.redirect, admin.login.redirect.
+     */
+    public static function getAdminRouteNames(): array
+    {
+        $excluded = [
+            'admin.login',
+            'admin.login.attempt',
+            'admin.verifyOtp',
+            'admin.logout',
+            'admin.redirect',
+            'admin.login.redirect',
+        ];
+
+        return Cache::remember('admin_route_names', 3600, function () use ($excluded) {
+            return collect(app('router')->getRoutes())
+                ->map->getName()
+                ->filter(function ($name) use ($excluded) {
+                    return $name && Str::startsWith($name, 'admin.') && !in_array($name, $excluded);
+                })
+                ->unique()
+                ->values()
+                ->all();
+        });
     }
 }

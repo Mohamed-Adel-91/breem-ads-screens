@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\RoutesHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route as RouteFacade;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 
@@ -25,13 +24,13 @@ class PermissionController extends Controller
     {
         return view('admin.permissions.form')->with([
             'pageName' => 'إنشاء صلاحية',
-            'routes' => $this->adminRouteNames(),
+            'routes' => RoutesHelper::getAdminRouteNames(),
         ]);
     }
 
     public function store(Request $request)
     {
-        $routes = $this->adminRouteNames();
+        $routes = RoutesHelper::getAdminRouteNames();
 
         $data = $request->validate([
             'name' => [
@@ -55,7 +54,7 @@ class PermissionController extends Controller
 
         return view('admin.permissions.form')->with([
             'pageName' => 'تعديل صلاحية',
-            'routes' => $this->adminRouteNames(),
+            'routes' => RoutesHelper::getAdminRouteNames(),
             'data' => $permission,
         ]);
     }
@@ -63,7 +62,7 @@ class PermissionController extends Controller
     public function update(Request $request, $id)
     {
         $permission = Permission::where('guard_name', 'admin')->findOrFail($id);
-        $routes = $this->adminRouteNames();
+        $routes = RoutesHelper::getAdminRouteNames();
 
         $data = $request->validate([
             'name' => [
@@ -88,15 +87,5 @@ class PermissionController extends Controller
         $permission->delete();
 
         return redirect()->route('admin.permissions.index')->with('success', 'تم حذف الصلاحية بنجاح.');
-    }
-
-    protected function adminRouteNames(): array
-    {
-        return collect(RouteFacade::getRoutes())
-            ->map->getName()
-            ->filter(fn ($name) => $name && Str::startsWith($name, 'admin.'))
-            ->unique()
-            ->values()
-            ->all();
     }
 }
