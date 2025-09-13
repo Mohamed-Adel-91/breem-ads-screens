@@ -8,7 +8,8 @@ use App\Http\Controllers\Admin\{
     SettingController,
     DashboardController,
     SeoMetaController,
-    UserController
+    UserController,
+    PermissionController
 };
 use Illuminate\Support\Facades\Route;
 
@@ -65,5 +66,6 @@ Route::group([
         Route::get('/settings/edit', [SettingController::class, 'edit'])->name('settings.edit');
         Route::put('/settings/update', [SettingController::class, 'update'])->name('settings.update');
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::resource('permissions', PermissionController::class)->only(['index']);
     });
 });
