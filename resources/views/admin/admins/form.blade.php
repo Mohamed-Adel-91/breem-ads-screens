@@ -118,7 +118,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="roles">{{ __('admin.forms.roles') }}</label>
-                                                <select id="roles" name="roles[]" multiple="multiple">
+                                                <select id="roles" name="roles[]" multiple="multiple" placeholder="{{ __('admin.forms.choose_roles') }}">
                                                     @foreach ($availableRoles as $id => $name)
                                                         <option value="{{ $id }}"
                                                             {{ in_array($id, old('roles', isset($data) ? $data->roles->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
@@ -134,7 +134,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="permissions">{{ __('admin.forms.permissions') }}</label>
-                                                <select id="permissions" name="permissions[]" multiple="multiple">
+                                                <select id="permissions" name="permissions[]" multiple="multiple" placeholder="{{ __('admin.forms.choose_permissions') }}">
                                                     @foreach ($availablePermissions as $id => $name)
                                                         <option value="{{ $id }}"
                                                             {{ in_array($id, old('permissions', isset($data) ? $data->permissions->pluck('id')->toArray() : [])) ? 'selected' : '' }}>

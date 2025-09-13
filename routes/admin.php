@@ -9,7 +9,8 @@ use App\Http\Controllers\Admin\{
     DashboardController,
     SeoMetaController,
     UserController,
-    PermissionController
+    PermissionController,
+    RoleController
 };
 use Illuminate\Support\Facades\Route;
 
@@ -67,5 +68,6 @@ Route::group([
         Route::put('/settings/update', [SettingController::class, 'update'])->name('settings.update');
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::resource('permissions', PermissionController::class)->middleware('role:super-admin');
+        Route::resource('roles', RoleController::class)->middleware('role:super-admin');
     });
 });
