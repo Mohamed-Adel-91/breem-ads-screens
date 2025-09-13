@@ -48,18 +48,15 @@ class SeoMetaController extends Controller
             ->with('success', 'تم إنشاء بيانات تحسين محركات البحث بنجاح.');
     }
 
-    public function edit($id)
+    public function edit(string $lang, SeoMeta $seoMeta)
     {
-        $seoMeta = SeoMeta::findOrFail($id);
         $pagesRoutes = RoutesHelper::getFrontendRoutes();
 
         return view('admin.seo_metas.form', compact('seoMeta', 'pagesRoutes'))
             ->with('pageName', 'تعديل ميتا سيو');
     }
-    public function update(Request $request, $id)
+    public function update(Request $request, string $lang, SeoMeta $seoMeta)
     {
-        $seoMeta = SeoMeta::findOrFail($id);
-
         $data = $request->validate([
             'page'           => 'required|unique:seo_metas,page,' . $seoMeta->id,
             'title'          => 'required|array',
@@ -77,19 +74,18 @@ class SeoMetaController extends Controller
             ->withProperties($data)
             ->log('Updated SEO Meta');
 
-        return redirect()->route('admin.seo_metas.index', $request->query())
+        return redirect()->route('admin.seo_metas.index', array_merge(['lang' => $lang], $request->query()))
             ->with('success', 'تم تحديث بيانات تحسين محركات البحث بنجاح.');
     }
-    public function destroy($id)
+    public function destroy(string $lang, SeoMeta $seoMeta)
     {
-        $seoMeta = SeoMeta::findOrFail($id);
         $seoMeta->delete();
         activity()
             ->performedOn($seoMeta)
             ->causedBy(Auth::guard('admin')->user())
             ->withProperties(['name' => $seoMeta->name])
             ->log('Deleted SEO Meta');
-        return redirect()->route('admin.seo_metas.index')
+        return redirect()->route('admin.seo_metas.index', ['lang' => $lang])
             ->with('success', 'تم حذف بيانات تحسين محركات البحث بنجاح.');
     }
 }
