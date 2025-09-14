@@ -11,7 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('admins', fn (Blueprint $table) => $table->dropColumn('role'));
+        Schema::create('menus', function (Blueprint $table) {
+            $table->id();
+            $table->string('location'); // header, footer
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
     }
 
     /**
@@ -19,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('admins', function (Blueprint $table) {
-            $table->enum('role', ['1', '2', '3', '4', '5', '6'])->default('1');
-        });
+        Schema::dropIfExists('menus');
     }
 };

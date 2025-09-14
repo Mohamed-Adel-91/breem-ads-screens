@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('contact_us', function (Blueprint $table) {
+        Schema::create('section_items', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email');
-            $table->string('phone')->nullable();
-            $table->enum('type', ['advertiser', 'host_place']);
-            $table->longText('message');
-            $table->enum('status', ['new', 'read', 'replied'])->default('new');
+            $table->foreignId('section_id')->constrained('page_sections')->cascadeOnDelete();
+            $table->unsignedInteger('order')->default(0);
+            $table->json('data')->nullable();
+            $table->unsignedBigInteger('media_id')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('contact_us');
+        Schema::dropIfExists('section_items');
     }
 };

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique(); // hero_video, facebook_link, phone, ...
-            $table->text('value')->nullable();
+            $table->json('value')->nullable();
             $table->timestamps();
         });
     }

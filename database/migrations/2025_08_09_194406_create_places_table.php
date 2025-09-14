@@ -13,10 +13,8 @@ return new class extends Migration
     {
         Schema::create('places', function (Blueprint $table) {
             $table->id();
-            $table->string('name_ar');
-            $table->string('name_en');
-            $table->string('address_ar')->nullable();
-            $table->string('address_en')->nullable();
+            $table->json('name')->nullable();
+            $table->json('address')->nullable();
             $table->enum('type', ['club', 'cafe', 'mall', 'other'])->default('cafe');
             $table->timestamps();
         });
