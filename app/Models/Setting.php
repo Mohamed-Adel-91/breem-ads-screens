@@ -6,28 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
-
 class Setting extends Model
 {
     use HasFactory, HasTranslations;
-    protected $table = 'settings';
-    protected $fillable = [
-        'email',
-        'slogan',
-        'address',
-        'phone',
-        'hotline',
-        'location',
-        'facebook',
-        'youtube',
-        'instagram',
-        'linkedin',
-        'hr_mail',
-        'customer_service_mail',
-    ];
-    public $translatable = ['address', 'slogan'];
-    protected $casts = [
-        'address' => 'json',
-        'slogan' => 'json',
-    ];
+    protected $fillable = ['key', 'value'];
+    protected $casts = ['value' => 'array'];
+    public $translatable = ['value'];
+    public function scopeKey($query, $key)
+    {
+        return $query->where('key', $key);
+    }
 }
