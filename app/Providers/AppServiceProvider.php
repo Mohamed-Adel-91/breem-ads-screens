@@ -50,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
             $routeName = Route::currentRouteName();
             $meta = SeoMeta::where('page', $routeName)->first();
             $view->with('meta', $meta);
+            $view->with('currentLocale', app()->getLocale());
         });
 
         // Register model observers that invalidate cached layout/page data

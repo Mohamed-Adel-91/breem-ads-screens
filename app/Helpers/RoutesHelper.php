@@ -9,52 +9,48 @@ use Illuminate\Support\Str;
 class RoutesHelper
 {
     /**
-     * Get Frontend Routes.
-     *
+     * Get Frontend Routes: returns an associative array of route name => display URL.
+     * Includes routes named with prefixes 'web.' (current) and 'front.' (legacy),
+     * filters to GET-only routes, strips the {lang}/{lang?} prefix, and skips parameterized URIs.
      */
-    public static function getFrontendRoutes()
+    public static function getFrontendRoutes(): array
     {
         $pagesRoutes = [];
         foreach (Route::getRoutes() as $route) {
-            // Get the action name (e.g. "App\Http\Controllers\Web\PagesController@index")
-            $action = $route->getActionName();
-            // Skip if the action is a Closure or not from the PagesController
-            if ($action === 'Closure' || !Str::contains($action, 'App\Http\Controllers\Web\PagesController')) {
+            $name = $route->getName();
+            if (!$name) {
                 continue;
             }
-            // Filter for routes with names starting with "front."
-            $name = $route->getName();
-            if ($name && Str::startsWith($name, 'front.')) {
-                // If it's the homepage, display "Home page" instead of the URI
-                if ($name === 'front.homepage') {
-                    $pagesRoutes[$name] = '/ (Home page)';
-                } else {
-                    $uri = $route->uri();
 
-                    // Remove the {lang} prefix if present
-                    $uriWithoutLang = Str::startsWith($uri, '{lang}')
-                        ? ltrim(substr($uri, 6), '/')
-                        : $uri;
-
-                    // Skip routes that contain dynamic parameters
-                    if (Str::contains($uriWithoutLang, '{')) {
-                        continue;
-                    }
-
-                    $pagesRoutes[$name] = '/' . $uriWithoutLang;
-                }
+            if (!Str::startsWith($name, ['web.', 'front.'])) {
+                continue;
             }
+
+            if (!in_array('GET', $route->methods(), true)) {
+                continue;
+            }
+
+            $uri = $route->uri();
+            if (Str::startsWith($uri, '{lang?}')) {
+                $uri = ltrim(substr($uri, 7), '/');
+            } elseif (Str::startsWith($uri, '{lang}')) {
+                $uri = ltrim(substr($uri, 6), '/');
+            }
+
+            if (Str::contains($uri, '{')) {
+                continue;
+            }
+
+            $label = ($uri === '' || $uri === '/') ? '/ (Home page)' : '/' . $uri;
+            $pagesRoutes[$name] = $label;
         }
+
+        ksort($pagesRoutes);
         return $pagesRoutes;
     }
 
     /**
      * Get all admin route names used for permissions.
-     *
-     * Excludes auth and redirect routes to keep the permission list clean.
-     *
-     * Excluded routes: admin.login, admin.login.attempt, admin.verifyOtp,
-     * admin.logout, admin.redirect, admin.login.redirect.
      */
     public static function getAdminRouteNames(): array
     {
@@ -79,3 +75,4 @@ class RoutesHelper
         });
     }
 }
+
