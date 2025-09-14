@@ -134,6 +134,36 @@ class PagesService
 
     public function contactUs()
     {
-        return view('web.pages.contact_us');
+        $data = Cache::rememberForever('page.contact-us', function () {
+            $page = Page::where('slug', 'contact-us')
+                ->with(['sections' => function ($query) {
+                    $query->where('is_active', true)
+                        ->orderBy('order')
+                        ->with(['items' => function ($q) {
+                            $q->orderBy('order');
+                        }]);
+                }])
+                ->firstOrFail();
+
+            $sections = $page->sections->map(function ($section) {
+                $items = $section->items
+                    ->filter(fn($item) => $item->is_active ?? true)
+                    ->sortBy('order')
+                    ->values();
+                $section->setRelation('items', $items);
+                return $section;
+            });
+
+            return compact('page', 'sections');
+        });
+
+        if ($data['sections']->isEmpty()) {
+            return response()->view('404', [], 404);
+        }
+
+        return view('web.pages.contact_us', [
+            'page' => $data['page'],
+            'sections' => $data['sections'],
+        ]);
     }
 }

@@ -21,40 +21,40 @@
                     </h5>
                 </div>
 
-                <!-- الفورم -->
                 <div class="modal-body">
-                    <form>
+                    <form method="POST" action="{{ route('web.contact.submit', ['lang' => app()->getLocale(), 'type' => 'screens']) }}">
+                        @csrf
                         <div class="mb-3">
                             <label class="form-label">الاسم / الشركة <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control">
+                            <input name="name" type="text" class="form-control" required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">رقم الجوال <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control">
+                            <input name="phone" type="tel" class="form-control" required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">البريد الإلكتروني<span class="text-danger">*</span></label>
-                            <input type="email" class="form-control">
+                            <input name="email" type="email" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">عدد الشاشات</label>
-                            <input type="text" class="form-control">
+                            <input name="screens_count" type="text" class="form-control">
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">هل لديك شاشات للعرض؟</label>
                             <div class="d-flex gap-3">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="adOption" id="option1">
-                                    <label class="form-check-label" for="option1">
+                                    <input class="form-check-input" type="radio" name="have_screens" value="yes" id="soption1">
+                                    <label class="form-check-label" for="soption1">
                                         لدي شاشات للعرض
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="adOption" id="option2">
-                                    <label class="form-check-label" for="option2">
+                                    <input class="form-check-input" type="radio" name="have_screens" value="no" id="soption2">
+                                    <label class="form-check-label" for="soption2">
                                         احتاج شاشات
                                     </label>
                                 </div>
@@ -64,12 +64,11 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">عدد فروع شركتكم <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control">
+                                <input name="branches_count" type="number" class="form-control">
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">متوسط عدد العملاء اليومي <span
-                                        class="text-danger">*</span></label>
-                                <select class="form-select">
+                                <label class="form-label">متوسط عدد العملاء اليومي <span class="text-danger">*</span></label>
+                                <select name="daily_customers_avg" class="form-select">
                                     <option>اختر العدد</option>
                                     <option>50,000 الى 100,000</option>
                                     <option>100,000 الى 500,000</option>
@@ -82,14 +81,11 @@
 
                         <div class="mb-3 d-flex flex-column">
                             <label class="form-label">اضافة تفاصيل</label>
-                            <textarea id="w3review" name="w3review" rows="4" cols="50"></textarea>
+                            <textarea id="w3review" name="details" rows="4" cols="50"></textarea>
                         </div>
 
                         <div class="text-center mt-4">
-                            <button type="submit" class="btn px-5"
-                                style="background:#41A8A6; color:white; border-radius:10px;">
-                                إرسال
-                            </button>
+                            <button type="submit" class="btn px-5" style="background:#41A8A6; color:white; border-radius:10px;">إرسال</button>
                         </div>
                     </form>
                 </div>
@@ -97,3 +93,4 @@
         </div>
     </div>
 </div>
+

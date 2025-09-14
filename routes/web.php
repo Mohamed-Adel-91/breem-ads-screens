@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\PagesController;
+use App\Http\Controllers\Web\ContactSubmissionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn() => redirect(app()->getLocale()));
@@ -17,6 +18,11 @@ Route::group([
         Route::get('/whoweare', 'whoweare')->name('whoweare');
         Route::get('/contact-us', 'contactUs')->name('contactUs');
     });
+
+    // Contact forms submission
+    Route::post('/contact-submit/{type}', [ContactSubmissionController::class, 'store'])
+        ->whereIn('type', ['ads', 'screens', 'create', 'faq'])
+        ->name('contact.submit');
 });
 
 /***************************** Fallback ROUTES **********************************/

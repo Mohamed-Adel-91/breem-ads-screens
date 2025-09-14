@@ -22,25 +22,26 @@
                 </div>
 
                 <div class="modal-body">
-                    <form>
+                    <form method="POST" action="{{ route('web.contact.submit', ['lang' => app()->getLocale(), 'type' => 'faq']) }}">
+                        @csrf
                         <div class="mb-3">
                             <label class="form-label">الاسم / الشركة <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control">
+                            <input name="name" type="text" class="form-control" required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">رقم الجوال <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control">
+                            <input name="phone" type="tel" class="form-control" required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">البريد الإلكتروني<span class="text-danger">*</span></label>
-                            <input type="email" class="form-control">
+                            <input name="email" type="email" class="form-control" required>
                         </div>
 
                         <div class="mb-3 d-flex flex-column">
                             <label class="form-label">اكتب استفسارك</label>
-                            <textarea id="w3review" name="w3review" rows="4" cols="50"></textarea>
+                            <textarea id="w3review" name="question" rows="4" cols="50"></textarea>
                         </div>
 
                         <div class="text-center mt-4">
@@ -55,3 +56,4 @@
         </div>
     </div>
 </div>
+
