@@ -32,6 +32,28 @@
     <!-- ===================== Start JS Files ===================== -->
     @include('web.layouts.scripts.js')
     <!-- ===================== Start JS Files ===================== -->
+
+    <!-- SweetAlert for flash messages -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        (function() {
+            const swal = @json(session('swal'));
+            if (swal && swal.type && swal.text) {
+                Swal.fire({
+                    icon: swal.type,
+                    title: swal.type === 'success' ? '{{ app()->getLocale() === 'ar' ? 'تم بنجاح' : 'Success' }}' : '{{ app()->getLocale() === 'ar' ? 'خطأ' : 'Error' }}',
+                    text: swal.text,
+                });
+            }
+            @if ($errors->any())
+                Swal.fire({
+                    icon: 'error',
+                    title: '{{ app()->getLocale() === 'ar' ? 'خطأ في التحقق' : 'Validation Error' }}',
+                    html: `{!! implode('<br>', $errors->all()) !!}`,
+                });
+            @endif
+        })();
+    </script>
 </body>
 
 

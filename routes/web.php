@@ -21,7 +21,7 @@ Route::group([
 
     // Contact forms submission
     Route::post('/contact-submit/{type}', [ContactSubmissionController::class, 'store'])
-        ->whereIn('type', ['ads', 'screens', 'create', 'faq'])
+        ->where(['type' => 'ads|screens|create|faq'])
         ->name('contact.submit');
 });
 

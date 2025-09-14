@@ -9,11 +9,19 @@ use Illuminate\Support\Facades\Log;
 
 class ContactSubmissionController extends Controller
 {
-    public function store(Request $request, string $type)
+    public function store(Request $request)
     {
-        $type = strtolower($type);
+        $type = strtolower((string) $request->route('type'));
+        Log::debug('Contact submit route params', [
+            'lang' => $request->route('lang'),
+            'type' => $type,
+            'path' => $request->path(),
+        ]);
         $allowed = ['ads', 'screens', 'create', 'faq'];
-        abort_unless(in_array($type, $allowed, true), 404);
+        if (!in_array($type, $allowed, true)) {
+            Log::warning('Contact submit route received invalid type', ['type' => $type, 'path' => $request->path()]);
+            abort(404);
+        }
 
         $commonRules = [
             'name'  => ['required', 'string', 'max:255'],
@@ -59,18 +67,22 @@ class ContactSubmissionController extends Controller
 
         $validated = $request->validate(array_merge($commonRules, $specific));
 
-        $payload = $validated;
-        $submission = ContactSubmission::create([
-            'type' => $type,
-            'name' => $validated['name'],
-            'phone' => $validated['phone'],
-            'email' => $validated['email'],
-            'payload' => $payload,
-        ]);
+        try {
+            $payload = $validated;
+            $submission = ContactSubmission::create([
+                'type' => $type,
+                'name' => $validated['name'],
+                'phone' => $validated['phone'],
+                'email' => $validated['email'],
+                'payload' => $payload,
+            ]);
 
-        Log::info('Contact submission stored', ['id' => $submission->id, 'type' => $type]);
+            Log::info('Contact submission stored', ['id' => $submission->id, 'type' => $type]);
 
-        return back()->with('status', __('Thank you! We will contact you soon.'));
+            return back()->with('swal', ['type' => 'success', 'text' => __('شكرا! سنعاود الاتصال بك قريباً.')]);
+        } catch (\Throwable $e) {
+            Log::error('Contact submission error', ['type' => $type, 'msg' => $e->getMessage()]);
+            return back()->withInput()->with('swal', ['type' => 'error', 'text' => __('حدث خطأ غير متوقع. حاول مرة أخرى.')]);
+        }
     }
 }
-
