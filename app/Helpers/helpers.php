@@ -1,6 +1,27 @@
 <?php
 
 /**
+ * Abort(403) unless the authenticated admin has ANY of the given roles.
+ *
+ * @param string|array $roles
+ * @return bool
+ */
+if (!function_exists('adminHasRole')) {
+    function adminHasRole(string|array $roles): bool
+    {
+        /** @var \App\Models\Admin|null $admin */
+        $admin = auth('admin')->user();
+        if (!$admin) abort(403);
+
+        $roles = (array) $roles;
+        if (!$admin->hasAnyRole($roles)) { 
+            abort(403);
+        }
+        return true;
+    }
+}
+
+/**
  * Format a number based on the current locale.
  *
  * @param int|float $number The number to format

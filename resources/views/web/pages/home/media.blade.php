@@ -17,7 +17,7 @@
             <div class="col-12 col-sm-6 col-md-3">
                 <div class="box">
                     <div class="image">
-                        <img  src="img/social.png" alt="">
+                        <img class="w-100" src="img/social_white_no_bg.png" alt="">
                     </div>
                     <div>
                         <span>+۲۱٥ </span>
@@ -30,7 +30,7 @@
             <div class="col-12 col-sm-6 col-md-3">
                 <div class="box">
                     <div class="image">
-                        <img  src="img/screen.png" alt="">
+                        <img src="img/screen.png" alt="">
                     </div>
                     <div>
                         <span>+۳٤۷ </span>

@@ -3,16 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Foundation\Auth\Access\Authorizable;
-use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Foundation\Auth\Access\Authorizable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 class Admin extends Authenticatable implements AuthenticatableContract
 {
-    use HasFactory, Notifiable, Authorizable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, Authorizable;
     protected $guard_name = 'admin';
     protected $table = 'admins';
     protected $fillable = [
@@ -29,7 +29,10 @@ class Admin extends Authenticatable implements AuthenticatableContract
     {
         $this->attributes['password'] = Hash::make($input);
     }
-
+    public function isRole(...$roles)
+    {
+        return in_array($this->role, $roles);
+    }
     public function getImagePathAttribute()
     {
         return $this->profile_picture ? asset(self::UPLOAD_FOLDER . $this->profile_picture) : null;

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
+  <!-- Style: white strokes, rounded caps/joins -->
+  <defs>
+    <style>
+      .w{ fill:none; stroke:#FFFFFF; stroke-width:6; stroke-linecap:round; stroke-linejoin:round; }
+      .teal{ fill:#3BB0AA; } /* teal fill close to original */
+      .wfill{ fill:#FFFFFF; }
+    </style>
+  </defs>
+
+  <!-- Tripod / stand -->
+  <path class="w" d="M64 100v18" />
+  <path class="w" d="M34 136h60" />
+  <path class="w" d="M64 118l-14 18" />
+  <path class="w" d="M64 118l14 18" />
+
+  <!-- Softbox body -->
+  <rect x="32" y="26" width="64" height="56" rx="6" class="w"/>
+  <!-- Screen border (inner white border) -->
+  <rect x="44" y="38" width="40" height="32" rx="3" class="w wfill"/>
+  <!-- Screen fill (teal) -->
+  <rect x="48" y="42" width="32" height="24" rx="2" class="teal"/>
+
+  <!-- Barn doors (top, right, bottom, left) -->
+  <path class="w" d="M48 20h32l-6 6H54l-6-6z"/>        <!-- Top -->
+  <path class="w" d="M98 40v28l6-6V46l-6-6z"/>         <!-- Right -->
+  <path class="w" d="M48 88h32l-6-6H54l-6 6z"/>        <!-- Bottom -->
+  <path class="w" d="M30 40v28l-6-6V46l6-6z"/>         <!-- Left -->
+
+  <!-- Rays / inner flaps (small triangles around the screen) -->
+  <path class="w" d="M58 26l12-12" />
+  <path class="w" d="M70 26L58 14" />
+  <path class="w" d="M98 58l12-12" />
+  <path class="w" d="M98 50l12 12" />
+  <path class="w" d="M58 82l12 12" />
+  <path class="w" d="M70 82L58 94" />
+  <path class="w" d="M30 50L18 38" />
+  <path class="w" d="M30 58L18 70" />
+</svg>
