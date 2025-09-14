@@ -7,6 +7,18 @@ use App\Helpers\ComponentHelper;
 use App\Services\FileService;
 use App\Services\LayoutService;
 use App\Models\SeoMeta;
+use App\Models\Menu;
+use App\Models\MenuItem;
+use App\Models\Setting;
+use App\Models\Page;
+use App\Models\PageSection;
+use App\Models\SectionItem;
+use App\Observers\MenuObserver;
+use App\Observers\MenuItemObserver;
+use App\Observers\SettingObserver;
+use App\Observers\PageObserver;
+use App\Observers\PageSectionObserver;
+use App\Observers\SectionItemObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
@@ -39,6 +51,14 @@ class AppServiceProvider extends ServiceProvider
             $meta = SeoMeta::where('page', $routeName)->first();
             $view->with('meta', $meta);
         });
+
+        // Register model observers that invalidate cached layout/page data
+        Menu::observe(MenuObserver::class);
+        MenuItem::observe(MenuItemObserver::class);
+        Setting::observe(SettingObserver::class);
+        Page::observe(PageObserver::class);
+        PageSection::observe(PageSectionObserver::class);
+        SectionItem::observe(SectionItemObserver::class);
 
         View::composer([
             'web.layouts.components.transparent-header',
