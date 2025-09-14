@@ -7,14 +7,18 @@
         <div class="row">
             @foreach ($section->items as $item)
                 @php
-                    $itemData = $item->getTranslation('data', app()->getLocale());
-                    if (is_string($itemData)) {
-                        $decoded = json_decode($itemData, true);
-                        $itemData = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+                    $current = $item->getTranslation('data', app()->getLocale(), true);
+                    $fallback = $item->getTranslation('data', config('app.fallback_locale'), true);
+                    foreach (['current','fallback'] as $var) {
+                        if (is_string(${$var})) {
+                            $decoded = json_decode(${$var}, true);
+                            ${$var} = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+                        }
+                        if (!is_array(${$var})) {
+                            ${$var} = [];
+                        }
                     }
-                    if (!is_array($itemData)) {
-                        $itemData = [];
-                    }
+                    $itemData = array_replace($fallback, $current);
                 @endphp
                 <div class="col-12 col-sm-6 col-md-3">
                     <div class="box">

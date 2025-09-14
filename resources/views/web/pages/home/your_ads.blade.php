@@ -1,12 +1,16 @@
 @php
-    $sectionSettings = $section->getTranslation('settings', app()->getLocale());
-    if (is_string($sectionSettings)) {
-        $decoded = json_decode($sectionSettings, true);
-        $sectionSettings = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+    $current = $section->getTranslation('settings', app()->getLocale(), true);
+    $fallback = $section->getTranslation('settings', config('app.fallback_locale'), true);
+    foreach (['current','fallback'] as $var) {
+        if (is_string(${$var})) {
+            $decoded = json_decode(${$var}, true);
+            ${$var} = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+        }
+        if (!is_array(${$var})) {
+            ${$var} = [];
+        }
     }
-    if (!is_array($sectionSettings)) {
-        $sectionSettings = [];
-    }
+    $sectionSettings = array_replace($fallback, $current);
 @endphp
 
 <section class="your_ads">

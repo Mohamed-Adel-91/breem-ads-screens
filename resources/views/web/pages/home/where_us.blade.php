@@ -1,12 +1,16 @@
 @php
-    $sectionSettings = $section->getTranslation('settings', app()->getLocale());
-    if (is_string($sectionSettings)) {
-        $decoded = json_decode($sectionSettings, true);
-        $sectionSettings = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+    $current = $section->getTranslation('settings', app()->getLocale(), true);
+    $fallback = $section->getTranslation('settings', config('app.fallback_locale'), true);
+    foreach (['current','fallback'] as $var) {
+        if (is_string(${$var})) {
+            $decoded = json_decode(${$var}, true);
+            ${$var} = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+        }
+        if (!is_array(${$var})) {
+            ${$var} = [];
+        }
     }
-    if (!is_array($sectionSettings)) {
-        $sectionSettings = [];
-    }
+    $sectionSettings = array_replace($fallback, $current);
 @endphp
 
 <section class="where_us">
@@ -16,14 +20,18 @@
             <div class="swiper-wrapper">
                 @foreach ($section->items as $item)
                     @php
-                        $itemData = $item->getTranslation('data', app()->getLocale());
-                        if (is_string($itemData)) {
-                            $decoded = json_decode($itemData, true);
-                            $itemData = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+                        $current = $item->getTranslation('data', app()->getLocale(), true);
+                        $fallback = $item->getTranslation('data', config('app.fallback_locale'), true);
+                        foreach (['current','fallback'] as $var) {
+                            if (is_string(${$var})) {
+                                $decoded = json_decode(${$var}, true);
+                                ${$var} = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+                            }
+                            if (!is_array(${$var})) {
+                                ${$var} = [];
+                            }
                         }
-                        if (!is_array($itemData)) {
-                            $itemData = [];
-                        }
+                        $itemData = array_replace($fallback, $current);
                     @endphp
                     <div class="swiper-slide">
                         <div class="location-card">
