@@ -3,9 +3,6 @@
 
 <!-- SEO Meta -->
 @push('meta')
-    <!-- Page Title -->
-    <title>بريم | الصفحة الرئيسيه</title>
-    <!-- description -->
     <meta name="description" content="description" />
 @endpush
 

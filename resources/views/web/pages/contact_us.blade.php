@@ -1,7 +1,6 @@
 @extends('web.layouts.master')
 
 @push('meta')
-    <title>بريم | تواصل معنا</title>
     <meta name="description" content="description" />
 @endpush
 
