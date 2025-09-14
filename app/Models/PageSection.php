@@ -14,7 +14,7 @@ class PageSection extends Model
     protected $casts = ['settings' => 'array'];
     public function items()
     {
-        return $this->hasMany(SectionItem::class)->orderBy('order');
+        return $this->hasMany(SectionItem::class, 'section_id');
     }
     public function page()
     {

@@ -139,7 +139,7 @@ class HomePageSeeder extends Seeder
             );
 
             // إعادة بناء العناصر
-            $partners->items()->delete();
+            SectionItem::where('section_id', $partners->id)->delete();
             $partnerImages = [
                 'img/partener.png',
                 'img/partener2.png',
@@ -190,7 +190,7 @@ class HomePageSeeder extends Seeder
                 ['order' => 4, 'is_active' => true, 'settings' => []]
             );
 
-            $stats->items()->delete();
+            SectionItem::where('section_id', $stats->id)->delete();
             $statsItems = [
                 [
                     'icon_url' => 'img/pc.png',
@@ -241,7 +241,7 @@ class HomePageSeeder extends Seeder
                 ]
             );
 
-            $where->items()->delete();
+            SectionItem::where('section_id', $where->id)->delete();
             $whereSlides = [
                 ['image_url' => 'img/first.png',  'overlay_text' => ['ar' => 'العربية',       'en' => 'Al Arabiya']],
                 ['image_url' => 'img/second.png', 'overlay_text' => ['ar' => 'ميديا السعودية', 'en' => 'Media Saudi']],
