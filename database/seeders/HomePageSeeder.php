@@ -120,12 +120,22 @@ class HomePageSeeder extends Seeder
                     'order' => 1,
                     'is_active' => true,
                     'settings' => [
-                        'video_url' => '/img/showreel.mp4',
-                        'autoplay'  => true,
-                        'loop'      => true,
-                        'muted'     => true,
-                        'controls'  => true,
-                        'playsinline' => true,
+                        'ar' => [
+                            'video_url' => '/img/showreel.mp4',
+                            'autoplay'  => true,
+                            'loop'      => true,
+                            'muted'     => true,
+                            'controls'  => true,
+                            'playsinline' => true,
+                        ],
+                        'en' => [
+                            'video_url' => '/img/showreel.mp4',
+                            'autoplay'  => true,
+                            'loop'      => true,
+                            'muted'     => true,
+                            'controls'  => true,
+                            'playsinline' => true,
+                        ],
                     ],
                 ]
             );
@@ -135,7 +145,7 @@ class HomePageSeeder extends Seeder
              * ------------------------------------------------*/
             $partners = PageSection::updateOrCreate(
                 ['page_id' => $home->id, 'type' => 'partners'],
-                ['order' => 2, 'is_active' => true, 'settings' => []]
+                ['order' => 2, 'is_active' => true, 'settings' => ['ar' => [], 'en' => []]]
             );
 
             // إعادة بناء العناصر
@@ -157,8 +167,14 @@ class HomePageSeeder extends Seeder
                     'section_id' => $partners->id,
                     'order' => $i + 1,
                     'data' => [
-                        'image_url' => $path,
-                        'alt' => ['ar' => 'شريك', 'en' => 'Partner'],
+                        'ar' => [
+                            'image_url' => $path,
+                            'alt' => 'شريك',
+                        ],
+                        'en' => [
+                            'image_url' => $path,
+                            'alt' => 'Partner',
+                        ],
                     ],
                 ]);
             }
@@ -172,12 +188,16 @@ class HomePageSeeder extends Seeder
                     'order' => 3,
                     'is_active' => true,
                     'settings' => [
-                        'title' => ['ar' => "تعرف على بريم", 'en' => "Know Breem"],
-                        'desc'  => [
-                            'ar' => "بريم تقدم لكم حلولاً تسويقية متكاملة تبدأ من إدارة حملات السوشيال ميديا باحترافية، مروراً بصناعة المحتوى الإبداعي والتصميمات الجذابة، وصولاً إلى شاشات الإعلانات التي تضمن وصول علامتكم التجارية إلى الجمهور في الأماكن الحيوية.",
-                            'en' => "Breem offers integrated marketing solutions: expert social media campaigns, creative content and designs, and ad screens that put your brand in prime locations.",
+                        'ar' => [
+                            'title' => "تعرف على بريم",
+                            'desc'  => "بريم تقدم لكم حلولاً تسويقية متكاملة تبدأ من إدارة حملات السوشيال ميديا باحترافية، مروراً بصناعة المحتوى الإبداعي والتصميمات الجذابة، وصولاً إلى شاشات الإعلانات التي تضمن وصول علامتكم التجارية إلى الجمهور في الأماكن الحيوية.",
+                            'readmore_link' => '#',
                         ],
-                        'readmore_link' => '#',
+                        'en' => [
+                            'title' => "Know Breem",
+                            'desc'  => "Breem offers integrated marketing solutions: expert social media campaigns, creative content and designs, and ad screens that put your brand in prime locations.",
+                            'readmore_link' => '#',
+                        ],
                     ],
                 ]
             );
@@ -187,29 +207,29 @@ class HomePageSeeder extends Seeder
              * ------------------------------------------------*/
             $stats = PageSection::updateOrCreate(
                 ['page_id' => $home->id, 'type' => 'stats'],
-                ['order' => 4, 'is_active' => true, 'settings' => []]
+                ['order' => 4, 'is_active' => true, 'settings' => ['ar' => [], 'en' => []]]
             );
 
             SectionItem::where('section_id', $stats->id)->delete();
             $statsItems = [
                 [
                     'icon_url' => 'img/pc.png',
-                    'number'   => '٦٥۸+',
+                    'number'   => ['ar' => '٦٥۸+', 'en' => '658+'],
                     'label'    => ['ar' => 'شاشات الإعلانات', 'en' => 'Ad Screens'],
                 ],
                 [
                     'icon_url' => 'img/social.png',
-                    'number'   => '۲۱٥+',
+                    'number'   => ['ar' => '۲۱٥+', 'en' => '215+'],
                     'label'    => ['ar' => 'اعلانات سوشيال', 'en' => 'Social Ads'],
                 ],
                 [
                     'icon_url' => 'img/screen.png',
-                    'number'   => '۳٤۷+',
+                    'number'   => ['ar' => '۳٤۷+', 'en' => '347+'],
                     'label'    => ['ar' => 'تصوير إعلانات', 'en' => 'Ad Production'],
                 ],
                 [
                     'icon_url' => 'img/pc.png',
-                    'number'   => '٦٥۸+',
+                    'number'   => ['ar' => '٦٥۸+', 'en' => '658+'],
                     'label'    => ['ar' => 'شاشات الإعلانات', 'en' => 'Ad Screens'],
                 ],
             ];
@@ -218,7 +238,18 @@ class HomePageSeeder extends Seeder
                 SectionItem::create([
                     'section_id' => $stats->id,
                     'order' => $i + 1,
-                    'data'  => $it
+                    'data'  => [
+                        'ar' => [
+                            'icon_url' => $it['icon_url'],
+                            'number'   => $it['number']['ar'],
+                            'label'    => $it['label']['ar'],
+                        ],
+                        'en' => [
+                            'icon_url' => $it['icon_url'],
+                            'number'   => $it['number']['en'],
+                            'label'    => $it['label']['en'],
+                        ],
+                    ],
                 ]);
             }
 
@@ -231,11 +262,21 @@ class HomePageSeeder extends Seeder
                     'order' => 5,
                     'is_active' => true,
                     'settings' => [
-                        'title' => ['ar' => 'أين تجدنا', 'en' => 'Where to find us'],
-                        'brochure' => [
-                            'text' => ['ar' => 'حمل الكتيب للمزيد', 'en' => 'Download brochure'],
-                            'icon_url' => 'img/download.png',
-                            'link_url' => '#', // ضع لينك الكتيب الحقيقي
+                        'ar' => [
+                            'title' => 'أين تجدنا',
+                            'brochure' => [
+                                'text' => 'حمل الكتيب للمزيد',
+                                'icon_url' => 'img/download.png',
+                                'link_url' => '#', // ضع لينك الكتيب الحقيقي
+                            ],
+                        ],
+                        'en' => [
+                            'title' => 'Where to find us',
+                            'brochure' => [
+                                'text' => 'Download brochure',
+                                'icon_url' => 'img/download.png',
+                                'link_url' => '#',
+                            ],
                         ],
                     ],
                 ]
@@ -254,7 +295,16 @@ class HomePageSeeder extends Seeder
                 SectionItem::create([
                     'section_id' => $where->id,
                     'order' => $i + 1,
-                    'data' => $slide,
+                    'data' => [
+                        'ar' => [
+                            'image_url' => $slide['image_url'],
+                            'overlay_text' => $slide['overlay_text']['ar'],
+                        ],
+                        'en' => [
+                            'image_url' => $slide['image_url'],
+                            'overlay_text' => $slide['overlay_text']['en'],
+                        ],
+                    ],
                 ]);
             }
 
@@ -267,15 +317,22 @@ class HomePageSeeder extends Seeder
                     'order' => 6,
                     'is_active' => true,
                     'settings' => [
-                        'title' => ['ar' => 'إعرض إعلانك الأن', 'en' => 'Run Your Ad Now'],
-                        'text'  => [
-                            'ar' => 'فريقنا المتخصص مستعد دائمًا للرد على استفساراتك وتلبية واحتياجاتك. نحن هنا لتحويل رؤيتك الإعلانية إلى واقع.',
-                            'en' => 'Our specialist team is ready to answer your questions and turn your ad vision into reality.',
+                        'ar' => [
+                            'title' => 'إعرض إعلانك الأن',
+                            'text'  => 'فريقنا المتخصص مستعد دائمًا للرد على استفساراتك وتلبية واحتياجاتك. نحن هنا لتحويل رؤيتك الإعلانية إلى واقع.',
+                            'link_text' => 'تواصل معنا',
+                            'link_url'  => '/contact',
+                            'image_url' => 'img/screen_image.png',
+                            'overlay_image_url' => 'img/ads.png',
                         ],
-                        'link_text' => ['ar' => 'تواصل معنا', 'en' => 'Contact Us'],
-                        'link_url'  => '/contact',
-                        'image_url' => 'img/screen_image.png',
-                        'overlay_image_url' => 'img/ads.png',
+                        'en' => [
+                            'title' => 'Run Your Ad Now',
+                            'text'  => 'Our specialist team is ready to answer your questions and turn your ad vision into reality.',
+                            'link_text' => 'Contact Us',
+                            'link_url'  => '/contact',
+                            'image_url' => 'img/screen_image.png',
+                            'overlay_image_url' => 'img/ads.png',
+                        ],
                     ],
                 ]
             );
