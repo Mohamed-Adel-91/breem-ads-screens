@@ -9,13 +9,11 @@ class PageObserver
 {
     public function saved(Page $page): void
     {
-        // For now, clear home page cache if any page changes might affect menus/sections visibility
-        Cache::forget('page.home');
+        Cache::forget('page.' . $page->slug);
     }
 
     public function deleted(Page $page): void
     {
-        Cache::forget('page.home');
+        Cache::forget('page.' . $page->slug);
     }
 }
-

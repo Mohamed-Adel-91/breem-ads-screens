@@ -1,78 +1,66 @@
 @extends('web.layouts.master')
 
-<!-- SEO Meta -->
 @push('meta')
-    <!-- Page Title -->
     <title>بريم | من نحن</title>
-    <!-- description -->
     <meta name="description" content="description" />
 @endpush
 
 @section('content')
-    <!-- Main Content -->
     <main>
-        <section class="second_banner">
-            <div class="banner_image">
-                <img src="img/banner2.png" alt="">
-            </div>
-        </section>
+        @php
+            $locale = app()->getLocale();
+            $banner = $sections->firstWhere('type', 'second_banner') ?? null;
+            $who    = $sections->firstWhere('type', 'who_we') ?? null;
+            $port   = $sections->firstWhere('type', 'port_image') ?? null;
+        @endphp
 
-        <section class="who_we">
-            <div class="container">
-                <h2>من نحن</h2>
-                <p>
-                    بريم تقدم لكم حلولاً تسويقية متكاملة تبدأ من إدارة حملات السوشيال ميديا باحترافية، مروراً بصناعة المحتوى
-                    الإبداعي والتصميمات الجذابة، وصولاً إلى شاشات الإعلانات التي تضمن وصول علامتكم التجارية إلى الجمهور في
-                    الأماكن الحيوية. نحن نؤمن بأن التسويق الفعّال هو مفتاح نجاح أي علامة تجارية. في "بريم"، نقدم لك مجموعة
-                    من الحلول التسويقية المتكاملة التي تضمن لك الوصول إلى جمهورك المستهدف بأعلى فعالية. خدماتنا تشمل:
-                </p>
+        @if ($banner)
+            <section class="second_banner">
+                <div class="banner_image">
+                    <img src="{{ data_get($banner->getTranslations('section_data'), "$locale.image_url") }}" alt="">
+                </div>
+            </section>
+        @endif
 
-                <div class="mt-5 bottom-desc">
-                    <h4><img src="img/Vector.png" class="ms-4" alt="">إدارة حملات السوشيال ميديا باحترافية</h4>
-                    <p>ندير حملاتك على منصات التواصل الاجتماعي (فيسبوك، إنستغرام، تويتر، تيك توك، وغيرها) من خلال
-                        استراتيجيات مدروسة ومحتوى مخصص لجذب انتباه جمهورك. نركز على تحسين التفاعل والمشاركة لزيادة الوعي
-                        بالعلامتك التجارية .</p>
-                    <ul>
-                        <li>تحليل الأداء: متابعة مستمرة لنتائج الحملات لضمان الوصول الأمثل.</li>
-                        <li>التفاعل مع الجمهور: إدارة التعليقات والردود لخلق علاقة متينة مع المتابعين.</li>
-                    </ul>
-                </div>
-                <div class="mt-5 bottom-desc">
-                    <h4><img src="img/Vector.png" class="ms-4" alt="">صناعة المحتوى الإبداعي</h4>
-                    <p>المحتوى هو الأساس الذي يبني علاقتك مع جمهورك. فريقنا من الكتاب والمصممين المبدعين يعمل على تصميم
-                        محتوى مميز يعكس هوية علامتك التجارية بطرق مبتكرة. سواء كانت مقاطع فيديو، مقالات، رسومات بيانية أو
-                        صور، نحن هنا لتحويل أفكارك إلى رسائل قابلة للتفاعل.</p>
-                    <ul>
-                        <li>محتوى مرن: تصميم محتوى يتناسب مع مختلف الأذواق والأنماط.</li>
-                        <li>استهداف دقيق: استخدام أدوات التحليل للوصول إلى جمهورك المثالي.</li>
-                    </ul>
-                </div>
-                <div class="mt-5 bottom-desc">
-                    <h4><img src="img/Vector.png" class="ms-4" alt="">تصميمات جذابة وبصرية</h4>
-                    <p>الصور والتصميمات الجذابة هي الوسيلة الأمثل للتفاعل السريع مع جمهورك. من خلال تصميمات عالية الجودة،
-                        نضمن أن يكون لديك محتوى مرئي يشد الأنظار ويعزز الهوية البصرية لعلامتك التجارية. .</p>
-                    <ul>
-                        <li>تسويق مرئي قوي: تصميم شعارات، منشورات دعائية، وفيديوهات تفاعلية.</li>
-                        <li>تنسيق إبداعي: دمج الألوان والخطوط لتناسب توجهك التجاري.</li>
-                    </ul>
-                </div>
-                <div class="mt-5 bottom-desc">
-                    <h4><img src="img/Vector.png" class="ms-4" alt="">تصميمات جذابة وبصرية</h4>
-                    <p>الصور والتصميمات الجذابة هي الوسيلة الأمثل للتفاعل السريع مع جمهورك. من خلال تصميمات عالية الجودة،
-                        نضمن أن يكون لديك محتوى مرئي يشد الأنظار ويعزز الهوية البصرية لعلامتك التجارية. .</p>
-                    <ul>
-                        <li>تسويق مرئي قوي: تصميم شعارات، منشورات دعائية، وفيديوهات تفاعلية.</li>
-                        <li>تنسيق إبداعي: دمج الألوان والخطوط لتناسب توجهك التجاري.</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
+        @if ($who)
+            <section class="who_we">
+                <div class="container">
+                    <h2>{{ data_get($who->getTranslations('section_data'), "$locale.title") }}</h2>
+                    <p>
+                        {{ data_get($who->getTranslations('section_data'), "$locale.description") }}
+                    </p>
 
-        <section class="port_image">
-            <img src="img/port.png" alt="">
-        </section>
+                    @foreach ($who->items as $it)
+                        @php
+                            $data = $it->getTranslations('data');
+                            $title = data_get($data, "$locale.title");
+                            $text  = data_get($data, "$locale.text");
+                            $bullets = data_get($data, "$locale.bullets", []);
+                        @endphp
+                        <div class="mt-5 bottom-desc">
+                            <h4><img src="img/Vector.png" class="ms-4" alt="">{{ $title }}</h4>
+                            <p>{{ $text }}</p>
+                            @if (!empty($bullets))
+                                <ul>
+                                    @foreach ($bullets as $b)
+                                        <li>{{ $b }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if ($port)
+            <section class="port_image">
+                <img src="{{ data_get($port->getTranslations('section_data'), "$locale.image_url") }}" alt="">
+            </section>
+        @endif
     </main>
 @endsection
 
 @push('scripts-js')
 @endpush
+

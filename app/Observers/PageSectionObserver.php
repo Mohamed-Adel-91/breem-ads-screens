@@ -9,12 +9,17 @@ class PageSectionObserver
 {
     public function saved(PageSection $section): void
     {
-        Cache::forget('page.home');
+        $slug = $section->page()->value('slug');
+        if ($slug) {
+            Cache::forget('page.' . $slug);
+        }
     }
 
     public function deleted(PageSection $section): void
     {
-        Cache::forget('page.home');
+        $slug = $section->page()->value('slug');
+        if ($slug) {
+            Cache::forget('page.' . $slug);
+        }
     }
 }
-

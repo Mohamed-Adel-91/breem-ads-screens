@@ -9,12 +9,17 @@ class SectionItemObserver
 {
     public function saved(SectionItem $item): void
     {
-        Cache::forget('page.home');
+        $slug = optional($item->section()->with('page')->first())->page->slug ?? null;
+        if ($slug) {
+            Cache::forget('page.' . $slug);
+        }
     }
 
     public function deleted(SectionItem $item): void
     {
-        Cache::forget('page.home');
+        $slug = optional($item->section()->with('page')->first())->page->slug ?? null;
+        if ($slug) {
+            Cache::forget('page.' . $slug);
+        }
     }
 }
-

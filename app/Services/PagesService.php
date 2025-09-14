@@ -79,7 +79,57 @@ class PagesService
 
     public function whoweare()
     {
-        return view('web.pages.whoweare');
+        $data = Cache::rememberForever('page.whoweare', function () {
+            $page = Page::where('slug', 'whoweare')
+                ->with([
+                    'sections' => function ($query) {
+                        $query->where('is_active', true)
+                            ->orderBy('order')
+                            ->with(['items' => function ($q) {
+                                $q->orderBy('order');
+                            }]);
+                    },
+                ])
+                ->firstOrFail();
+
+            $disabledSections = [];
+            $sections = $page->sections->map(function ($section) use (&$disabledSections) {
+                $totalItems = $section->items->count();
+                $items = $section->items
+                    ->filter(fn($item) => $item->is_active ?? true)
+                    ->sortBy('order')
+                    ->values();
+                if ($items->count() === 0 && $totalItems > 0) {
+                    $disabledSections[] = [
+                        'section_id' => $section->id,
+                        'type' => $section->type ?? null,
+                        'total_items' => $totalItems,
+                    ];
+                }
+                $section->setRelation('items', $items);
+                return $section;
+            });
+
+            if (!empty($disabledSections)) {
+                Log::info('WhoWeAre page sections have no active items', [
+                    'page_id' => $page->id,
+                    'slug' => $page->slug,
+                    'sections' => $disabledSections,
+                ]);
+            }
+
+            return compact('page', 'sections');
+        });
+
+        if ($data['sections']->isEmpty()) {
+            Log::warning('WhoWeAre page has no active sections');
+            return response()->view('404', [], 404);
+        }
+
+        return view('web.pages.whoweare', [
+            'page' => $data['page'],
+            'sections' => $data['sections'],
+        ]);
     }
 
     public function contactUs()
