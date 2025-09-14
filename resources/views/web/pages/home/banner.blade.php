@@ -15,17 +15,8 @@
 
 <section class="banner">
     <div class="banner_video">
-        @php
-            $raw = $section_data['video_url'] ?? '';
-            if (preg_match('/^https?:\/\//', $raw)) {
-                $videoSrc = $raw;
-            } else {
-                $norm = str_starts_with($raw, 'frontend/') ? $raw : 'frontend/' . ltrim($raw, '/');
-                $videoSrc = asset($norm);
-            }
-        @endphp
         <video
-            src="{{ $videoSrc }}"
+            src="{{ asset(media_path($section_data['video_url'] ?? '')) }}"
             @if (!empty($section_data['autoplay'] ?? null)) autoplay @endif
             @if (!empty($section_data['loop'] ?? null)) loop @endif
             @if (!empty($section_data['playsinline'] ?? null)) playsinline @endif

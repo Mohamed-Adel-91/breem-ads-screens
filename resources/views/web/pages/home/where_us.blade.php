@@ -35,16 +35,7 @@
                     @endphp
                     <div class="swiper-slide">
                         <div class="location-card">
-                            @php
-                                $rawImage = $itemData['image_url'] ?? '';
-                                if (preg_match('/^https?:\/\//', $rawImage)) {
-                                    $imgUrl = $rawImage;
-                                } else {
-                                    $normImage = str_starts_with($rawImage, 'frontend/') ? $rawImage : 'frontend/' . ltrim($rawImage, '/');
-                                    $imgUrl = asset($normImage);
-                                }
-                            @endphp
-                            <img src="{{ $imgUrl }}" alt="{{ $itemData['overlay_text'] ?? '' }}">
+                            <img src="{{ asset(media_path($itemData['image_url'] ?? '')) }}" alt="{{ $itemData['overlay_text'] ?? '' }}">
                             <div class="overlay">
                                 <p>{{ $itemData['overlay_text'] ?? '' }}</p>
                             </div>
@@ -69,17 +60,8 @@
                 }
             @endphp
             <div class="button_book">
-                @php
-                    $rawIcon = $brochure['icon_url'] ?? '';
-                    if (preg_match('/^https?:\/\//', $rawIcon)) {
-                        $iconUrl = $rawIcon;
-                    } else {
-                        $normIcon = str_starts_with($rawIcon, 'frontend/') ? $rawIcon : 'frontend/' . ltrim($rawIcon, '/');
-                        $iconUrl = asset($normIcon);
-                    }
-                @endphp
                 <a href="{{ $brochure['link_url'] ?? '#' }}">
-                    {{ $brochure['text'] ?? '' }} <img src="{{ $iconUrl }}" alt="">
+                    {{ $brochure['text'] ?? '' }} <img src="{{ asset(media_path($brochure['icon_url'] ?? '')) }}" alt="">
                 </a>
             </div>
         </div>

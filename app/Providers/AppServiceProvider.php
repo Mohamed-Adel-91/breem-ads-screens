@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Contracts\FileServiceInterface;
 use App\Helpers\ComponentHelper;
 use App\Services\FileService;
+use App\Services\LayoutService;
 use App\Models\SeoMeta;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +38,20 @@ class AppServiceProvider extends ServiceProvider
             $routeName = Route::currentRouteName();
             $meta = SeoMeta::where('page', $routeName)->first();
             $view->with('meta', $meta);
+        });
+
+        View::composer([
+            'web.layouts.components.transparent-header',
+            'web.layouts.components.solid-header',
+            'web.layouts.components.footer',
+        ], function ($view) {
+            $layoutService = app(LayoutService::class);
+
+            $view->with([
+                'headerMenu' => $layoutService->getHeaderMenu(),
+                'footerMenu' => $layoutService->getFooterMenu(),
+                'layoutSettings' => $layoutService->getSettings(),
+            ]);
         });
     }
 }

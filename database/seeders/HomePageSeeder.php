@@ -120,7 +120,7 @@ class HomePageSeeder extends Seeder
                     'is_active' => true,
                     'section_data' => [
                         'ar' => [
-                            'video_url' => '/img/showreel.mp4',
+                            'video_url' => '/assets/showreel.mp4',
                             'autoplay'  => true,
                             'loop'      => true,
                             'muted'     => true,
@@ -128,7 +128,7 @@ class HomePageSeeder extends Seeder
                             'playsinline' => true,
                         ],
                         'en' => [
-                            'video_url' => '/img/showreel.mp4',
+                            'video_url' => '/assets/showreel.mp4',
                             'autoplay'  => true,
                             'loop'      => true,
                             'muted'     => true,
@@ -211,12 +211,12 @@ class HomePageSeeder extends Seeder
             SectionItem::where('section_id', $stats->id)->delete();
             $statsItems = [
                 [
-                    'icon_url' => 'img/pc.png',
+                    'icon_url' => 'img/tv_with_remote.svg',
                     'number'   => ['ar' => '٦٥۸+', 'en' => '658+'],
                     'label'    => ['ar' => 'شاشات الإعلانات', 'en' => 'Ad Screens'],
                 ],
                 [
-                    'icon_url' => 'img/social.png',
+                    'icon_url' => 'img/social_white_no_bg.png',
                     'number'   => ['ar' => '۲۱٥+', 'en' => '215+'],
                     'label'    => ['ar' => 'اعلانات سوشيال', 'en' => 'Social Ads'],
                 ],
@@ -226,9 +226,9 @@ class HomePageSeeder extends Seeder
                     'label'    => ['ar' => 'تصوير إعلانات', 'en' => 'Ad Production'],
                 ],
                 [
-                    'icon_url' => 'img/pc.png',
+                    'icon_url' => 'img/laptop.svg',
                     'number'   => ['ar' => '٦٥۸+', 'en' => '658+'],
-                    'label'    => ['ar' => 'شاشات الإعلانات', 'en' => 'Ad Screens'],
+                    'label'    => ['ar' => 'تصميم و تطوير مواقع', 'en' => 'Websites Development'],
                 ],
             ];
 

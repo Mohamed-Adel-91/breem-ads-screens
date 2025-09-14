@@ -23,25 +23,12 @@
             </div>
             <div class="col-12 col-sm-6">
                 <div class="position-relative w-100">
-                    @php
-                        $rawMain = $section_data['image_url'] ?? '';
-                        if (preg_match('/^https?:\/\//', $rawMain)) {
-                            $mainUrl = $rawMain;
-                        } else {
-                            $normMain = str_starts_with($rawMain, 'frontend/') ? $rawMain : 'frontend/' . ltrim($rawMain, '/');
-                            $mainUrl = asset($normMain);
-                        }
-
-                        $rawOverlay = $section_data['overlay_image_url'] ?? '';
-                        if (preg_match('/^https?:\/\//', $rawOverlay)) {
-                            $overlayUrl = $rawOverlay;
-                        } else {
-                            $normOverlay = str_starts_with($rawOverlay, 'frontend/') ? $rawOverlay : 'frontend/' . ltrim($rawOverlay, '/');
-                            $overlayUrl = asset($normOverlay);
-                        }
-                    @endphp
-                    <img src="{{ $mainUrl }}" alt="" class="w-100">
-                    <img src="{{ $overlayUrl }}" alt="" class="position-absolute second_image">
+                    @if(!empty($section_data['image_url']))
+                        <img src="{{ asset(media_path($section_data['image_url'])) }}" alt="" class="w-100">
+                    @endif
+                    @if(!empty($section_data['overlay_image_url']))
+                        <img src="{{ asset(media_path($section_data['overlay_image_url'])) }}" alt="" class="position-absolute second_image">
+                    @endif
                 </div>
             </div>
         </div>

@@ -11,21 +11,21 @@
                     <img src="img/logo.png" alt=""></a>
                 <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-4 pages">
-                        <li class="nav-item">
-                            <a class="nav-link" aria-current="page" href="{{ route('web.home', $lang) }}">الرئيسية</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('web.whoweare', $lang) }}">من نحن</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link " href="{{ route('web.contactUs', $lang) }}">تواصل معنا</a>
-                        </li>
+                        @php $locale = app()->getLocale(); @endphp
+                        @foreach ($headerMenu?->items ?? [] as $item)
+                            @php $target = $item->target ?? '_self'; @endphp
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url($locale . $item->url) }}" target="{{ $target }}">
+                                    {{ $item->label }}
+                                </a>
+                            </li>
+                        @endforeach
                     </ul>
                 </div>
                 <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 pages">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">99654334+</a>
+                            <a class="nav-link" href="#">{{ $layoutSettings['phone'] ?? '' }}</a>
                         </li>
                         <li class="nav-item">
                             @php
