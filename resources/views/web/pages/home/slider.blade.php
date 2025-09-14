@@ -2,16 +2,11 @@
     <div class="container">
         <div class="swiper mySwiper">
             <div class="swiper-wrapper">
-                <div class="swiper-slide"><img src="img/partener.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener2.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener3.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener4.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener5.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener2.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener3.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener4.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener5.png" alt=""></div>
+                @foreach ($sliderItems as $slide)
+                    <div class="swiper-slide">
+                        <img src="{{ asset($slide['image_url']) }}" alt="{{ $slide['alt'] }}">
+                    </div>
+                @endforeach
             </div>
         </div>
     </div>
