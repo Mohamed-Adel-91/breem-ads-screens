@@ -1,17 +1,26 @@
+@php
+    // No section-level settings used here
+@endphp
+
 <section class="slider">
     <div class="container">
         <div class="swiper mySwiper">
             <div class="swiper-wrapper">
-                <div class="swiper-slide"><img src="img/partener.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener2.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener3.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener4.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener5.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener2.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener3.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener4.png" alt=""></div>
-                <div class="swiper-slide"><img src="img/partener5.png" alt=""></div>
+                @foreach ($section->items as $item)
+                    @php
+                        $itemData = $item->getTranslation('data', app()->getLocale());
+                        if (is_string($itemData)) {
+                            $decoded = json_decode($itemData, true);
+                            $itemData = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+                        }
+                        if (!is_array($itemData)) {
+                            $itemData = [];
+                        }
+                    @endphp
+                    <div class="swiper-slide">
+                        <img src="{{ asset($itemData['image_url'] ?? '') }}" alt="{{ $itemData['alt'] ?? '' }}">
+                    </div>
+                @endforeach
             </div>
         </div>
     </div>

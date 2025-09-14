@@ -40,6 +40,6 @@ class RealEmailRule implements Rule
      */
     public function message()
     {
-        return trans('validation.real_email');
+        return __('validation.real_email');
     }
 }

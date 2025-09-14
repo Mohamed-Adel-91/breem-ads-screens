@@ -37,6 +37,6 @@ class StrongPasswordRule implements Rule
      */
     public function message()
     {
-        return trans('validation.strong_password');
+        return __('validation.strong_password');
     }
 }

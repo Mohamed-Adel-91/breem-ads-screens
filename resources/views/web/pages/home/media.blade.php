@@ -1,58 +1,35 @@
+@php
+    // No section-level settings used here
+@endphp
+
 <section class="media">
     <div class="container">
         <div class="row">
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="box">
-                    <div class="image">
-                        <img class="w-100" src="img/tv_with_remote.svg" alt="">
-                    </div>
-                    <div>
-                        <span>+٦٥۸ </span>
-                    </div>
-                    <div class="desc">
-                        <p>شاشات الإعلانات</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="box">
-                    <div class="image">
-                        <img class="w-100" src="img/social_white_no_bg.png" alt="">
-                    </div>
-                    <div>
-                        <span>+۲۱٥ </span>
-                    </div>
-                    <div class="desc">
-                        <p> اعلانات سوشيال</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="box">
-                    <div class="image">
-                        <img src="img/screen.png" alt="">
-                    </div>
-                    <div>
-                        <span>+۳٤۷ </span>
-                    </div>
-                    <div class="desc">
-                        <p>تصوير إعلانات </p>
+            @foreach ($section->items as $item)
+                @php
+                    $itemData = $item->getTranslation('data', app()->getLocale());
+                    if (is_string($itemData)) {
+                        $decoded = json_decode($itemData, true);
+                        $itemData = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+                    }
+                    if (!is_array($itemData)) {
+                        $itemData = [];
+                    }
+                @endphp
+                <div class="col-12 col-sm-6 col-md-3">
+                    <div class="box">
+                        <div class="image">
+                            <img class="w-100" src="{{ asset($itemData['icon_url'] ?? '') }}" alt="">
+                        </div>
+                        <div>
+                            <span>{{ $itemData['number'] ?? '' }}</span>
+                        </div>
+                        <div class="desc">
+                            <p>{{ $itemData['label'] ?? '' }}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="box">
-                    <div class="image">
-                        <img class="w-100" src="img/laptop.svg" alt="">
-                    </div>
-                    <div>
-                        <span>+۳۱ </span>
-                    </div>
-                    <div class="desc">
-                        <p>تصميم و تطوير مواقع </p>
-                    </div>
-                </div>
-            </div>
+            @endforeach
         </div>
     </div>
 </section>

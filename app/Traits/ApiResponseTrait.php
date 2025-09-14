@@ -17,7 +17,7 @@ trait ApiResponseTrait
     public function successResponse(mixed $data = [], string $message = null): JsonResponse
     {
         if (!$message) {
-            $message = trans('api.response.success');
+            $message = __('api.response.success');
         }
 
         $response = [
@@ -43,7 +43,7 @@ trait ApiResponseTrait
     public function errorResponse(mixed $errors = [], string $message = null, int $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR): JsonResponse
     {
         if (!$message) {
-            $message = trans('api.response.error');
+            $message = __('api.response.error');
         }
 
         $response = [
@@ -70,7 +70,7 @@ trait ApiResponseTrait
     public function validationErrorResponse(mixed $errors, string $message = null, int $statusCode = Response::HTTP_UNPROCESSABLE_ENTITY): JsonResponse
     {
         if (!$message) {
-            $message = trans('api.response.validation_error');
+            $message = __('api.response.validation_error');
         }
 
         $response = [

@@ -13,23 +13,9 @@
 @section('content')
     <!-- Main Content -->
     <main>
-        <!-- banner Section -->
-        @include('web.pages.home.banner')
-
-        <!-- Slider -->
-        @include('web.pages.home.slider')
-
-        <!-- knowmore Section -->
-        @include('web.pages.home.knowmore')
-
-        <!-- media Section -->
-        @include('web.pages.home.media')
-
-        <!-- where_us Section -->
-        @include('web.pages.home.where_us')
-
-        <!-- your_ads Section -->
-        @include('web.pages.home.your_ads')
+        @foreach ($sections as $section)
+            @includeIf('web.pages.home.' . $section->type, ['section' => $section])
+        @endforeach
     </main>
 @endsection
 
