@@ -22,7 +22,16 @@
                         $itemData = array_replace($fallback, $current);
                     @endphp
                     <div class="swiper-slide">
-                        <img src="{{ asset($itemData['image_url'] ?? '') }}" alt="{{ $itemData['alt'] ?? '' }}">
+                        @php
+                            $raw = $itemData['image_url'] ?? '';
+                            if (preg_match('/^https?:\/\//', $raw)) {
+                                $url = $raw;
+                            } else {
+                                $norm = str_starts_with($raw, 'frontend/') ? $raw : 'frontend/' . ltrim($raw, '/');
+                                $url = asset($norm);
+                            }
+                        @endphp
+                        <img src="{{ $url }}" alt="{{ $itemData['alt'] ?? '' }}">
                     </div>
                 @endforeach
             </div>

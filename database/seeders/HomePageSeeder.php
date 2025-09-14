@@ -82,8 +82,7 @@ class HomePageSeeder extends Seeder
             );
 
             /** ------------------------------------------------
-             *  Sidebar (4 أيقونات سوشيال/أكشن)
-             *  نخزّنها كإعداد قابل للتوسّع
+             *  Sidebar (social icons)
              * ------------------------------------------------*/
             Setting::updateOrCreate(
                 ['key' => 'sidebar.icons'],
@@ -119,13 +118,13 @@ class HomePageSeeder extends Seeder
                 [
                     'order' => 1,
                     'is_active' => true,
-                    'settings' => [
+                    'section_data' => [
                         'ar' => [
                             'video_url' => '/img/showreel.mp4',
                             'autoplay'  => true,
                             'loop'      => true,
                             'muted'     => true,
-                            'controls'  => true,
+                            'controls'  => false,
                             'playsinline' => true,
                         ],
                         'en' => [
@@ -133,7 +132,7 @@ class HomePageSeeder extends Seeder
                             'autoplay'  => true,
                             'loop'      => true,
                             'muted'     => true,
-                            'controls'  => true,
+                            'controls'  => false,
                             'playsinline' => true,
                         ],
                     ],
@@ -145,10 +144,9 @@ class HomePageSeeder extends Seeder
              * ------------------------------------------------*/
             $partners = PageSection::updateOrCreate(
                 ['page_id' => $home->id, 'type' => 'partners'],
-                ['order' => 2, 'is_active' => true, 'settings' => ['ar' => [], 'en' => []]]
+                ['order' => 2, 'is_active' => true, 'section_data' => ['ar' => [], 'en' => []]]
             );
 
-            // إعادة بناء العناصر
             SectionItem::where('section_id', $partners->id)->delete();
             $partnerImages = [
                 'img/partener.png',
@@ -187,7 +185,7 @@ class HomePageSeeder extends Seeder
                 [
                     'order' => 3,
                     'is_active' => true,
-                    'settings' => [
+                    'section_data' => [
                         'ar' => [
                             'title' => "تعرف على بريم",
                             'desc'  => "بريم تقدم لكم حلولاً تسويقية متكاملة تبدأ من إدارة حملات السوشيال ميديا باحترافية، مروراً بصناعة المحتوى الإبداعي والتصميمات الجذابة، وصولاً إلى شاشات الإعلانات التي تضمن وصول علامتكم التجارية إلى الجمهور في الأماكن الحيوية.",
@@ -207,7 +205,7 @@ class HomePageSeeder extends Seeder
              * ------------------------------------------------*/
             $stats = PageSection::updateOrCreate(
                 ['page_id' => $home->id, 'type' => 'stats'],
-                ['order' => 4, 'is_active' => true, 'settings' => ['ar' => [], 'en' => []]]
+                ['order' => 4, 'is_active' => true, 'section_data' => ['ar' => [], 'en' => []]]
             );
 
             SectionItem::where('section_id', $stats->id)->delete();
@@ -261,13 +259,13 @@ class HomePageSeeder extends Seeder
                 [
                     'order' => 5,
                     'is_active' => true,
-                    'settings' => [
+                    'section_data' => [
                         'ar' => [
                             'title' => 'أين تجدنا',
                             'brochure' => [
                                 'text' => 'حمل الكتيب للمزيد',
                                 'icon_url' => 'img/download.png',
-                                'link_url' => '#', // ضع لينك الكتيب الحقيقي
+                                'link_url' => '#',
                             ],
                         ],
                         'en' => [
@@ -316,7 +314,7 @@ class HomePageSeeder extends Seeder
                 [
                     'order' => 6,
                     'is_active' => true,
-                    'settings' => [
+                    'section_data' => [
                         'ar' => [
                             'title' => 'إعرض إعلانك الأن',
                             'text'  => 'فريقنا المتخصص مستعد دائمًا للرد على استفساراتك وتلبية واحتياجاتك. نحن هنا لتحويل رؤيتك الإعلانية إلى واقع.',

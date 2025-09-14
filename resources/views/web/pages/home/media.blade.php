@@ -23,7 +23,16 @@
                 <div class="col-12 col-sm-6 col-md-3">
                     <div class="box">
                         <div class="image">
-                            <img class="w-100" src="{{ asset($itemData['icon_url'] ?? '') }}" alt="">
+                            @php
+                                $rawIcon = $itemData['icon_url'] ?? '';
+                                if (preg_match('/^https?:\/\//', $rawIcon)) {
+                                    $iconUrl = $rawIcon;
+                                } else {
+                                    $normIcon = str_starts_with($rawIcon, 'frontend/') ? $rawIcon : 'frontend/' . ltrim($rawIcon, '/');
+                                    $iconUrl = asset($normIcon);
+                                }
+                            @endphp
+                            <img class="w-100" src="{{ $iconUrl }}" alt="">
                         </div>
                         <div>
                             <span>{{ $itemData['number'] ?? '' }}</span>

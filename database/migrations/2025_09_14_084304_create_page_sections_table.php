@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('type'); // banner, partners, about, stats, where_us, cta, footer
             $table->unsignedInteger('order')->default(0);
             $table->boolean('is_active')->default(true);
-            $table->json('settings')->nullable();
+            $table->json('section_data')->nullable();
             $table->timestamps();
         });
     }

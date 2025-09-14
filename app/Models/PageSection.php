@@ -9,9 +9,9 @@ class PageSection extends Model
 {
 
     use HasTranslations;
-    protected $fillable = ['page_id', 'type', 'order', 'is_active', 'settings'];
-    public $translatable = ['settings'];
-    protected $casts = ['settings' => 'array'];
+    protected $fillable = ['page_id', 'type', 'order', 'is_active', 'section_data'];
+    public $translatable = ['section_data'];
+    protected $casts = ['section_data' => 'array'];
     public function items()
     {
         return $this->hasMany(SectionItem::class, 'section_id');
