@@ -146,6 +146,8 @@ return [
             'email' => 'Email',
             'created_at' => 'Created',
             'actions' => 'Actions',
+            'field' => 'Field',
+            'value' => 'Value',
         ],
         'actions' => [
             'view' => 'View',
