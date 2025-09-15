@@ -22,23 +22,23 @@
                                 'resetUrl' => route('admin.users.index', ['lang' => $lang]),
                                 'exportUrl' => '',
                                 'filters' => $filters,
-                                'checkboxes' => ['today' => 'نتائج اليوم فقط'],
+                                'checkboxes' => ['today' => __('users.today_results_only')],
                             ])
                             @include('admin.partials.results-summary', [
                                 'data' => $data,
-                                'label' => 'المستخدمين',
+                                'label' => __('users.label'),
                             ])
                             <div class="table-responsive">
                                 <table class="table custom-table m-0">
                                     <thead>
                                         <tr>
                                             <th>#</th>
-                                            <th>الاسم بالكامل</th>
-                                            <th>الاسم المستعار</th>
-                                            <th>البريد الإلكتروني</th>
-                                            <th>رقم الجوال</th>
-                                            <th>تاريخ الإنشاء</th>
-                                            <th>تاريخ التحديث</th>
+                                            <th>{{ __('users.full_name') }}</th>
+                                            <th>{{ __('users.nickname') }}</th>
+                                            <th>{{ __('users.email') }}</th>
+                                            <th>{{ __('users.mobile') }}</th>
+                                            <th>{{ __('users.created_at') }}</th>
+                                            <th>{{ __('users.updated_at') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -58,7 +58,7 @@
                                             <tr>
                                                 <td colspan="11" class="text-center">
                                                     <div class="alert alert-danger">
-                                                        لا يوجد بيانات تطابق مع معايير البحث
+                                                        {{ __('users.no_records') }}
                                                     </div>
                                                 </td>
                                             </tr>

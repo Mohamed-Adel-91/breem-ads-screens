@@ -13,7 +13,7 @@
                                 'action' => route('admin.activity_logs.index', ['lang' => $lang]),
                                 'resetUrl' => route('admin.activity_logs.index', ['lang' => $lang]),
                                 'exportUrl' => route('admin.activity_logs.download', array_merge(['lang' => $lang], request()->query())),
-                                'checkboxes' => ['today' =>'نتائج اليوم فقط'],
+                                'checkboxes' => ['today' => __('admin.activity_logs.filters.today_only')],
                                 'filters' => $filters,
                             ])
                             @include('admin.partials.results-summary', ['data' => $data, 'label' => 'log(s)'])
@@ -22,11 +22,11 @@
                                     <thead>
                                         <tr>
                                             <th>#</th>
-                                            <th>الوصف</th>
-                                            <th>الفاعل</th>
-                                            <th class="w-50">الخصائص</th>
-                                            <th>تاريخ الإنشاء</th>
-                                            <th>تاريخ التحديث</th>
+                                            <th>{{ __('admin.activity_logs.table.description') }}</th>
+                                            <th>{{ __('admin.activity_logs.table.causer') }}</th>
+                                            <th class="w-50">{{ __('admin.activity_logs.table.properties') }}</th>
+                                            <th>{{ __('admin.table.created_at') }}</th>
+                                            <th>{{ __('admin.table.updated_at') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -35,10 +35,10 @@
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $item->description ?? '-' }}</td>
                                                 <td>
-                                                    <strong>المستخدم:</strong> {{ optional($item->causer)->first_name ?? '-' }}
+                                                    <strong>{{ __('admin.activity_logs.labels.user') }}</strong> {{ optional($item->causer)->first_name ?? '-' }}
                                                     {{ optional($item->causer)->last_name ?? '-' }}
                                                     <br>
-                                                    <strong>البريد الإلكتروني:</strong> {{ optional($item->causer)->email ?? '-' }}
+                                                    <strong>{{ __('admin.activity_logs.labels.email') }}</strong> {{ optional($item->causer)->email ?? '-' }}
                                                 </td>
                                                 <td>
                                                     @if ($item->properties && $item->properties->count())
@@ -63,7 +63,7 @@
                                             <tr>
                                                 <td colspan="11" class="text-center">
                                                     <div class="alert alert-danger">
-                                                        لا توجد سجلات لسجل النشاط مطابقة للمعايير.
+                                                        {{ __('admin.activity_logs.messages.empty') }}
                                                     </div>
                                                 </td>
                                             </tr>

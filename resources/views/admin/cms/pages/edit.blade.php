@@ -11,7 +11,7 @@
                     <div class="col-12">
                         <div class="card mb-3">
                             <div class="card-body">
-                                <h5 class="card-title mb-0">Page: {{ $page->name }} ({{ $page->slug }})</h5>
+                                <h5 class="card-title mb-0">{{ __('admin.cms.page_details', ['name' => $page->name, 'slug' => $page->slug]) }}</h5>
                             </div>
                         </div>
                     </div>
@@ -22,20 +22,20 @@
                                 <div class="card-header d-flex align-items-center justify-content-between">
                                     <div>
                                         <strong>#{{ $section->id }}</strong>
-                                        <span class="badge bg-secondary">Type: {{ $section->type ?? '-' }}</span>
-                                        <span class="badge bg-info">Order: <span
+                                        <span class="badge bg-secondary">{{ __('admin.cms.type') }}: {{ $section->type ?? '-' }}</span>
+                                        <span class="badge bg-info">{{ __('admin.cms.order') }}: <span
                                                 class="sec-order">{{ $section->order }}</span></span>
                                         <span class="badge bg-{{ $section->is_active ? 'success' : 'danger' }} sec-active">
-                                            {{ $section->is_active ? 'Active' : 'Inactive' }}
+                                            {{ $section->is_active ? __('admin.forms.active') : __('admin.cms.inactive') }}
                                         </span>
                                     </div>
                                     <div class="btn-group">
                                         <button class="btn btn-sm btn-outline-primary"
-                                            onclick="updateSectionOrder({{ $section->id }})">Update Order</button>
+                                            onclick="updateSectionOrder({{ $section->id }})">{{ __('admin.cms.update_order') }}</button>
                                         <button class="btn btn-sm btn-outline-warning"
-                                            onclick="toggleSection({{ $section->id }})">Toggle</button>
+                                            onclick="toggleSection({{ $section->id }})">{{ __('admin.cms.toggle') }}</button>
                                         <button class="btn btn-sm btn-outline-danger"
-                                            onclick="deleteSection({{ $section->id }})">Delete</button>
+                                            onclick="deleteSection({{ $section->id }})">{{ __('admin.cms.delete') }}</button>
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -46,19 +46,19 @@
                                                 : (array) ($section->section_data ?? []);
                                         @endphp
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-2">Section Data ({{ app()->getLocale() }})</h6>
+                                            <h6 class="mb-2">{{ __('admin.cms.section_data', ['locale' => app()->getLocale()]) }}</h6>
                                             <div class="btn-group btn-group-sm">
                                                 <button class="btn btn-outline-secondary"
-                                                    onclick="formatSectionData({{ $section->id }})">Format</button>
+                                                    onclick="formatSectionData({{ $section->id }})">{{ __('admin.cms.format') }}</button>
                                                 <button class="btn btn-outline-danger"
-                                                    onclick="clearSectionData({{ $section->id }})">Clear</button>
+                                                    onclick="clearSectionData({{ $section->id }})">{{ __('admin.cms.clear') }}</button>
                                                 <button class="btn btn-primary"
-                                                    onclick="saveSectionData({{ $section->id }})">Save</button>
+                                                    onclick="saveSectionData({{ $section->id }})">{{ __('admin.forms.save_button') }}</button>
                                             </div>
                                         </div>
 
                                         @if (empty($secData))
-                                            <div class="alert alert-light border">No section data for this locale.</div>
+                                            <div class="alert alert-light border">{{ __('admin.cms.no_section_data') }}</div>
                                         @else
                                             <form id="secform_{{ $section->id }}" class="row g-3">
                                                 @foreach ($secData as $key => $value)
@@ -130,8 +130,7 @@
 
                                         <textarea id="secdata_{{ $section->id }}" class="form-control font-monospace mt-3" rows="8"
                                             style="display:none;">@json($section->section_data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)</textarea>
-                                        <small class="text-muted">Edit JSON for this section's data. Stored per
-                                            locale.</small>
+                                        <small class="text-muted">{{ __('admin.cms.edit_json_hint') }}</small>
                                     </div>
 
                                     @if ($section->items->count())
@@ -139,10 +138,10 @@
                                             <table class="table table-sm align-middle mb-0">
                                                 <thead>
                                                     <tr>
-                                                        <th>ID</th>
-                                                        <th>Order</th>
-                                                        <th>Active</th>
-                                                        <th style="width: 240px;">Actions</th>
+                                                        <th>{{ __('admin.cms.id') }}</th>
+                                                        <th>{{ __('admin.cms.order') }}</th>
+                                                        <th>{{ __('admin.forms.active') }}</th>
+                                                        <th style="width: 240px;">{{ __('admin.cms.actions') }}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -156,17 +155,16 @@
                                                             <td>{{ $item->id }}</td>
                                                             <td><span class="itm-order">{{ $item->order }}</span></td>
                                                             <td><span
-                                                                    class="badge bg-{{ $itemActive ? 'success' : 'danger' }} itm-active">{{ $itemActive ? 'Active' : 'Inactive' }}</span>
+                                                                    class="badge bg-{{ $itemActive ? 'success' : 'danger' }} itm-active">{{ $itemActive ? __('admin.forms.active') : __('admin.cms.inactive') }}</span>
                                                             </td>
                                                             <td>
                                                                 <div class="btn-group btn-group-sm">
                                                                     <button class="btn btn-outline-primary"
-                                                                        onclick="updateItemOrder({{ $item->id }})">Update
-                                                                        Order</button>
+                                                                        onclick="updateItemOrder({{ $item->id }})">{{ __('admin.cms.update_order') }}</button>
                                                                     <button class="btn btn-outline-warning"
-                                                                        onclick="toggleItem({{ $item->id }})">Toggle</button>
+                                                                        onclick="toggleItem({{ $item->id }})">{{ __('admin.cms.toggle') }}</button>
                                                                     <button class="btn btn-outline-danger"
-                                                                        onclick="deleteItem({{ $item->id }})">Delete</button>
+                                                                        onclick="deleteItem({{ $item->id }})">{{ __('admin.cms.delete') }}</button>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -175,7 +173,7 @@
                                             </table>
                                         </div>
                                     @else
-                                        <em class="text-muted">No items in this section.</em>
+                                        <em class="text-muted">{{ __('admin.cms.no_items') }}</em>
                                     @endif
                                 </div>
                             </div>
@@ -198,14 +196,14 @@
                     const badge = card.querySelector('.sec-active');
                     badge.classList.remove('bg-success', 'bg-danger');
                     badge.classList.add(data.is_active ? 'bg-success' : 'bg-danger');
-                    badge.innerText = data.is_active ? 'Active' : 'Inactive';
+                    badge.innerText = data.is_active ? '{{ __('admin.forms.active') }}' : '{{ __('admin.cms.inactive') }}';
                 })
-                .catch(() => Swal.fire('Error', 'Could not toggle section', 'error'));
+                .catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.section_toggle_failed') }}', 'error'));
         }
 
         function updateSectionOrder(id) {
             Swal.fire({
-                    title: 'New Order',
+                    title: '{{ __('admin.cms.new_order') }}',
                     input: 'number',
                     inputAttributes: {
                         min: 0
@@ -228,7 +226,7 @@
 
         function deleteSection(id) {
             Swal.fire({
-                title: 'Delete section?',
+                title: '{{ __('admin.cms.delete_section_confirm') }}',
                 icon: 'warning',
                 showCancelButton: true
             }).then(r => {
@@ -237,7 +235,7 @@
                     .then(() => {
                         document.getElementById(`section_${id}`).remove();
                     })
-                    .catch(() => Swal.fire('Error', 'Could not delete', 'error'));
+                    .catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.delete_failed') }}', 'error'));
             })
         }
 
@@ -278,8 +276,8 @@
                 });
 
                 axios.patch(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/sections/${id}`, fd)
-                    .then(() => Swal.fire('Saved', 'Section data updated', 'success'))
-                    .catch(() => Swal.fire('Error', 'Could not save section data', 'error'));
+                    .then(() => Swal.fire('{{ __('admin.cms.saved') }}', '{{ __('admin.cms.section_data_updated') }}', 'success'))
+                    .catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.section_data_save_failed') }}', 'error'));
                 return;
             }
 
@@ -289,14 +287,14 @@
             try {
                 parsed = ta.value.trim() ? JSON.parse(ta.value) : {};
             } catch (e) {
-                Swal.fire('Invalid JSON', 'Fix JSON then try again.', 'error');
+                Swal.fire('{{ __('admin.cms.invalid_json') }}', '{{ __('admin.cms.invalid_json_fix') }}', 'error');
                 return;
             }
             axios.patch(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/sections/${id}`, {
                     section_data: parsed
                 })
-                .then(() => Swal.fire('Saved', 'Section data updated', 'success'))
-                .catch(() => Swal.fire('Error', 'Could not save section data', 'error'));
+                .then(() => Swal.fire('{{ __('admin.cms.saved') }}', '{{ __('admin.cms.section_data_updated') }}', 'success'))
+                .catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.section_data_save_failed') }}', 'error'));
         }
 
         function formatSectionData(id) {
@@ -305,14 +303,14 @@
                 const obj = ta.value.trim() ? JSON.parse(ta.value) : {};
                 ta.value = JSON.stringify(obj, null, 2);
             } catch (e) {
-                Swal.fire('Invalid JSON', 'Cannot format invalid JSON', 'warning');
+                Swal.fire('{{ __('admin.cms.invalid_json') }}', '{{ __('admin.cms.invalid_json_format') }}', 'warning');
             }
         }
 
         function clearSectionData(id) {
             Swal.fire({
-                    title: 'Clear data?',
-                    text: 'This will set {} for current locale',
+                    title: '{{ __('admin.cms.clear_data_confirm') }}',
+                    text: '{{ __('admin.cms.clear_data_warning') }}',
                     icon: 'warning',
                     showCancelButton: true
                 })
@@ -330,13 +328,13 @@
                 const b = row.querySelector('.itm-active');
                 b.classList.remove('bg-success', 'bg-danger');
                 b.classList.add(data.is_active ? 'bg-success' : 'bg-danger');
-                b.innerText = data.is_active ? 'Active' : 'Inactive';
-            }).catch(() => Swal.fire('Error', 'Could not toggle item', 'error'));
+                b.innerText = data.is_active ? '{{ __('admin.forms.active') }}' : '{{ __('admin.cms.inactive') }}';
+            }).catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.item_toggle_failed') }}', 'error'));
         }
 
         function updateItemOrder(id) {
             Swal.fire({
-                    title: 'New Order',
+                    title: '{{ __('admin.cms.new_order') }}',
                     input: 'number',
                     inputAttributes: {
                         min: 0
@@ -359,7 +357,7 @@
 
         function deleteItem(id) {
             Swal.fire({
-                title: 'Delete item?',
+                title: '{{ __('admin.cms.delete_item_confirm') }}',
                 icon: 'warning',
                 showCancelButton: true
             }).then(r => {
@@ -368,7 +366,7 @@
                     .then(() => {
                         document.getElementById(`item_${id}`).remove();
                     })
-                    .catch(() => Swal.fire('Error', 'Could not delete', 'error'));
+                    .catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.delete_failed') }}', 'error'));
             })
         }
     </script>

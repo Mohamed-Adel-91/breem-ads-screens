@@ -38,13 +38,13 @@
                                                 <td>{{ $permission->name }}</td>
                                                 <td>
                                                     <div class="td-actions">
-                                                        <a href="{{ route('admin.permissions.edit', ['lang' => app()->getLocale(), 'permission' => $permission->id]) }}" class="icon bg-info" data-toggle="tooltip" data-placement="top" title="Edit Row">
+                                                        <a href="{{ route('admin.permissions.edit', ['lang' => app()->getLocale(), 'permission' => $permission->id]) }}" class="icon bg-info" data-toggle="tooltip" data-placement="top" title="{{ __('admin.tooltips.edit_row') }}">
                                                             <i class="icon-edit"></i>
                                                         </a>
                                                         <form method="POST" id="delete_form_{{ $permission->id }}" class="d-inline delete_form" action="{{ route('admin.permissions.destroy', ['lang' => app()->getLocale(), 'permission' => $permission->id]) }}">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="icon red" data-toggle="tooltip" data-placement="top" title="Delete Row" onclick="checker(event, {{ $permission->id }})">
+                                                            <button type="submit" class="icon red" data-toggle="tooltip" data-placement="top" title="{{ __('admin.tooltips.delete_row') }}" onclick="checker(event, {{ $permission->id }})">
                                                                 <i class="icon-cancel"></i>
                                                             </button>
                                                         </form>

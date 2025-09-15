@@ -38,13 +38,13 @@
                                                 <td>{{ $role->name }}</td>
                                                 <td>
                                                     <div class="td-actions">
-                                                        <a href="{{ route('admin.roles.edit', ['lang' => app()->getLocale(), 'role' => $role->id]) }}" class="icon bg-info" data-toggle="tooltip" data-placement="top" title="Edit Row">
+                                                        <a href="{{ route('admin.roles.edit', ['lang' => app()->getLocale(), 'role' => $role->id]) }}" class="icon bg-info" data-toggle="tooltip" data-placement="top" title="{{ __('admin.tooltips.edit_row') }}">
                                                             <i class="icon-edit"></i>
                                                         </a>
                                                         <form method="POST" id="delete_form_{{ $role->id }}" class="d-inline delete_form" action="{{ route('admin.roles.destroy', ['lang' => app()->getLocale(), 'role' => $role->id]) }}">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="icon red" data-toggle="tooltip" data-placement="top" title="Delete Row" onclick="checker(event, {{ $role->id }})">
+                                                            <button type="submit" class="icon red" data-toggle="tooltip" data-placement="top" title="{{ __('admin.tooltips.delete_row') }}" onclick="checker(event, {{ $role->id }})">
                                                                 <i class="icon-cancel"></i>
                                                             </button>
                                                         </form>

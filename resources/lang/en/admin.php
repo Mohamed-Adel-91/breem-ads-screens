@@ -97,11 +97,33 @@ return [
         'hero_fail' => 'Only one hero section is allowed for this car model.'
     ],
 
+    'tooltips' => [
+        'edit_row' => 'Edit Row',
+        'delete_row' => 'Delete Row',
+    ],
+
     'pagination' => [
         'showing' => 'Showing',
         'to' => 'to',
         'of' => 'of',
         'results' => 'results',
+    ],
+    'activity_logs' => [
+        'filters' => [
+            'today_only' => "Today's results only",
+        ],
+        'table' => [
+            'description' => 'Description',
+            'causer' => 'Actor',
+            'properties' => 'Properties',
+        ],
+        'labels' => [
+            'user' => 'User:',
+            'email' => 'Email:',
+        ],
+        'messages' => [
+            'empty' => 'No activity log records match the criteria.',
+        ],
     ],
     'contact_submissions' => [
         'title' => 'Contact Submissions',
@@ -254,11 +276,46 @@ return [
         'upload_file' => 'Upload File',
         'youtube_link' => 'YouTube Link',
     ],
+
     'media_upload' => [
         'unsupported_video' => 'Your browser does not support the video tag.',
         'view_file' => 'View File',
         'no_media_selected' => 'No media selected',
         'preview_alt' => ':label Preview',
+    ],
+
+    'cms' => [
+        'page_details' => 'Page: :name (:slug)',
+        'type' => 'Type',
+        'order' => 'Order',
+        'inactive' => 'Inactive',
+        'update_order' => 'Update Order',
+        'toggle' => 'Toggle',
+        'delete' => 'Delete',
+        'section_data' => 'Section Data (:locale)',
+        'format' => 'Format',
+        'clear' => 'Clear',
+        'no_section_data' => 'No section data for this locale.',
+        'edit_json_hint' => "Edit JSON for this section's data. Stored per locale.",
+        'id' => 'ID',
+        'actions' => 'Actions',
+        'no_items' => 'No items in this section.',
+        'error' => 'Error',
+        'saved' => 'Saved',
+        'section_toggle_failed' => 'Could not toggle section',
+        'item_toggle_failed' => 'Could not toggle item',
+        'delete_failed' => 'Could not delete',
+        'section_data_updated' => 'Section data updated',
+        'section_data_save_failed' => 'Could not save section data',
+        'invalid_json' => 'Invalid JSON',
+        'invalid_json_fix' => 'Fix JSON then try again.',
+        'invalid_json_format' => 'Cannot format invalid JSON',
+        'clear_data_confirm' => 'Clear data?',
+        'clear_data_warning' => 'This will set {} for current locale',
+        'delete_section_confirm' => 'Delete section?',
+        'delete_item_confirm' => 'Delete item?',
+        'new_order' => 'New Order',
+
     ],
     'sweet_alert' => [
         'delete_title' => 'Are you sure to delete this item?',

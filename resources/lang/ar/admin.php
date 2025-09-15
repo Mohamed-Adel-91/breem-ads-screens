@@ -97,11 +97,33 @@ return [
         'hero_fail' => 'يُسمح بقسم رئيسي واحد فقط لهذا الطراز من السيارة...',
     ],
 
+    'tooltips' => [
+        'edit_row' => 'تعديل الصف',
+        'delete_row' => 'حذف الصف',
+    ],
+
     'pagination' => [
         'showing' => 'إظهار',
         'to' => 'إلى',
         'of' => 'من',
         'results' => 'نتائج',
+    ],
+    'activity_logs' => [
+        'filters' => [
+            'today_only' => 'نتائج اليوم فقط',
+        ],
+        'table' => [
+            'description' => 'الوصف',
+            'causer' => 'الفاعل',
+            'properties' => 'الخصائص',
+        ],
+        'labels' => [
+            'user' => 'المستخدم:',
+            'email' => 'البريد الإلكتروني:',
+        ],
+        'messages' => [
+            'empty' => 'لا توجد سجلات لسجل النشاط مطابقة للمعايير.',
+        ],
     ],
     'contact_submissions' => [
         'title' => 'طلبات التواصل',
@@ -259,11 +281,45 @@ return [
         'upload_file' => 'تحميل ملف',
         'youtube_link' => 'رابط يوتيوب',
     ],
+
     'media_upload' => [
         'unsupported_video' => 'متصفحك لا يدعم وسم الفيديو.',
         'view_file' => 'عرض الملف',
         'no_media_selected' => 'لم يتم اختيار وسائط',
         'preview_alt' => 'معاينة :label',
+    ],
+    'cms' => [
+        'page_details' => 'الصفحة: :name (:slug)',
+        'type' => 'النوع',
+        'order' => 'الترتيب',
+        'inactive' => 'غير مفعّل',
+        'update_order' => 'تحديث الترتيب',
+        'toggle' => 'تبديل الحالة',
+        'delete' => 'حذف',
+        'section_data' => 'بيانات القسم (:locale)',
+        'format' => 'تنسيق',
+        'clear' => 'مسح',
+        'no_section_data' => 'لا توجد بيانات لهذا القسم في هذه اللغة.',
+        'edit_json_hint' => 'حرّر بيانات JSON الخاصة بهذا القسم. يتم تخزينها لكل لغة.',
+        'id' => 'المعرّف',
+        'actions' => 'الإجراءات',
+        'no_items' => 'لا توجد عناصر في هذا القسم.',
+        'error' => 'خطأ',
+        'saved' => 'تم الحفظ',
+        'section_toggle_failed' => 'تعذّر تبديل حالة القسم',
+        'item_toggle_failed' => 'تعذّر تبديل حالة العنصر',
+        'delete_failed' => 'تعذّر الحذف',
+        'section_data_updated' => 'تم تحديث بيانات القسم',
+        'section_data_save_failed' => 'تعذّر حفظ بيانات القسم',
+        'invalid_json' => 'JSON غير صالح',
+        'invalid_json_fix' => 'يرجى تصحيح JSON ثم المحاولة مرة أخرى.',
+        'invalid_json_format' => 'لا يمكن تنسيق JSON غير الصالح',
+        'clear_data_confirm' => 'مسح البيانات؟',
+        'clear_data_warning' => 'سيتم تعيين {} للغة الحالية',
+        'delete_section_confirm' => 'هل تريد حذف القسم؟',
+        'delete_item_confirm' => 'هل تريد حذف العنصر؟',
+        'new_order' => 'ترتيب جديد',
+
     ],
     'sweet_alert' => [
         'delete_title' => 'هل أنت متأكد من حذف هذا العنصر؟',
