@@ -23,13 +23,30 @@ class PageSectionController extends Controller
             'order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'section_data' => ['nullable', 'array'],
+            'uploads' => ['nullable', 'array'],
+            'uploads.*' => ['nullable', 'file', 'max:30720'], // up to ~30MB
         ]);
 
-        DB::transaction(function () use ($section, $data) {
+        // Merge file uploads into section_data as paths
+        $sectionData = $data['section_data'] ?? (array) ($section->section_data ?? []);
+        $uploads = $request->file('uploads', []);
+        foreach ($uploads as $key => $file) {
+            if (!$file) continue;
+            // Store on public disk, then expose via storage path
+            $stored = $file->store('cms', 'public'); // cms/<file>
+            if ($stored) {
+                $sectionData[$key] = 'storage/' . $stored;
+            }
+        }
+
+        DB::transaction(function () use ($section, $data, $sectionData) {
             if (array_key_exists('type', $data)) $section->type = $data['type'];
             if (array_key_exists('order', $data)) $section->order = $data['order'];
             if (array_key_exists('is_active', $data)) $section->is_active = (bool) $data['is_active'];
-            if (array_key_exists('section_data', $data)) $section->section_data = $data['section_data'];
+            // Always persist computed section data if any provided/merged
+            if (!empty($sectionData) || array_key_exists('section_data', $data)) {
+                $section->section_data = $sectionData;
+            }
             $section->save();
         });
 

@@ -36,6 +36,9 @@
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
+                                @php
+                                    $secData = is_array($section->section_data) ? $section->section_data : (array)($section->section_data ?? []);
+                                @endphp
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h6 class="mb-2">Section Data ({{ app()->getLocale() }})</h6>
                                     <div class="btn-group btn-group-sm">
@@ -44,7 +47,51 @@
                                         <button class="btn btn-primary" onclick="saveSectionData({{ $section->id }})">Save</button>
                                     </div>
                                 </div>
-                                <textarea id="secdata_{{ $section->id }}" class="form-control font-monospace" rows="8">@json($section->section_data, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)</textarea>
+
+                                @if (empty($secData))
+                                    <div class="alert alert-light border">No section data for this locale.</div>
+                                @else
+                                    <form id="secform_{{ $section->id }}" class="row g-3">
+                                        @foreach ($secData as $key => $value)
+                                            @php
+                                                $label = \Illuminate\Support\Str::headline($key);
+                                                $isBool = is_bool($value) || $value === 1 || $value === 0 || $value === '1' || $value === '0' || (is_string($value) && in_array(strtolower($value), ['true','false']));
+                                                $boolChecked = is_bool($value) ? $value : in_array($value, [1, '1', 'true', 'TRUE', true], true);
+                                            @endphp
+
+                                            @if ($isBool)
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <input type="checkbox" class="form-check-input sec-checkbox" id="sec_{{ $section->id }}_{{ $key }}" data-key="{{ $key }}" @checked($boolChecked)>
+                                                        <label for="sec_{{ $section->id }}_{{ $key }}" class="form-check-label">{{ $label }}</label>
+                                                    </div>
+                                                </div>
+                                            @elseif (\Illuminate\Support\Str::contains($key, ['_path', '_url']))
+                                                <div class="col-12">
+                                                    @include('admin.layouts.components.media-upload', [
+                                                        'label' => $label,
+                                                        'name' => "uploads[$key]",
+                                                        'inputId' => "upload_{$section->id}_{$key}",
+                                                        'previewPath' => media_path($value),
+                                                    ])
+                                                    <input type="hidden" class="sec-current-value" data-key="{{ $key }}" value="{{ $value }}">
+                                                </div>
+                                            @elseif (is_string($value))
+                                                <div class="col-12">
+                                                    <label class="form-label" for="sec_{{ $section->id }}_{{ $key }}">{{ $label }}</label>
+                                                    <textarea id="sec_{{ $section->id }}_{{ $key }}" class="form-control sec-text" data-key="{{ $key }}" rows="3">{{ $value }}</textarea>
+                                                </div>
+                                            @else
+                                                <div class="col-12">
+                                                    <label class="form-label">{{ $label }}</label>
+                                                    <pre class="bg-light border rounded p-2 mb-0">{{ json_encode($value, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT) }}</pre>
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    </form>
+                                @endif
+
+                                <textarea id="secdata_{{ $section->id }}" class="form-control font-monospace mt-3" rows="8" style="display:none;">@json($section->section_data, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)</textarea>
                                 <small class="text-muted">Edit JSON for this section's data. Stored per locale.</small>
                             </div>
 
@@ -120,6 +167,48 @@ function deleteSection(id) {
     })
 }
 function saveSectionData(id) {
+    const form = document.getElementById(`secform_${id}`);
+    if (form) {
+        const fd = new FormData();
+        // Text fields
+        form.querySelectorAll('.sec-text').forEach(el => {
+            const key = el.dataset.key;
+            fd.append(`section_data[${key}]`, el.value ?? '');
+        });
+        // Checkboxes (always send explicit 1/0)
+        form.querySelectorAll('.sec-checkbox').forEach(el => {
+            const key = el.dataset.key;
+            fd.append(`section_data[${key}]`, el.checked ? 1 : 0);
+        });
+        // Existing path values (used when no new file selected)
+        const currentPaths = {};
+        form.querySelectorAll('.sec-current-value').forEach(el => {
+            currentPaths[el.dataset.key] = el.value || '';
+        });
+        // Files for uploads[...] and fallbacks to current path
+        const uploadInputs = form.querySelectorAll('input[type="file"][name^="uploads["]');
+        uploadInputs.forEach(input => {
+            // name pattern uploads[key]
+            const m = input.name.match(/^uploads\[(.+)\]$/);
+            const key = m ? m[1] : null;
+            if (!key) return;
+            if (input.files && input.files[0]) {
+                fd.append(input.name, input.files[0]);
+            } else {
+                // Keep current path as string if no file selected
+                if (Object.prototype.hasOwnProperty.call(currentPaths, key)) {
+                    fd.append(`section_data[${key}]`, currentPaths[key] ?? '');
+                }
+            }
+        });
+
+        axios.patch(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/sections/${id}`, fd)
+            .then(()=> Swal.fire('Saved', 'Section data updated', 'success'))
+            .catch(()=> Swal.fire('Error','Could not save section data','error'));
+        return;
+    }
+
+    // Fallback: raw JSON textarea
     const ta = document.getElementById(`secdata_${id}`);
     let parsed;
     try { parsed = ta.value.trim() ? JSON.parse(ta.value) : {}; }
