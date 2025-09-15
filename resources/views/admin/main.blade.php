@@ -16,7 +16,7 @@
                 <!-- Row start -->
                 <div class="row gutters">
                     <div class="col-12">
-                        <h2> مرحبا بك  ...!!</h2>
+                        <h2>{{ __('admin.messages.welcome') }}</h2>
                     </div>
                 </div>
                 <!-- Row end -->

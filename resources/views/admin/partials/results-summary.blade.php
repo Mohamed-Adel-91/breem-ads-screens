@@ -2,9 +2,9 @@
 <div class="row mb-3">
     <div class="col-12">
         <div class="alert alert-info">
-            <strong>النتائج: </strong> {{ $data->total() }} {{ $label ?? 'سجلات' }} موجوده
+            <strong>{{ __('admin.results_summary.heading') }}</strong> {{ $data->total() }} {{ $label ?? __('admin.results_summary.records') }} {{ __('admin.results_summary.available') }}
             @if (collect(request()->except('page'))->filter()->isNotEmpty())
-                (تمت تصفيتها)
+                {{ __('admin.results_summary.filtered') }}
             @endif
         </div>
     </div>

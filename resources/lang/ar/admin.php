@@ -68,6 +68,10 @@ return [
         'english' => 'الإنجليزية',
         'arabic' => 'العربية',
     ],
+    'dashboard' => [
+        'title' => 'لوحة التحكم',
+        'logged_in_message' => 'لقد قمت بتسجيل الدخول!',
+    ],
     'footer' => [
         'copyright' => '© حقوق الطبع والنشر ' . date('Y') . '. جميع الحقوق محفوظة. تم التطوير بواسطة Frame&Code.',
     ],
@@ -93,6 +97,7 @@ return [
         'close' => 'إغلاق',
     ],
     'messages' => [
+        'welcome' => 'مرحباً بك...!!',
         'loading' => 'جاري التحميل...',
         'hero_fail' => 'يُسمح بقسم رئيسي واحد فقط لهذا الطراز من السيارة...',
     ],
@@ -107,6 +112,12 @@ return [
         'to' => 'إلى',
         'of' => 'من',
         'results' => 'نتائج',
+    ],
+    'results_summary' => [
+        'heading' => 'النتائج:',
+        'records' => 'سجلات',
+        'available' => 'موجوده',
+        'filtered' => '(تمت تصفيتها)',
     ],
     'activity_logs' => [
         'filters' => [

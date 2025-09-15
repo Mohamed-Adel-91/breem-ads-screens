@@ -41,6 +41,17 @@
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    const jsTranslations = {
+        formNotFound: @json(__('js.form_not_found')),
+        enterTextHere: @json(__('js.enter_text_here')),
+        maxCharacters: @json(__('js.max_characters')),
+        bootstrapMultiselectNotLoaded: @json(__('js.bootstrap_multiselect_not_loaded')),
+        selectAll: @json(__('js.select_all')),
+        allSelected: @json(__('js.all_selected')),
+        chooseRoles: @json(__('js.choose_roles')),
+        choosePermissions: @json(__('js.choose_permissions')),
+    };
+
     function checker(ev, item) {
         ev.preventDefault();
         Swal.fire({
@@ -55,9 +66,10 @@
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                var form = document.getElementById('delete_form_' + item);
+                const formId = 'delete_form_' + item;
+                var form = document.getElementById(formId);
                 if (form) form.submit();
-                else console.error('Form not found: delete_form_' + item);
+                else console.error(jsTranslations.formNotFound.replace(':id', formId));
             } else {
                 Swal.fire(
                     '{{ __('admin.sweet_alert.cancelled') }}',
@@ -81,7 +93,7 @@
     $(function() {
         /* Summernote */
         $('.summernote').summernote({
-            placeholder: 'Enter text here...',
+            placeholder: jsTranslations.enterTextHere,
             tabsize: 2,
             height: 200,
             toolbar: [
@@ -109,8 +121,8 @@
             var max = $textarea.data('maxlength');
             var $editor = $textarea.next('.note-editor');
             var $countEl = $(
-                '<span class="char-counter">Max Characters (<span class="char-count text-muted">0</span>/' +
-                (max || '∞') + ')</span>');
+                '<span class="char-counter">' + jsTranslations.maxCharacters +
+                ' (<span class="char-count text-muted">0</span>/' + (max || '∞') + ')</span>');
             $editor.after($countEl);
 
             function updateCount() {
@@ -128,7 +140,7 @@
 
         /* Multiselect */
         if (typeof $.fn.multiselect !== 'function') {
-            console.error('bootstrap-multiselect لم يتم تحميله.');
+            console.error(jsTranslations.bootstrapMultiselectNotLoaded);
             return;
         }
 
@@ -147,8 +159,8 @@
             }
             $el.multiselect({
                 includeSelectAllOption: true,
-                selectAllText: 'تحديد الكل',
-                allSelectedText: 'تم تحديد الكل',
+                selectAllText: jsTranslations.selectAll,
+                allSelectedText: jsTranslations.allSelected,
                 nonSelectedText: nonText,
                 buttonWidth: '100%',
                 buttonClass: 'btn btn-light w-100 text-start',
@@ -167,7 +179,7 @@
                 }
             });
         }
-        initMulti($('#roles'), 'اختر الأدوار');
-        initMulti($('#permissions'), 'اختر الصلاحيات');
+        initMulti($('#roles'), jsTranslations.chooseRoles);
+        initMulti($('#permissions'), jsTranslations.choosePermissions);
     });
 </script>

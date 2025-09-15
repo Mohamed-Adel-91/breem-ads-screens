@@ -68,6 +68,10 @@ return [
         'english' => 'English',
         'arabic' => 'Arabic',
     ],
+    'dashboard' => [
+        'title' => 'Dashboard',
+        'logged_in_message' => "You're logged in!",
+    ],
     'footer' => [
         'copyright' => '© Copyright ' . date('Y') . '. All right reserved. Developed by Frame&Code.',
     ],
@@ -93,6 +97,7 @@ return [
         'close' => 'Close',
     ],
     'messages' => [
+        'welcome' => 'Welcome...!!',
         'loading' => 'Loading...',
         'hero_fail' => 'Only one hero section is allowed for this car model.'
     ],
@@ -107,6 +112,12 @@ return [
         'to' => 'to',
         'of' => 'of',
         'results' => 'results',
+    ],
+    'results_summary' => [
+        'heading' => 'Results:',
+        'records' => 'records',
+        'available' => 'available',
+        'filtered' => '(Filtered)',
     ],
     'activity_logs' => [
         'filters' => [
