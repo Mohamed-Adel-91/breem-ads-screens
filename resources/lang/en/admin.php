@@ -49,6 +49,12 @@ return [
         'compare_features' => 'Compare Features',
         'compare_features_values' => 'Compare Features Values',
         'compare_features_values_images' => 'Compare Features Values Images',
+        'website_cms' => 'Website CMS',
+        'home_page' => 'Home Page',
+        'who_we_are' => 'Who We Are',
+        'contact_us' => 'Contact Us',
+        'contact_submissions' => 'Contact Submissions',
+        'all_submissions' => 'All Submissions',
         'cash_and_installments' => 'Cash & Installments',
     ],
     'header' => [
@@ -61,6 +67,9 @@ return [
         'home' => 'Home',
         'english' => 'English',
         'arabic' => 'Arabic',
+    ],
+    'footer' => [
+        'copyright' => '© Copyright ' . date('Y') . '. All right reserved. Developed by Frame&Code.',
     ],
     'table' => [
         'first_name' => 'First Name',
@@ -81,10 +90,41 @@ return [
         'reset' => 'Reset',
         'export_excel' => 'Export Excel',
         'new' => 'New',
+        'close' => 'Close',
     ],
     'messages' => [
         'loading' => 'Loading...',
         'hero_fail' => 'Only one hero section is allowed for this car model.'
+    ],
+
+    'pagination' => [
+        'showing' => 'Showing',
+        'to' => 'to',
+        'of' => 'of',
+        'results' => 'results',
+    ],
+    'contact_submissions' => [
+        'title' => 'Contact Submissions',
+        'table' => [
+            'id' => 'ID',
+            'type' => 'Type',
+            'name' => 'Name',
+            'phone' => 'Phone',
+            'email' => 'Email',
+            'created_at' => 'Created',
+            'actions' => 'Actions',
+        ],
+        'actions' => [
+            'view' => 'View',
+            'delete' => 'Delete',
+            'payload' => 'Payload',
+        ],
+        'messages' => [
+            'empty' => 'No submissions',
+            'payload_error_title' => 'Error',
+            'payload_error_text' => 'Could not parse payload',
+        ],
+
     ],
     'forms' => [
         'know_more_entity' => 'Know More Entity',
@@ -213,6 +253,12 @@ return [
         'video_source' => 'Video Source',
         'upload_file' => 'Upload File',
         'youtube_link' => 'YouTube Link',
+    ],
+    'media_upload' => [
+        'unsupported_video' => 'Your browser does not support the video tag.',
+        'view_file' => 'View File',
+        'no_media_selected' => 'No media selected',
+        'preview_alt' => ':label Preview',
     ],
     'sweet_alert' => [
         'delete_title' => 'Are you sure to delete this item?',

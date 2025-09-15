@@ -42,10 +42,10 @@
         </div>
         <div class="d-flex justify-content-center">
             <p class="small text-muted">
-                {{ __('Showing') }} <span class="fw-semibold">{{ $data->firstItem() }}</span>
-                {{ __('to') }} <span class="fw-semibold">{{ $data->lastItem() }}</span>
-                {{ __('of') }} <span class="fw-semibold">{{ $data->total() }}</span>
-                {{ __('results') }}
+                {{ __('admin.pagination.showing') }} <span class="fw-semibold">{{ $data->firstItem() }}</span>
+                {{ __('admin.pagination.to') }} <span class="fw-semibold">{{ $data->lastItem() }}</span>
+                {{ __('admin.pagination.of') }} <span class="fw-semibold">{{ $data->total() }}</span>
+                {{ __('admin.pagination.results') }}
             </p>
         </div>
     </div>

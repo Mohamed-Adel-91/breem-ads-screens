@@ -3,7 +3,7 @@
     <!-- jquery latest version -->
     @include('admin.layouts.scripts.js')
     <div class="footer-area text-center">
-        <p>© Copyright {{ date('Y') }}. All right reserved. Developed by <a href="#">Frame&Code</a>.</p>
+        <p>{{ __('admin.footer.copyright') }}</p>
     </div>
 </footer>
 <!-- footer area end-->

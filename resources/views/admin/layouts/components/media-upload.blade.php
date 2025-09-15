@@ -18,24 +18,24 @@
             @if ($isVideoFile)
                 <video controls class="img-thumbnail" style="max-height: 200px; width: auto;">
                     <source src="{{ asset($previewPath) }}" type="video/mp4">
-                    Your browser does not support the video tag.
+                    {{ __('media_upload.unsupported_video') }}
                 </video>
             @elseif ($isPdfFile)
                 <a href="{{ asset($previewPath) }}" target="_blank" class="btn btn-outline-primary">
-                    View File
+                    {{ __('media_upload.view_file') }}
                 </a>
             @else
-                <img src="{{ asset($previewPath) }}" alt="{{ $label }} Preview" class="img-thumbnail"
+                <img src="{{ asset($previewPath) }}" alt="{{ __('media_upload.preview_alt', ['label' => $label]) }}" class="img-thumbnail"
                     style="max-height: 200px; width: auto;">
             @endif
         @else
-            <p>No media selected</p>
+            <p>{{ __('media_upload.no_media_selected') }}</p>
             <img src="" class="img-thumbnail" style="max-height: 200px; width: auto; display: none;">
             <video controls class="img-thumbnail" style="max-height: 200px; width: auto; display: none;">
                 <source src="" type="video/mp4">
-                Your browser does not support the video tag.
+                {{ __('media_upload.unsupported_video') }}
             </video>
-            <a href="" target="_blank" class="btn btn-outline-primary pdf-preview" style="display: none;">View File</a>
+            <a href="" target="_blank" class="btn btn-outline-primary pdf-preview" style="display: none;">{{ __('media_upload.view_file') }}</a>
         @endif
     </div>
 </div>

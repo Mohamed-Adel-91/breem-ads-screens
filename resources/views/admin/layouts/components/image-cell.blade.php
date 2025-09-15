@@ -10,7 +10,7 @@
             style="background-color:white; padding:20px; border-radius:5px; position:relative; max-width:90%; max-height:90%;">
             <img id="simpleModalImage" src="" style="max-width:100%; max-height:80vh;">
             <div style="text-align:right; margin-top:10px;">
-                <button onclick="closeSimpleModal()" class="btn btn-secondary">Close</button>
+                <button onclick="closeSimpleModal()" class="btn btn-secondary">{{ __('admin.buttons.close') }}</button>
             </div>
         </div>
     </div>

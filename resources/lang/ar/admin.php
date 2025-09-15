@@ -49,6 +49,12 @@ return [
         'compare_features' => 'مميزات المقارنة',
         'compare_features_values' => 'قيم مميزات المقارنة',
         'compare_features_values_images' => 'صور قيم مميزات المقارنة',
+        'website_cms' => 'إدارة محتوى الموقع',
+        'home_page' => 'الصفحة الرئيسية',
+        'who_we_are' => 'من نحن',
+        'contact_us' => 'تواصل معنا',
+        'contact_submissions' => 'رسائل تواصل معنا',
+        'all_submissions' => 'جميع الرسائل',
         'cash_and_installments' => 'النقدي والتقسيط',
     ],
     'header' => [
@@ -61,6 +67,9 @@ return [
         'home' => 'الرئيسية',
         'english' => 'الإنجليزية',
         'arabic' => 'العربية',
+    ],
+    'footer' => [
+        'copyright' => '© حقوق الطبع والنشر ' . date('Y') . '. جميع الحقوق محفوظة. تم التطوير بواسطة Frame&Code.',
     ],
     'table' => [
         'first_name' => 'الاسم الأول',
@@ -81,10 +90,41 @@ return [
         'reset' => 'إعادة تعيين',
         'export_excel' => 'تصدير إكسل',
         'new' => 'جديد',
+        'close' => 'إغلاق',
     ],
     'messages' => [
         'loading' => 'جاري التحميل...',
         'hero_fail' => 'يُسمح بقسم رئيسي واحد فقط لهذا الطراز من السيارة...',
+    ],
+
+    'pagination' => [
+        'showing' => 'إظهار',
+        'to' => 'إلى',
+        'of' => 'من',
+        'results' => 'نتائج',
+    ],
+    'contact_submissions' => [
+        'title' => 'طلبات التواصل',
+        'table' => [
+            'id' => 'المعرّف',
+            'type' => 'النوع',
+            'name' => 'الاسم',
+            'phone' => 'الهاتف',
+            'email' => 'البريد الإلكتروني',
+            'created_at' => 'تاريخ الإنشاء',
+            'actions' => 'الإجراءات',
+        ],
+        'actions' => [
+            'view' => 'عرض',
+            'delete' => 'حذف',
+            'payload' => 'البيانات',
+        ],
+        'messages' => [
+            'empty' => 'لا توجد طلبات تواصل',
+            'payload_error_title' => 'خطأ',
+            'payload_error_text' => 'تعذّر تحليل البيانات',
+        ],
+
     ],
     'forms' => [
         'know_more_entity' => 'صفحة اعرف المزيد عن موديل السيارة',
@@ -218,6 +258,12 @@ return [
         'video_source' => 'مصدر الفيديو',
         'upload_file' => 'تحميل ملف',
         'youtube_link' => 'رابط يوتيوب',
+    ],
+    'media_upload' => [
+        'unsupported_video' => 'متصفحك لا يدعم وسم الفيديو.',
+        'view_file' => 'عرض الملف',
+        'no_media_selected' => 'لم يتم اختيار وسائط',
+        'preview_alt' => 'معاينة :label',
     ],
     'sweet_alert' => [
         'delete_title' => 'هل أنت متأكد من حذف هذا العنصر؟',
