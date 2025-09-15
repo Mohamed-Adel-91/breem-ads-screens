@@ -1,49 +1,53 @@
-<!-- ################## Pagination Part Start ################## -->
-<div>
-    <div class="d-flex p-4 justify-content-center">
-        <nav aria-label="Page navigation example">
-            <ul class="pagination">
-                <!-- Previous Page Link -->
-                @if ($data->onFirstPage())
-                    <li class="page-item disabled"><span class="page-link">السابق</span></li>
-                @else
-                    <li class="page-item"><a class="page-link" href="{{ $data->previousPageUrl() }}"
-                            rel="prev">السابق</a>
-                    </li>
-                @endif
-                <!-- Pagination Elements -->
-                @foreach ($data->links()->elements as $element)
-                    <!-- Make three dots -->
-                    @if (is_string($element))
-                        <li class="page-item disabled"><span class="page-link">{{ $element }}</span></li>
+@if ($data->hasPages())
+    <div>
+        <div class="d-flex p-4 justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {{-- Previous Page Link --}}
+                    @if ($data->onFirstPage())
+                        <li class="page-item disabled"><span class="page-link">@lang('pagination.previous')</span></li>
+                    @else
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $data->previousPageUrl() }}" rel="prev">@lang('pagination.previous')</a>
+                        </li>
                     @endif
-                    <!-- Array Of Links -->
-                    @if (is_array($element))
-                        @foreach ($element as $page => $url)
-                            @if ($page == $data->currentPage())
-                                <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
-                            @else
-                                <li class="page-item"><a class="page-link"
-                                        href="{{ $url }}">{{ $page }}</a>
-                                </li>
-                            @endif
-                        @endforeach
+
+                    {{-- Pagination Elements --}}
+                    @foreach ($elements as $element)
+                        {{-- "Three Dots" Separator --}}
+                        @if (is_string($element))
+                            <li class="page-item disabled"><span class="page-link">{{ $element }}</span></li>
+                        @endif
+
+                        {{-- Array Of Links --}}
+                        @if (is_array($element))
+                            @foreach ($element as $page => $url)
+                                @if ($page == $data->currentPage())
+                                    <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
+                                @else
+                                    <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
+                                @endif
+                            @endforeach
+                        @endif
+                    @endforeach
+
+                    {{-- Next Page Link --}}
+                    @if ($data->hasMorePages())
+                        <li class="page-item"><a class="page-link" href="{{ $data->nextPageUrl() }}" rel="next">@lang('pagination.next')</a></li>
+                    @else
+                        <li class="page-item disabled"><span class="page-link">@lang('pagination.next')</span></li>
                     @endif
-                @endforeach
-                <!-- Next Page Link -->
-                @if ($data->hasMorePages())
-                    <li class="page-item"><a class="page-link" href="{{ $data->nextPageUrl() }}" rel="next">التالي</a>
-                    </li>
-                @else
-                    <li class="page-item disabled"><span class="page-link">التالي</span></li>
-                @endif
-            </ul>
-        </nav>
+                </ul>
+            </nav>
+        </div>
+        <div class="d-flex justify-content-center">
+            <p class="small text-muted">
+                {{ __('Showing') }} <span class="fw-semibold">{{ $data->firstItem() }}</span>
+                {{ __('to') }} <span class="fw-semibold">{{ $data->lastItem() }}</span>
+                {{ __('of') }} <span class="fw-semibold">{{ $data->total() }}</span>
+                {{ __('results') }}
+            </p>
+        </div>
     </div>
-    <div class="d-flex justify-content-center">
-        <p>
-            عرض  {{ $data->firstItem() }}من  {{ $data->lastItem() }} في مجموع  {{ $data->total() }} نتائج
-        </p>
-    </div>
-</div>
-<!-- ################## Pagination Part Start ################## -->
+@endif
+

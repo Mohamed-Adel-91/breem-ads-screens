@@ -10,11 +10,11 @@ class ContactSubmissionController extends Controller
 {
     public function index(Request $request)
     {
-        $submissions = ContactSubmission::query()
+        $data = ContactSubmission::query()
             ->latest()
             ->paginate(20);
 
-        return view('admin.contact_submissions.index', compact('submissions'));
+        return view('admin.contact_submissions.index', compact('data'));
     }
 
     public function destroy(ContactSubmission $submission)

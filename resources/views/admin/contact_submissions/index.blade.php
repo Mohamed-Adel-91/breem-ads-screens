@@ -21,24 +21,24 @@
                             </tr>
                         </thead>
                         <tbody>
-                        @forelse($submissions as $s)
+                        @forelse($data as $item)
                             <tr>
-                                <td>{{ $s->id }}</td>
-                                <td><span class="badge bg-primary">{{ $s->type }}</span></td>
-                                <td>{{ $s->name }}</td>
-                                <td>{{ $s->phone }}</td>
-                                <td>{{ $s->email }}</td>
-                                <td>{{ $s->created_at?->format('Y-m-d H:i') }}</td>
+                                <td>{{ $item->id }}</td>
+                                <td><span class="badge bg-primary">{{ $item->type }}</span></td>
+                                <td>{{ $item->name }}</td>
+                                <td>{{ $item->phone }}</td>
+                                <td>{{ $item->email }}</td>
+                                <td>{{ $item->created_at?->format('Y-m-d H:i') }}</td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-info" onclick="showPayload({{ $s->id }})">View</button>
-                                        <form id="delete_form_{{ $s->id }}" action="{{ route('admin.contact_submissions.destroy', ['lang'=>app()->getLocale(),'submission'=>$s->id]) }}" method="POST">
+                                        <button class="btn btn-outline-info" onclick="showPayload({{ $item->id }})">View</button>
+                                        <form id="delete_form_{{ $item->id }}" action="{{ route('admin.contact_submissions.destroy', ['lang'=>app()->getLocale(),'submission'=>$item->id]) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-outline-danger" onclick="checker(event, '{{ $s->id }}')">Delete</button>
+                                            <button type="submit" class="btn btn-outline-danger" onclick="checker(event, '{{ $item->id }}')">Delete</button>
                                         </form>
                                     </div>
-                                    <script type="application/json" id="payload_{{ $s->id }}">@json($s->payload)</script>
+                                    <script type="application/json" id="payload_{{ $item->id }}">@json($item->payload)</script>
                                 </td>
                             </tr>
                         @empty
@@ -47,7 +47,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="card-footer">{{ $submissions->links('admin.partials.pagination') }}</div>
+                @include('admin.partials.pagination', ['data' => $data])
             </div>
         </div>
     </div>
