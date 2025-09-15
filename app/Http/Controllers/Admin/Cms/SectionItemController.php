@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\SectionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SectionItemController extends Controller
 {
     public function toggle(Request $request, SectionItem $item)
     {
         // Prefer a dedicated column if exists; if not, fall back to JSON `data.is_active`
-        if (\Schema::hasColumn($item->getTable(), 'is_active')) {
+        if (Schema::hasColumn($item->getTable(), 'is_active')) {
             $item->is_active = ! (bool) ($item->is_active ?? true);
         } else {
             $data = $item->data ?? [];
@@ -36,7 +37,7 @@ class SectionItemController extends Controller
             if (array_key_exists('order', $data)) $item->order = $data['order'];
             if (array_key_exists('data', $data)) $item->data = $data['data'];
             if (array_key_exists('is_active', $data)) {
-                if (\Schema::hasColumn($item->getTable(), 'is_active')) {
+                if (Schema::hasColumn($item->getTable(), 'is_active')) {
                     $item->is_active = (bool) $data['is_active'];
                 } else {
                     $tmp = $item->data ?? [];

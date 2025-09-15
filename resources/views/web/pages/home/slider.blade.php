@@ -1,5 +1,5 @@
 @php
-    // No section-level settings used here
+    //
 @endphp
 
 <section class="slider">
@@ -22,7 +22,7 @@
                         $itemData = array_replace($fallback, $current);
                     @endphp
                     <div class="swiper-slide">
-                        <img src="{{ asset(media_path($itemData['image_url'] ?? '')) }}" alt="{{ $itemData['alt'] ?? '' }}">
+                        <img src="{{ asset(media_path($itemData['image_path'] ?? '')) }}" alt="{{ $itemData['alt'] ?? '' }}">
                     </div>
                 @endforeach
             </div>

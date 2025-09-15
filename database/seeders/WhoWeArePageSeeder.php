@@ -13,7 +13,7 @@ class WhoWeArePageSeeder extends Seeder
         DB::transaction(function () {
             $page = Page::updateOrCreate(
                 ['slug' => 'whoweare'],
-                ['name' => 'About / من نحن', 'is_active' => true]
+                ['name' => 'Who We Are / من نحن', 'is_active' => true]
             );
 
             // Section: second_banner
@@ -23,8 +23,8 @@ class WhoWeArePageSeeder extends Seeder
                     'order' => 1,
                     'is_active' => true,
                     'section_data' => [
-                        'ar' => ['image_url' => 'img/banner2.png'],
-                        'en' => ['image_url' => 'img/banner2.png'],
+                        'ar' => ['image_path' => 'img/banner2.png'],
+                        'en' => ['image_path' => 'img/banner2.png'],
                     ],
                 ]
             );
@@ -104,8 +104,8 @@ class WhoWeArePageSeeder extends Seeder
                     'order' => 3,
                     'is_active' => true,
                     'section_data' => [
-                        'ar' => ['image_url' => 'img/port.png'],
-                        'en' => ['image_url' => 'img/port.png'],
+                        'ar' => ['image_path' => 'img/port.png'],
+                        'en' => ['image_path' => 'img/port.png'],
                     ],
                 ]
             );

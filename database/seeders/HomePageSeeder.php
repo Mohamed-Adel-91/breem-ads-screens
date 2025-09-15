@@ -23,7 +23,7 @@ class HomePageSeeder extends Seeder
              * ------------------------------------------------*/
             $home = Page::updateOrCreate(
                 ['slug' => 'home'],
-                ['name' => 'الصفحة الرئيسية', 'is_active' => true]
+                ['name' => 'Homepage /الصفحة الرئيسية', 'is_active' => true]
             );
 
             /** ------------------------------------------------
@@ -47,14 +47,14 @@ class HomePageSeeder extends Seeder
                 ],
                 [
                     'order' => 2,
-                    'label' => ['ar' => 'من نحن', 'en' => 'About'],
+                    'label' => ['ar' => 'من نحن', 'en' => 'Who We Are'],
                     'url'   => '/whoweare',
                     'target' => null,
                     'is_active' => true,
                 ],
                 [
                     'order' => 3,
-                    'label' => ['ar' => 'تواصل معنا', 'en' => 'Contact'],
+                    'label' => ['ar' => 'تواصل معنا', 'en' => 'Contact Us'],
                     'url'   => '/contact-us',
                     'target' => null,
                     'is_active' => true,
@@ -78,7 +78,7 @@ class HomePageSeeder extends Seeder
 
             Setting::updateOrCreate(
                 ['key' => 'header.logo'],
-                ['value' => ['image_url' => 'img/logo.png', 'alt' => ['ar' => 'بريم', 'en' => 'Breem']]]
+                ['value' => ['image_path' => 'img/logo.png', 'alt' => ['ar' => 'بريم', 'en' => 'Breem']]]
             );
 
             /** ------------------------------------------------
@@ -120,7 +120,7 @@ class HomePageSeeder extends Seeder
                     'is_active' => true,
                     'section_data' => [
                         'ar' => [
-                            'video_url' => '/assets/showreel.mp4',
+                            'video_path' => '/assets/showreel.mp4',
                             'autoplay'  => true,
                             'loop'      => true,
                             'muted'     => true,
@@ -128,7 +128,7 @@ class HomePageSeeder extends Seeder
                             'playsinline' => true,
                         ],
                         'en' => [
-                            'video_url' => '/assets/showreel.mp4',
+                            'video_path' => '/assets/showreel.mp4',
                             'autoplay'  => true,
                             'loop'      => true,
                             'muted'     => true,
@@ -166,11 +166,11 @@ class HomePageSeeder extends Seeder
                     'order' => $i + 1,
                     'data' => [
                         'ar' => [
-                            'image_url' => $path,
+                            'image_path' => $path,
                             'alt' => 'شريك',
                         ],
                         'en' => [
-                            'image_url' => $path,
+                            'image_path' => $path,
                             'alt' => 'Partner',
                         ],
                     ],
@@ -213,22 +213,22 @@ class HomePageSeeder extends Seeder
             SectionItem::where('section_id', $stats->id)->delete();
             $statsItems = [
                 [
-                    'icon_url' => 'img/tv_with_remote.svg',
+                    'icon_path' => 'img/tv_with_remote.svg',
                     'number'   => ['ar' => '٦٥۸+', 'en' => '658+'],
                     'label'    => ['ar' => 'شاشات الإعلانات', 'en' => 'Ad Screens'],
                 ],
                 [
-                    'icon_url' => 'img/social_white_no_bg.png',
+                    'icon_path' => 'img/social_white_no_bg.png',
                     'number'   => ['ar' => '۲۱٥+', 'en' => '215+'],
                     'label'    => ['ar' => 'اعلانات سوشيال', 'en' => 'Social Ads'],
                 ],
                 [
-                    'icon_url' => 'img/screen.png',
+                    'icon_path' => 'img/screen.png',
                     'number'   => ['ar' => '۳٤۷+', 'en' => '347+'],
                     'label'    => ['ar' => 'تصوير إعلانات', 'en' => 'Ad Production'],
                 ],
                 [
-                    'icon_url' => 'img/laptop.svg',
+                    'icon_path' => 'img/laptop.svg',
                     'number'   => ['ar' => '٦٥۸+', 'en' => '658+'],
                     'label'    => ['ar' => 'تصميم و تطوير مواقع', 'en' => 'Websites Development'],
                 ],
@@ -240,12 +240,12 @@ class HomePageSeeder extends Seeder
                     'order' => $i + 1,
                     'data'  => [
                         'ar' => [
-                            'icon_url' => $it['icon_url'],
+                            'icon_path' => $it['icon_path'],
                             'number'   => $it['number']['ar'],
                             'label'    => $it['label']['ar'],
                         ],
                         'en' => [
-                            'icon_url' => $it['icon_url'],
+                            'icon_path' => $it['icon_path'],
                             'number'   => $it['number']['en'],
                             'label'    => $it['label']['en'],
                         ],
@@ -266,16 +266,16 @@ class HomePageSeeder extends Seeder
                             'title' => 'أين تجدنا',
                             'brochure' => [
                                 'text' => 'حمل الكتيب للمزيد',
-                                'icon_url' => 'img/download.png',
-                                'link_url' => '#',
+                                'icon_path' => 'img/download.png',
+                                'brochure_path' => '#',
                             ],
                         ],
                         'en' => [
                             'title' => 'Where to find us',
                             'brochure' => [
                                 'text' => 'Download brochure',
-                                'icon_url' => 'img/download.png',
-                                'link_url' => '#',
+                                'icon_path' => 'img/download.png',
+                                'brochure_path' => '#',
                             ],
                         ],
                     ],
@@ -284,12 +284,12 @@ class HomePageSeeder extends Seeder
 
             SectionItem::where('section_id', $where->id)->delete();
             $whereSlides = [
-                ['image_url' => 'img/first.png',  'overlay_text' => ['ar' => 'العربية',       'en' => 'Al Arabiya']],
-                ['image_url' => 'img/second.png', 'overlay_text' => ['ar' => 'ميديا السعودية', 'en' => 'Media Saudi']],
-                ['image_url' => 'img/where3.png', 'overlay_text' => ['ar' => 'نصف مليون',     'en' => 'Half Million']],
-                ['image_url' => 'img/first.png',  'overlay_text' => ['ar' => 'العربية',       'en' => 'Al Arabiya']],
-                ['image_url' => 'img/second.png', 'overlay_text' => ['ar' => 'ميديا السعودية', 'en' => 'Media Saudi']],
-                ['image_url' => 'img/where3.png', 'overlay_text' => ['ar' => 'نصف مليون',     'en' => 'Half Million']],
+                ['image_path' => 'img/first.png',  'overlay_text' => ['ar' => 'العربية',       'en' => 'Al Arabiya']],
+                ['image_path' => 'img/second.png', 'overlay_text' => ['ar' => 'ميديا السعودية', 'en' => 'Media Saudi']],
+                ['image_path' => 'img/where3.png', 'overlay_text' => ['ar' => 'نصف مليون',     'en' => 'Half Million']],
+                ['image_path' => 'img/first.png',  'overlay_text' => ['ar' => 'العربية',       'en' => 'Al Arabiya']],
+                ['image_path' => 'img/second.png', 'overlay_text' => ['ar' => 'ميديا السعودية', 'en' => 'Media Saudi']],
+                ['image_path' => 'img/where3.png', 'overlay_text' => ['ar' => 'نصف مليون',     'en' => 'Half Million']],
             ];
             foreach ($whereSlides as $i => $slide) {
                 SectionItem::create([
@@ -297,11 +297,11 @@ class HomePageSeeder extends Seeder
                     'order' => $i + 1,
                     'data' => [
                         'ar' => [
-                            'image_url' => $slide['image_url'],
+                            'image_path' => $slide['image_path'],
                             'overlay_text' => $slide['overlay_text']['ar'],
                         ],
                         'en' => [
-                            'image_url' => $slide['image_url'],
+                            'image_path' => $slide['image_path'],
                             'overlay_text' => $slide['overlay_text']['en'],
                         ],
                     ],
@@ -322,16 +322,16 @@ class HomePageSeeder extends Seeder
                             'text'  => 'فريقنا المتخصص مستعد دائمًا للرد على استفساراتك وتلبية واحتياجاتك. نحن هنا لتحويل رؤيتك الإعلانية إلى واقع.',
                             'link_text' => 'تواصل معنا',
                             'link_url'  => '/contact-us',
-                            'image_url' => 'img/screen_image.png',
-                            'overlay_image_url' => 'img/ads.png',
+                            'image_path' => 'img/screen_image.png',
+                            'overlay_image_path' => 'img/ads.png',
                         ],
                         'en' => [
                             'title' => 'Run Your Ad Now',
                             'text'  => 'Our specialist team is ready to answer your questions and turn your ad vision into reality.',
                             'link_text' => 'Contact Us',
                             'link_url'  => '/contact-us',
-                            'image_url' => 'img/screen_image.png',
-                            'overlay_image_url' => 'img/ads.png',
+                            'image_path' => 'img/screen_image.png',
+                            'overlay_image_path' => 'img/ads.png',
                         ],
                     ],
                 ]
@@ -356,14 +356,14 @@ class HomePageSeeder extends Seeder
                 ],
                 [
                     'order' => 2,
-                    'label' => ['ar' => 'من نحن', 'en' => 'About'],
+                    'label' => ['ar' => 'من نحن', 'en' => 'Who We Are'],
                     'url'   => '/whoweare',
                     'target' => null,
                     'is_active' => true,
                 ],
                 [
                     'order' => 3,
-                    'label' => ['ar' => 'تواصل معنا', 'en' => 'Contact'],
+                    'label' => ['ar' => 'تواصل معنا', 'en' => 'Contact Us'],
                     'url'   => '/contact-us',
                     'target' => null,
                     'is_active' => true,
@@ -375,7 +375,7 @@ class HomePageSeeder extends Seeder
 
             Setting::updateOrCreate(
                 ['key' => 'footer.logo'],
-                ['value' => ['image_url' => 'img/whitelogo.png', 'alt' => ['ar' => 'بريم', 'en' => 'Breem']]]
+                ['value' => ['image_path' => 'img/whitelogo.png', 'alt' => ['ar' => 'بريم', 'en' => 'Breem']]]
             );
 
             Setting::updateOrCreate(

@@ -23,8 +23,8 @@ class ContactUsPageSeeder extends Seeder
                     'order' => 1,
                     'is_active' => true,
                     'section_data' => [
-                        'ar' => ['image_url' => 'img/contact.png'],
-                        'en' => ['image_url' => 'img/contact.png'],
+                        'ar' => ['image_path' => 'img/contact.png'],
+                        'en' => ['image_path' => 'img/contact.png'],
                     ],
                 ]
             );
@@ -56,14 +56,14 @@ class ContactUsPageSeeder extends Seeder
                     'is_active' => true,
                     'section_data' => [
                         'ar' => [
-                            'background_image' => 'img/map.png',
+                            'background_image_path' => 'img/map.png',
                             'title' => 'موقعنا',
                             'address' => 'شارع بني تميم متفرع من الملك فهد – حي المروج، مبنى رقم 2174، الدور الخامس الرمز البريدي 12282 – الرياض، المملكة العربية السعودية.',
                             'phone_label' => 'رقم جوال : ۹۹٦٥٤۳۳٤+',
                             'whatsapp_label' => 'رقم الواتس اب : ۹۹٦٥٤۳۳٤+',
                         ],
                         'en' => [
-                            'background_image' => 'img/map.png',
+                            'background_image_path' => 'img/map.png',
                             'title' => 'Our Location',
                             'address' => 'Bani Tamim St., from King Fahd – Al Muruj, Bldg. 2174, 5th Floor, Postal Code 12282 – Riyadh, KSA.',
                             'phone_label' => 'Mobile: +99654334',
@@ -80,8 +80,8 @@ class ContactUsPageSeeder extends Seeder
                     'order' => 4,
                     'is_active' => true,
                     'section_data' => [
-                        'ar' => ['image_url' => 'img/banner_sa.png'],
-                        'en' => ['image_url' => 'img/banner_sa.png'],
+                        'ar' => ['image_path' => 'img/banner_sa.png'],
+                        'en' => ['image_path' => 'img/banner_sa.png'],
                     ],
                 ]
             );

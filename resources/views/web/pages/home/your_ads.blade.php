@@ -23,11 +23,11 @@
             </div>
             <div class="col-12 col-sm-6">
                 <div class="position-relative w-100">
-                    @if(!empty($section_data['image_url']))
-                        <img src="{{ asset(media_path($section_data['image_url'])) }}" alt="" class="w-100">
+                    @if(!empty($section_data['image_path']))
+                        <img src="{{ asset(media_path($section_data['image_path'])) }}" alt="" class="w-100">
                     @endif
-                    @if(!empty($section_data['overlay_image_url']))
-                        <img src="{{ asset(media_path($section_data['overlay_image_url'])) }}" alt="" class="position-absolute second_image">
+                    @if(!empty($section_data['overlay_image_path']))
+                        <img src="{{ asset(media_path($section_data['overlay_image_path'])) }}" alt="" class="position-absolute second_image">
                     @endif
                 </div>
             </div>

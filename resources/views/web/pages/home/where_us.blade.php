@@ -35,7 +35,7 @@
                     @endphp
                     <div class="swiper-slide">
                         <div class="location-card">
-                            <img src="{{ asset(media_path($itemData['image_url'] ?? '')) }}" alt="{{ $itemData['overlay_text'] ?? '' }}">
+                            <img src="{{ asset(media_path($itemData['image_path'] ?? '')) }}" alt="{{ $itemData['overlay_text'] ?? '' }}">
                             <div class="overlay">
                                 <p>{{ $itemData['overlay_text'] ?? '' }}</p>
                             </div>
@@ -60,8 +60,8 @@
                 }
             @endphp
             <div class="button_book">
-                <a href="{{ $brochure['link_url'] ?? '#' }}">
-                    {{ $brochure['text'] ?? '' }} <img src="{{ asset(media_path($brochure['icon_url'] ?? '')) }}" alt="">
+                <a href="{{ $brochure['brochure_path'] ?? '#' }}">
+                    {{ $brochure['text'] ?? '' }} <img src="{{ asset(media_path($brochure['icon_path'] ?? '')) }}" alt="">
                 </a>
             </div>
         </div>

@@ -1,5 +1,5 @@
 @php
-    // No section-level settings used here
+    // 
 @endphp
 
 <section class="media">
@@ -23,7 +23,7 @@
                 <div class="col-12 col-sm-6 col-md-3">
                     <div class="box">
                         <div class="image">
-                            <img class="w-100" src="{{ asset(media_path($itemData['icon_url'] ?? '')) }}" alt="">
+                            <img class="w-100" src="{{ asset(media_path($itemData['icon_path'] ?? '')) }}" alt="">
                         </div>
                         <div>
                             <span>{{ $itemData['number'] ?? '' }}</span>

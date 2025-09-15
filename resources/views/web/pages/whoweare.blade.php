@@ -16,7 +16,7 @@
         @if ($banner)
             <section class="second_banner">
                 <div class="banner_image">
-                    <img src="{{ data_get($banner->getTranslations('section_data'), "$locale.image_url") }}" alt="">
+                    <img src="{{ data_get($banner->getTranslations('section_data'), "$locale.image_path") }}" alt="">
                 </div>
             </section>
         @endif
@@ -54,7 +54,7 @@
 
         @if ($port)
             <section class="port_image">
-                <img src="{{ data_get($port->getTranslations('section_data'), "$locale.image_url") }}" alt="">
+                <img src="{{ data_get($port->getTranslations('section_data'), "$locale.image_path") }}" alt="">
             </section>
         @endif
     </main>

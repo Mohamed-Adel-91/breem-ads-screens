@@ -16,7 +16,7 @@
 <section class="banner">
     <div class="banner_video">
         <video
-            src="{{ asset(media_path($section_data['video_url'] ?? '')) }}"
+            src="{{ asset(media_path($section_data['video_path'] ?? '')) }}"
             @if (!empty($section_data['autoplay'] ?? null)) autoplay @endif
             @if (!empty($section_data['loop'] ?? null)) loop @endif
             @if (!empty($section_data['playsinline'] ?? null)) playsinline @endif

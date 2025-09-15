@@ -17,7 +17,7 @@
         @if ($banner)
             <section class="second_banner">
                 <div class="banner_image">
-                    <img src="{{ data_get($banner->getTranslations('section_data'), "$locale.image_url") }}" alt="">
+                    <img src="{{ data_get($banner->getTranslations('section_data'), "$locale.image_path") }}" alt="">
                 </div>
             </section>
         @endif
@@ -41,7 +41,7 @@
         @if ($map)
             <section class="map">
                 <div class="back_image">
-                    <img class="bann" src="{{ data_get($map->getTranslations('section_data'), "$locale.background_image") }}" alt="">
+                    <img class="bann" src="{{ data_get($map->getTranslations('section_data'), "$locale.background_image_path") }}" alt="">
                     <div class="overlay"></div>
                     <div class="map_content">
                         <h3>{{ data_get($map->getTranslations('section_data'), "$locale.title") }}</h3>
@@ -67,7 +67,7 @@
 
         @if ($bottom)
             <section class="w-100">
-                <img class="w-100" src="{{ data_get($bottom->getTranslations('section_data'), "$locale.image_url") }}" alt="">
+                <img class="w-100" src="{{ data_get($bottom->getTranslations('section_data'), "$locale.image_path") }}" alt="">
             </section>
         @endif
     </main>
