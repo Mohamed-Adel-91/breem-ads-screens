@@ -10,7 +10,7 @@
                 <a class="navbar-brand" href="#">
                     <img src="img/logo.png" alt=""></a>
                 <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-4 pages">
+                    <ul class="navbar-nav mb-2 mb-lg-0 gap-4 pages">
                         @php $locale = app()->getLocale(); @endphp
                         @foreach ($headerMenu?->items ?? [] as $item)
                             @php $target = $item->target ?? '_self'; @endphp
@@ -23,7 +23,7 @@
                     </ul>
                 </div>
                 <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 pages">
+                    <ul class="navbar-nav mb-2 mb-lg-0 pages">
                         <li class="nav-item">
                             <a class="nav-link" href="#">{{ $layoutSettings['phone'] ?? '' }}</a>
                         </li>

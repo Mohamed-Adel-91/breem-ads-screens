@@ -112,10 +112,13 @@ header .pages li a:hover::after {
   border-radius: 12px 0 0 12px;
   overflow: hidden;
 }
+
 [lang="en"] .sidebar {
   left: 0;
   right: auto;
+  border-radius: 0 12px 12px 0;
 }
+
 .sidebar ul {
   padding: 0;
   margin: 0;
@@ -243,8 +246,15 @@ header .pages li a:hover::after {
 }
 
 .media {
-  background-color: #41A8A6;
+  /* background-color: #41A8A6; */
   padding: 2rem 0;
+  background-image: url('../img/backkk.png');
+  background-size: cover;
+
+}
+
+.media .box {
+  /* background-image: url('../img/backkk.png'); */
 }
 
 .media .box div {
@@ -432,14 +442,14 @@ footer .footer .container {
 }
 
 /* توسيط اللوجو */
-footer .footer .logo-footer {
+/* footer .footer .logo-footer {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100%;
   flex-direction: column;
   gap: 2rem;
-}
+} */
 
 /* اللينكات */
 footer .footer .linkss {
@@ -742,6 +752,10 @@ header .pages li a:hover {
   width: 100% !important;
   text-align: right !important;
   color: #212529 !important;
+      display: flex
+;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .contact_us .multiselect-container {
@@ -886,4 +900,15 @@ header .pages li a:hover {
   margin-left: auto;
   margin-right: 0;
 
+}
+
+textarea {
+      background: #fff !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 1rem !important;
+    width: 100% !important;
+    text-align: right !important;
+    color: #212529 !important;
 }

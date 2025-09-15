@@ -3,9 +3,14 @@
         <div class="overlay"></div> <!-- أوفرلاي -->
         <div class="container">
             <div class="row">
-                <div class="col-md-4 d-flex justify-content-center align-items-center">
+                <div class="col-md-4 d-flex justify-content-center align-items-center flex-column">
                     <div class="logo-footer">
                         <img src="img/whitelogo.png" alt="">
+                    </div>
+                    <div class="footer_data mt-4">
+                        <p> شارع بني تميم متفرع من الملك فهد – حي المروج، مبنى رقم 2174، الدور الخامس الرمز البريدي 12282 – الرياض، المملكة العربية السعودية.</p>
+                        <p>۹۹٦٥٤۳۳٤+</p>
+                        <p>info@breem.com</p>
                     </div>
                 </div>
                 <div class="col-md-4">
