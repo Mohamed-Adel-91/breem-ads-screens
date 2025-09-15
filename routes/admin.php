@@ -5,12 +5,18 @@ use App\Http\Controllers\Admin\{
     AdminController,
     ProfileController,
     ActivityLogController,
+    ContactSubmissionController,
     SettingController,
     DashboardController,
     SeoMetaController,
     UserController,
     PermissionController,
     RoleController
+};
+use App\Http\Controllers\Admin\Cms\{
+    PageController,
+    PageSectionController,
+    SectionItemController,
 };
 use Illuminate\Support\Facades\Route;
 
@@ -80,20 +86,19 @@ Route::group([
     'middleware' => ['auth:admin'],
 ], function () {
     // Pages edit
-    Route::get('/cms/pages/{slug}/edit', [\App\Http\Controllers\Admin\Cms\PageController::class, 'edit'])->name('cms.pages.edit');
+    Route::get('/cms/pages/{slug}/edit', [PageController::class, 'edit'])->name('cms.pages.edit');
 
     // Sections
-    Route::patch('/cms/sections/{section}/toggle', [\App\Http\Controllers\Admin\Cms\PageSectionController::class, 'toggle'])->name('cms.sections.toggle');
-    Route::patch('/cms/sections/{section}', [\App\Http\Controllers\Admin\Cms\PageSectionController::class, 'update'])->name('cms.sections.update');
-    Route::delete('/cms/sections/{section}', [\App\Http\Controllers\Admin\Cms\PageSectionController::class, 'destroy'])->name('cms.sections.destroy');
+    Route::patch('/cms/sections/{section}/toggle', [PageSectionController::class, 'toggle'])->name('cms.sections.toggle');
+    Route::patch('/cms/sections/{section}', [PageSectionController::class, 'update'])->name('cms.sections.update');
+    Route::delete('/cms/sections/{section}', [PageSectionController::class, 'destroy'])->name('cms.sections.destroy');
 
     // Items
-    Route::patch('/cms/items/{item}/toggle', [\App\Http\Controllers\Admin\Cms\SectionItemController::class, 'toggle'])->name('cms.items.toggle');
-    Route::patch('/cms/items/{item}', [\App\Http\Controllers\Admin\Cms\SectionItemController::class, 'update'])->name('cms.items.update');
-    Route::delete('/cms/items/{item}', [\App\Http\Controllers\Admin\Cms\SectionItemController::class, 'destroy'])->name('cms.items.destroy');
+    Route::patch('/cms/items/{item}/toggle', [SectionItemController::class, 'toggle'])->name('cms.items.toggle');
+    Route::patch('/cms/items/{item}', [SectionItemController::class, 'update'])->name('cms.items.update');
+    Route::delete('/cms/items/{item}', [SectionItemController::class, 'destroy'])->name('cms.items.destroy');
 
     // Contact submissions
-    Route::get('/contact-submissions', [\App\Http\Controllers\Admin\ContactSubmissionController::class, 'index'])->name('contact_submissions.index');
-    Route::delete('/contact-submissions/{submission}', [\App\Http\Controllers\Admin\ContactSubmissionController::class, 'destroy'])->name('contact_submissions.destroy');
+    Route::get('/contact-submissions', [ContactSubmissionController::class, 'index'])->name('contact_submissions.index');
+    Route::delete('/contact-submissions/{submission}', [ContactSubmissionController::class, 'destroy'])->name('contact_submissions.destroy');
 });
-

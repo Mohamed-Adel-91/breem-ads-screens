@@ -1174,6 +1174,11 @@ ul.header-tasks:last-child {
     left: 15px;
 }
 
+.page-content {
+    position: relative;
+    top: -20px;
+}
+
 .page-wrapper .page-content {
     display: inline-block;
     width: 100%;
