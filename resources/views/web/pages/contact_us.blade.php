@@ -83,9 +83,9 @@
 
             $('#modelselect').multiselect({
                 includeSelectAllOption: true,
-                selectAllText: 'تحديد الكل',
-                allSelectedText: 'تم تحديد الكل',
-                nonSelectedText: 'اختر الأماكن',
+                selectAllText: "{{ __('multiselect.selectAllText') }}",
+                allSelectedText: "{{ __('multiselect.allSelectedText') }}",
+                nonSelectedText: "{{ __('multiselect.nonSelectedText') }}",
                 buttonWidth: '100%',
                 buttonClass: 'btn btn-light w-100 text-start',
                 maxHeight: 200,
@@ -100,4 +100,3 @@
         });
     </script>
 @endpush
-
