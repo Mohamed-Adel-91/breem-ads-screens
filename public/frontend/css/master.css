@@ -193,6 +193,11 @@ header .pages li a:hover::after {
     max-width: -webkit-fill-available;
   }
 }
+@media (max-width: 768px) {
+.sidebar{
+  display: none;
+}
+}
 
 .banner {
   height: 100vh;
@@ -863,7 +868,8 @@ header .pages li a:hover {
   .map .map_content {
     position: relative;
     top: auto;
-    right: auto;
+    right: auto !important;
+    left: auto !important;
     transform: none;
     max-width: 100%;
     padding: 20px;

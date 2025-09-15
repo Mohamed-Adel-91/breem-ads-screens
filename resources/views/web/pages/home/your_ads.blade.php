@@ -13,7 +13,7 @@
     $section_data = array_replace($fallback, $current);
 @endphp
 
-<section class="your_ads">
+<section class="your_ads my-4">
     <div class="container">
         <div class="row">
             <div class="col-12 col-sm-6">
