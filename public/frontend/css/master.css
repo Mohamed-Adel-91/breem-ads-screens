@@ -112,7 +112,10 @@ header .pages li a:hover::after {
   border-radius: 12px 0 0 12px;
   overflow: hidden;
 }
-
+[lang="en"] .sidebar {
+  left: 0;
+  right: auto;
+}
 .sidebar ul {
   padding: 0;
   margin: 0;
@@ -216,7 +219,7 @@ header .pages li a:hover::after {
   font-weight: 700;
   font-style: Bold;
   font-size: 3.5rem;
-  text-align: right;
+  /* text-align: right; */
   color: #41A8A6;
 
 }
@@ -225,7 +228,7 @@ header .pages li a:hover::after {
   font-weight: 400;
   font-size: 1.2rem;
   line-height: 35px;
-  text-align: right;
+  /* text-align: right; */
 }
 
 .Knowmore .link_button {
@@ -376,7 +379,7 @@ header .pages li a:hover::after {
   font-family: "cairo";
   font-weight: 700;
   font-size: 50px;
-  text-align: right;
+  /* text-align: right; */
   color: #41A8A6;
 }
 
@@ -385,7 +388,7 @@ header .pages li a:hover::after {
   font-family: Cairo;
   font-weight: 400;
   font-size: 22px;
-  text-align: right;
+  /* text-align: right; */
 }
 
 .your_ads .link {
@@ -435,7 +438,7 @@ footer .footer .logo-footer {
   align-items: center;
   height: 100%;
   flex-direction: column;
-    gap: 2rem;
+  gap: 2rem;
 }
 
 /* اللينكات */
@@ -538,7 +541,7 @@ header .pages li a:hover {
   color: #41A8A6;
   font-weight: 700;
   font-size: 40px;
-  text-align: right;
+  /* text-align: right; */
   margin-bottom: 1rem;
 
 }
@@ -547,21 +550,31 @@ header .pages li a:hover {
   color: #1D1D1D;
   font-weight: 400;
   font-size: 22px;
-  text-align: right;
+  /* text-align: right; */
   text-align: justify;
 }
 
 .who_we h4 {
   font-weight: 700;
   font-size: 20px;
-  text-align: right;
+  /* text-align: right; */
   color: #1D1D1D;
+}
+
+.h4image {
+  margin-left: 1.5rem;
+}
+
+[lang="en"] .h4image {
+  margin-right: 1.5rem;
+  margin-left: auto;
+  transform: rotate(180deg);
 }
 
 .who_we ul li {
   font-weight: 400;
   font-size: 20px;
-  text-align: right;
+  /* text-align: right; */
   color: #1D1D1D;
   list-style: square;
 }
@@ -598,11 +611,16 @@ header .pages li a:hover {
   border-radius: 10px;
 }
 
+[lang="en"] .contact_us h2::after {
+  left: 0;
+  right: auto;
+}
+
 .contact_us h2 {
   color: #41A8A6;
   font-weight: 700;
   font-size: 40px;
-  text-align: right;
+  /* text-align: right; */
   margin-bottom: 1rem;
   position: relative;
 }
@@ -611,7 +629,7 @@ header .pages li a:hover {
   color: #1D1D1D;
   font-weight: 400;
   font-size: 22px;
-  text-align: right;
+  /* text-align: right; */
   text-align: justify;
   transition: transform 0.5s ease-in-out;
 
@@ -732,7 +750,7 @@ header .pages li a:hover {
   border-radius: 0.375rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   width: 100% !important;
-  text-align: right;
+  /* text-align: right; */
   max-height: 200px;
   overflow-y: auto;
 }
@@ -783,6 +801,12 @@ header .pages li a:hover {
   background: linear-gradient(90deg, rgba(0, 0, 0, 0) 23.58%, rgba(1, 71, 71, 0.86) 64.73%);
 }
 
+[lang="en"] .map .back_image .overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(275deg, rgba(0, 0, 0, 0) 23.58%, rgba(1, 71, 71, 0.86) 64.73%);
+}
+
 .map .map_content {
   position: absolute;
   top: 50%;
@@ -793,21 +817,30 @@ header .pages li a:hover {
   direction: rtl;
   z-index: 40;
 }
-.map .map_content h3{
-font-weight: 700;
-font-size: 40px;
-margin-bottom: 24px;
+
+[lang="en"] .map .map_content {
+  left: 5%;
+  direction: ltr;
+  right: auto;
 }
-.map .map_content p{
-font-weight: 500;
-font-size: 1.5rem;
+
+.map .map_content h3 {
+  font-weight: 700;
+  font-size: 40px;
+  margin-bottom: 24px;
+}
+
+.map .map_content p {
+  font-weight: 500;
+  font-size: 1.5rem;
 
 }
 
-.map .map_content .contact{
-font-weight: 400;
-font-size: 24px;
+.map .map_content .contact {
+  font-weight: 400;
+  font-size: 24px;
 }
+
 @media (max-width: 768px) {
   .map .back_image {
     height: auto;
@@ -820,8 +853,10 @@ font-size: 24px;
     transform: none;
     max-width: 100%;
     padding: 20px;
-    background: rgba(1, 71, 71, 0.85); /* عشان النص يبقى واضح */
-    margin-top: -4px; /* يركب على الصورة */
+    background: rgba(1, 71, 71, 0.85);
+    /* عشان النص يبقى واضح */
+    margin-top: -4px;
+    /* يركب على الصورة */
   }
 
   .map .map_content h3 {
@@ -839,4 +874,16 @@ font-size: 24px;
     width: 20px;
     margin-left: 8px;
   }
+}
+
+.pages {
+  margin-right: auto;
+  margin-left: 0;
+
+}
+
+[lang="en"] .pages {
+  margin-left: auto;
+  margin-right: 0;
+
 }

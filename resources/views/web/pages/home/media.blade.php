@@ -23,7 +23,7 @@
                 <div class="col-12 col-sm-6 col-md-3">
                     <div class="box">
                         <div class="image">
-                            <img class="w-100" src="{{ asset(media_path($itemData['icon_path'] ?? '')) }}" alt="">
+                            <img class="w-100 h-100  object-contain;" src="{{ asset(media_path($itemData['icon_path'] ?? '')) }}" alt="">
                         </div>
                         <div>
                             <span>{{ $itemData['number'] ?? '' }}</span>

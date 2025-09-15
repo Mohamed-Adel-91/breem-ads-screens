@@ -37,7 +37,7 @@
                             $bullets = data_get($data, "$locale.bullets", []);
                         @endphp
                         <div class="mt-5 bottom-desc">
-                            <h4><img src="img/Vector.png" class="ms-4" alt="">{{ $title }}</h4>
+                            <h4><img src="img/Vector.png" class="h4image" alt="">{{ $title }}</h4>
                             <p>{{ $text }}</p>
                             @if (!empty($bullets))
                                 <ul>
