@@ -95,6 +95,7 @@ class SettingController extends Controller
             'pageName' => 'Settings',
             'data' => $vm,
             'lang' => $lang,
+            'settings' => Setting::orderBy('key')->get(),
         ]);
     }
 
@@ -169,6 +170,28 @@ class SettingController extends Controller
             $upsertTrans('address', $validated['address']);
         }
 
+        // Generic key/value handler from dynamic settings form
+        $dynamic = $request->input('settings', []);
+        if (is_array($dynamic) && !empty($dynamic)) {
+            foreach ($dynamic as $key => $val) {
+                // Attempt to decode JSON arrays entered in textarea
+                $saveVal = $val;
+                if (is_string($val)) {
+                    $trim = trim($val);
+                    if (($trim !== '') && ($trim[0] === '{' || $trim[0] === '[')) {
+                        $decoded = json_decode($trim, true);
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            $saveVal = $decoded;
+                        }
+                    }
+                }
+
+                $s = Setting::firstOrCreate(['key' => $key]);
+                $s->value = $saveVal;
+                $s->save();
+            }
+        }
+
         activity()
             ->causedBy(Auth::guard('admin')->user())
             ->withProperties($validated)
@@ -178,4 +201,3 @@ class SettingController extends Controller
         return redirect()->route('admin.settings.edit', ['lang' => $lang]);
     }
 }
-
