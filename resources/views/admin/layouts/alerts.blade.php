@@ -1,30 +1,28 @@
-@if (Session::has('error'))
-    <div class="mb-3">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert"
-            style="color: #fff;display: flex;justify-content: space-between;">
-            {{ Session::get('error') }}
-            {{-- <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"><span>x</span></button> --}}
-        </div>
+@if (session('error'))
+    <div class="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        {{ session('error') }}
     </div>
 @endif
-@if (Session::has('success'))
-    <div class="mb-3">
-        <div class="alert alert-success alert-dismissible fade show" role="alert" style="color: #fff;display: flex;justify-content: space-between;">
-            {{ Session::get('success') }}
-            {{-- <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"><span>x</span></button> --}}
-        </div>
+
+@if (session('success'))
+    <div class="rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+        {{ session('success') }}
     </div>
 @endif
+
+@if (session('status'))
+    <div class="rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
+        {{ session('status') }}
+    </div>
+@endif
+
 @if ($errors->any())
-    <div class="mb-3">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert"
-            style="color: #fff;display: flex;justify-content: space-between;">
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-            {{-- <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"><span>x</span></button> --}}
-        </div>
+    <div class="rounded-md border border-red-200 bg-red-50 p-4">
+        <h3 class="text-sm font-semibold text-red-800">{{ __('There were some problems with your input:') }}</h3>
+        <ul class="mt-2 list-disc space-y-1 ps-5 text-sm text-red-700">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
     </div>
 @endif

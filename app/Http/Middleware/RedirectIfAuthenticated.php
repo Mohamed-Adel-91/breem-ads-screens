@@ -23,7 +23,7 @@ class RedirectIfAuthenticated
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
                 return $guard === 'admin'
-                    ? redirect()->route('admin.index',['lang' => app()->getLocale()])
+                    ? redirect()->route('admin.dashboard', ['lang' => app()->getLocale()])
                     : redirect()->route('web.home',['lang' => app()->getLocale()]);
             }
         }

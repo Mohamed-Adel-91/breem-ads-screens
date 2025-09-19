@@ -56,8 +56,8 @@
                         @if (Auth::guard('admin')->user()->hasRole('super-admin'))
                             <a href="{{ route('admin.admins.create',['lang' => app()->getLocale()]) }}"><i class="icon-user1"></i> {{ __('admin.header.create_admin') }}</a>
                             <a href="{{ route('admin.admins.index',['lang' => app()->getLocale()]) }}"><i class="icon-users"></i> {{ __('admin.header.admins_list') }}</a>
-                            <a href="{{ route('admin.activity_logs.index',['lang' => app()->getLocale()]) }}"
-                                class="{{ Request::is('dashboard/activity-logs') ? 'current-page' : '' }}">
+                            <a href="{{ route('admin.logs.index',['lang' => app()->getLocale()]) }}"
+                                class="{{ request()->routeIs('admin.logs.*') ? 'current-page' : '' }}">
                                 <i><i class="fas fa-history"></i></i> {{ __('admin.header.activity_logs') }}
                             </a>
                         @endif

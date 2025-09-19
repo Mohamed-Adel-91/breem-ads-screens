@@ -32,7 +32,16 @@ return [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+            'webhook_url' => env('SLACK_WEBHOOK_URL'),
         ],
+    ],
+
+    'screens' => [
+        'hmac_secret' => env('SCREENS_HMAC_SECRET'),
+        'signature_leeway' => env('SCREENS_SIGNATURE_LEEWAY', 300),
+        'heartbeat_interval' => env('SCREENS_HEARTBEAT_INTERVAL', 60),
+        'playlist_ttl' => env('SCREENS_PLAYLIST_TTL', 300),
+        'config_ttl' => env('SCREENS_CONFIG_TTL', 900),
     ],
 
 ];

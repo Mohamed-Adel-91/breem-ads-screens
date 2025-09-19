@@ -2,6 +2,8 @@
 @section('content')
     @php
         $primaryLocale = config('app.locale');
+        $englishLocale = in_array('en', $locales ?? []) ? 'en' : ($locales[0] ?? 'en');
+        $arabicLocale = in_array('ar', $locales ?? []) ? 'ar' : ($locales[1] ?? $englishLocale);
     @endphp
     <div class="page-wrapper">
         @include('admin.layouts.sidebar')
@@ -33,18 +35,32 @@
                             <button type="button" class="btn btn-sm btn-primary" id="add-who-item">{{ __('admin.buttons.new') }}</button>
                         </div>
                         <div class="card-body">
-                            <div class="row g-3">
-                                @foreach ($locales as $locale)
-                                    <div class="col-md-6">
-                                        <label class="form-label">Title ({{ strtoupper($locale) }})</label>
-                                        <input type="text" class="form-control" name="who_we[{{ $locale }}][title]"
-                                            value="{{ old("who_we.$locale.title", $whoWeData[$locale]['title'] ?? '') }}">
+                            <div class="row g-3 flex-md-row-reverse">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Title ({{ strtoupper($arabicLocale) }})</label>
+                                        <input type="text" class="form-control" dir="rtl"
+                                            name="who_we[{{ $arabicLocale }}][title]"
+                                            value="{{ old("who_we.$arabicLocale.title", $whoWeData[$arabicLocale]['title'] ?? '') }}">
                                     </div>
-                                    <div class="col-12">
-                                        <label class="form-label">Description ({{ strtoupper($locale) }})</label>
-                                        <textarea class="form-control" rows="4" name="who_we[{{ $locale }}][description]">{{ old("who_we.$locale.description", $whoWeData[$locale]['description'] ?? '') }}</textarea>
+                                    <div>
+                                        <label class="form-label">Description ({{ strtoupper($arabicLocale) }})</label>
+                                        <textarea class="form-control" rows="4" dir="rtl"
+                                            name="who_we[{{ $arabicLocale }}][description]">{{ old("who_we.$arabicLocale.description", $whoWeData[$arabicLocale]['description'] ?? '') }}</textarea>
                                     </div>
-                                @endforeach
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Title ({{ strtoupper($englishLocale) }})</label>
+                                        <input type="text" class="form-control" name="who_we[{{ $englishLocale }}][title]"
+                                            value="{{ old("who_we.$englishLocale.title", $whoWeData[$englishLocale]['title'] ?? '') }}">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Description ({{ strtoupper($englishLocale) }})</label>
+                                        <textarea class="form-control" rows="4"
+                                            name="who_we[{{ $englishLocale }}][description]">{{ old("who_we.$englishLocale.description", $whoWeData[$englishLocale]['description'] ?? '') }}</textarea>
+                                    </div>
+                                </div>
                             </div>
                             <hr>
                             <div id="who-items-container">
@@ -58,28 +74,54 @@
                                         </div>
                                         <div class="card-body">
                                             <input type="hidden" name="who_we[items][{{ $whoIndex }}][id]" value="{{ $item->id }}">
-                                            <div class="row g-3">
+                                            <div class="row g-3 align-items-start">
                                                 <div class="col-md-3">
                                                     <label class="form-label">Order</label>
                                                     <input type="number" class="form-control" name="who_we[items][{{ $whoIndex }}][order]"
                                                         value="{{ old("who_we.items.$whoIndex.order", $item->order) }}">
                                                 </div>
-                                                @foreach ($locales as $locale)
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Title ({{ strtoupper($locale) }})</label>
-                                                        <input type="text" class="form-control" name="who_we[items][{{ $whoIndex }}][title][{{ $locale }}]"
-                                                            value="{{ old("who_we.items.$whoIndex.title.$locale", $itemData[$locale]['title'] ?? '') }}">
+                                                <div class="col-md-9">
+                                                    <div class="row g-3 flex-md-row-reverse">
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Title ({{ strtoupper($arabicLocale) }})</label>
+                                                                <input type="text" class="form-control" dir="rtl"
+                                                                    name="who_we[items][{{ $whoIndex }}][title][{{ $arabicLocale }}]"
+                                                                    value="{{ old("who_we.items.$whoIndex.title.$arabicLocale", $itemData[$arabicLocale]['title'] ?? '') }}">
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Text ({{ strtoupper($arabicLocale) }})</label>
+                                                                <textarea class="form-control" rows="3" dir="rtl"
+                                                                    name="who_we[items][{{ $whoIndex }}][text][{{ $arabicLocale }}]">{{ old("who_we.items.$whoIndex.text.$arabicLocale", $itemData[$arabicLocale]['text'] ?? '') }}</textarea>
+                                                            </div>
+                                                            <div>
+                                                                <label class="form-label">Bullets ({{ strtoupper($arabicLocale) }})</label>
+                                                                <textarea class="form-control" rows="3" dir="rtl"
+                                                                    name="who_we[items][{{ $whoIndex }}][bullets][{{ $arabicLocale }}]">{{ old("who_we.items.$whoIndex.bullets.$arabicLocale", isset($itemData[$arabicLocale]['bullets']) ? implode("\n", $itemData[$arabicLocale]['bullets']) : '') }}</textarea>
+                                                                <small class="text-muted">Enter each bullet on a new line.</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Title ({{ strtoupper($englishLocale) }})</label>
+                                                                <input type="text" class="form-control"
+                                                                    name="who_we[items][{{ $whoIndex }}][title][{{ $englishLocale }}]"
+                                                                    value="{{ old("who_we.items.$whoIndex.title.$englishLocale", $itemData[$englishLocale]['title'] ?? '') }}">
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Text ({{ strtoupper($englishLocale) }})</label>
+                                                                <textarea class="form-control" rows="3"
+                                                                    name="who_we[items][{{ $whoIndex }}][text][{{ $englishLocale }}]">{{ old("who_we.items.$whoIndex.text.$englishLocale", $itemData[$englishLocale]['text'] ?? '') }}</textarea>
+                                                            </div>
+                                                            <div>
+                                                                <label class="form-label">Bullets ({{ strtoupper($englishLocale) }})</label>
+                                                                <textarea class="form-control" rows="3"
+                                                                    name="who_we[items][{{ $whoIndex }}][bullets][{{ $englishLocale }}]">{{ old("who_we.items.$whoIndex.bullets.$englishLocale", isset($itemData[$englishLocale]['bullets']) ? implode("\n", $itemData[$englishLocale]['bullets']) : '') }}</textarea>
+                                                                <small class="text-muted">Enter each bullet on a new line.</small>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Text ({{ strtoupper($locale) }})</label>
-                                                        <textarea class="form-control" rows="3" name="who_we[items][{{ $whoIndex }}][text][{{ $locale }}]">{{ old("who_we.items.$whoIndex.text.$locale", $itemData[$locale]['text'] ?? '') }}</textarea>
-                                                    </div>
-                                                    <div class="col-12">
-                                                        <label class="form-label">Bullets ({{ strtoupper($locale) }})</label>
-                                                        <textarea class="form-control" rows="3" name="who_we[items][{{ $whoIndex }}][bullets][{{ $locale }}]">{{ old("who_we.items.$whoIndex.bullets.$locale", isset($itemData[$locale]['bullets']) ? implode("\n", $itemData[$locale]['bullets']) : '') }}</textarea>
-                                                        <small class="text-muted">Enter each bullet on a new line.</small>
-                                                    </div>
-                                                @endforeach
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -120,26 +162,51 @@
                 <button type="button" class="btn btn-sm btn-outline-danger remove-who-item">&times;</button>
             </div>
             <div class="card-body">
-                <div class="row g-3">
+                <div class="row g-3 align-items-start">
                     <div class="col-md-3">
                         <label class="form-label">Order</label>
                         <input type="number" class="form-control" name="who_we[items][__INDEX__][order]">
                     </div>
-                    @foreach ($locales as $locale)
-                        <div class="col-md-6">
-                            <label class="form-label">Title ({{ strtoupper($locale) }})</label>
-                            <input type="text" class="form-control" name="who_we[items][__INDEX__][title][{{ $locale }}]">
+                    <div class="col-md-9">
+                        <div class="row g-3 flex-md-row-reverse">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Title ({{ strtoupper($arabicLocale) }})</label>
+                                    <input type="text" class="form-control" dir="rtl"
+                                        name="who_we[items][__INDEX__][title][{{ $arabicLocale }}]">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Text ({{ strtoupper($arabicLocale) }})</label>
+                                    <textarea class="form-control" rows="3" dir="rtl"
+                                        name="who_we[items][__INDEX__][text][{{ $arabicLocale }}]"></textarea>
+                                </div>
+                                <div>
+                                    <label class="form-label">Bullets ({{ strtoupper($arabicLocale) }})</label>
+                                    <textarea class="form-control" rows="3" dir="rtl"
+                                        name="who_we[items][__INDEX__][bullets][{{ $arabicLocale }}]"></textarea>
+                                    <small class="text-muted">Enter each bullet on a new line.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Title ({{ strtoupper($englishLocale) }})</label>
+                                    <input type="text" class="form-control"
+                                        name="who_we[items][__INDEX__][title][{{ $englishLocale }}]">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Text ({{ strtoupper($englishLocale) }})</label>
+                                    <textarea class="form-control" rows="3"
+                                        name="who_we[items][__INDEX__][text][{{ $englishLocale }}]"></textarea>
+                                </div>
+                                <div>
+                                    <label class="form-label">Bullets ({{ strtoupper($englishLocale) }})</label>
+                                    <textarea class="form-control" rows="3"
+                                        name="who_we[items][__INDEX__][bullets][{{ $englishLocale }}]"></textarea>
+                                    <small class="text-muted">Enter each bullet on a new line.</small>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Text ({{ strtoupper($locale) }})</label>
-                            <textarea class="form-control" rows="3" name="who_we[items][__INDEX__][text][{{ $locale }}]"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Bullets ({{ strtoupper($locale) }})</label>
-                            <textarea class="form-control" rows="3" name="who_we[items][__INDEX__][bullets][{{ $locale }}]"></textarea>
-                            <small class="text-muted">Enter each bullet on a new line.</small>
-                        </div>
-                    @endforeach
+                    </div>
                 </div>
             </div>
         </div>
