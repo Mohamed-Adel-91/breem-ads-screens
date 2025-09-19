@@ -19,7 +19,7 @@ class EnsureEmailVerified
     public function handle(Request $request, Closure $next)
     {
         if ($request->user() && $request->user()->is_verified === false) {
-            return $this->unauthenticatedResponse(__('api.email_not_verified'));
+            return response(__('api.email_not_verified'), 401);
         }
         return $next($request);
     }
