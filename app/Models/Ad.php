@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Enums\AdStatus;
+use App\Services\Screen\AdSchedulerService;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\Concerns\HasPivotEvents;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -18,6 +20,7 @@ class Ad extends Model
 {
     use HasFactory;
     use HasTranslations;
+    use HasPivotEvents;
 
     public const UPLOAD_FOLDER = 'upload/ads';
 
@@ -34,6 +37,27 @@ class Ad extends Model
      * @var array<int, string>
      */
     public array $translatable = ['title', 'description'];
+
+    protected static function booted(): void
+    {
+        static::pivotAttached(function (Ad $ad, string $relationName, array $pivotIds, array $pivotIdsAttributes): void {
+            if ($relationName === 'screens') {
+                app(AdSchedulerService::class)->forgetMany($pivotIds);
+            }
+        });
+
+        static::pivotUpdated(function (Ad $ad, string $relationName, array $pivotIds, array $pivotIdsAttributes): void {
+            if ($relationName === 'screens') {
+                app(AdSchedulerService::class)->forgetMany($pivotIds);
+            }
+        });
+
+        static::pivotDetached(function (Ad $ad, string $relationName, array $pivotIds): void {
+            if ($relationName === 'screens') {
+                app(AdSchedulerService::class)->forgetMany($pivotIds);
+            }
+        });
+    }
 
     /**
      * The attributes that should be cast.

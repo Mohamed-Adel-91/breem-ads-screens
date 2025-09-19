@@ -3,7 +3,6 @@
 namespace App\Services\Screen;
 
 use App\Enums\ScreenStatus;
-use App\Models\Ad;
 use App\Models\Screen;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
@@ -11,6 +10,11 @@ use Illuminate\Support\Collection;
 
 class ScreenApiService
 {
+    public function __construct(
+        protected AdSchedulerService $scheduler
+    ) {
+    }
+
     /**
      * Handle the initial handshake for a screen.
      *
@@ -88,44 +92,24 @@ class ScreenApiService
      */
     public function playlist(Screen $screen, ?string $ifNoneMatch = null): array
     {
-        $screen->loadMissing([
-            'ads' => function ($query): void {
-                $query->orderBy('play_order');
-            },
-            'ads.schedules',
-        ]);
+        $payload = $this->scheduler->forScreen($screen);
 
-        $items = $screen->ads
-            ->sortBy(fn (Ad $ad) => $ad->pivot->play_order)
-            ->values()
-            ->map(function (Ad $ad) use ($screen): array {
-                $schedule = $ad->schedules->firstWhere('screen_id', $screen->id);
+        /** @var \Illuminate\Support\Collection<int, array<string, mixed>> $items */
+        $items = collect($payload['items'] ?? []);
+        $screenModel = $payload['screen'] ?? $screen->fresh();
 
-                return [
-                    'id' => $ad->id,
-                    'ad_id' => $ad->id,
-                    'file_path' => $ad->file_path,
-                    'file_type' => $ad->file_type,
-                    'duration_seconds' => (int) $ad->duration_seconds,
-                    'play_order' => (int) $ad->pivot->play_order,
-                    'schedule' => $schedule ? [
-                        'start_time' => optional($schedule->start_time)->toAtomString(),
-                        'end_time' => optional($schedule->end_time)->toAtomString(),
-                        'is_active' => (bool) $schedule->is_active,
-                    ] : null,
-                ];
-            });
-
-        $etag = $this->makePlaylistEtag($screen, $items);
+        $etag = (string) ($payload['etag'] ?? ($screenModel
+            ? $this->makePlaylistEtag($screenModel, $items)
+            : sha1($items->toJson(JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE))));
         $unchanged = $ifNoneMatch && hash_equals($etag, $ifNoneMatch);
 
         return [
-            'screen' => $screen,
+            'screen' => $screenModel,
             'items' => $items,
             'etag' => $etag,
             'unchanged' => $unchanged,
-            'generated_at' => now(),
-            'expires_at' => now()->addSeconds($this->playlistTtl()),
+            'generated_at' => $payload['generated_at'] ?? now(),
+            'expires_at' => $payload['expires_at'] ?? now()->addSeconds($this->playlistTtl()),
         ];
     }
 
