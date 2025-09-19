@@ -166,9 +166,20 @@ class AdSchedulerService
             ->map(fn (Ad $ad) => $this->makeItem($ad, null))
             ->values();
 
-        return $scheduled
+        $items = $scheduled
             ->merge($fallback)
             ->sortBy('play_order')
+            ->values();
+
+        if ($items->isEmpty()) {
+            $fallbackItem = $this->makeConfiguredFallbackItem();
+
+            if ($fallbackItem) {
+                $items = collect([$fallbackItem]);
+            }
+        }
+
+        return $items
             ->values()
             ->all();
     }
@@ -222,7 +233,7 @@ class AdSchedulerService
     {
         $playOrder = (int) ($ad->pivot->play_order ?? 0);
 
-        return [
+        return $this->normalizeItem([
             'id' => $ad->id,
             'ad_id' => $ad->id,
             'file_path' => $ad->file_path,
@@ -245,7 +256,77 @@ class AdSchedulerService
                 : optional($ad->end_date)->toAtomString(),
             'ad_valid_from' => optional($ad->start_date)->toAtomString(),
             'ad_valid_until' => optional($ad->end_date)->toAtomString(),
-        ];
+        ]);
+    }
+
+    /**
+     * Build the fallback playlist item defined via configuration.
+     */
+    protected function makeConfiguredFallbackItem(): ?array
+    {
+        $fallback = config('ads.fallback');
+
+        if (!is_array($fallback)) {
+            return null;
+        }
+
+        $url = $fallback['url'] ?? null;
+
+        if (!$url) {
+            return null;
+        }
+
+        return $this->normalizeItem([
+            'id' => null,
+            'ad_id' => null,
+            'file_path' => null,
+            'file_url' => $url,
+            'file_type' => $fallback['type'] ?? null,
+            'duration_seconds' => (int) ($fallback['duration'] ?? 0),
+            'play_order' => 0,
+            'schedule_id' => null,
+            'schedule' => null,
+            'valid_from' => null,
+            'valid_until' => null,
+            'ad_valid_from' => null,
+            'ad_valid_until' => null,
+        ]);
+    }
+
+    /**
+     * Normalize a playlist item payload to ensure consistent structure.
+     *
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>
+     */
+    protected function normalizeItem(array $item): array
+    {
+        if (!array_key_exists('duration_seconds', $item)) {
+            $item['duration_seconds'] = (int) ($item['duration'] ?? 0);
+        }
+
+        unset($item['duration']);
+
+        if (!array_key_exists('file_type', $item) && array_key_exists('type', $item)) {
+            $item['file_type'] = $item['type'];
+        }
+
+        unset($item['type']);
+
+        $path = $item['file_path'] ?? null;
+        $url = $item['file_url'] ?? null;
+
+        if (!$url) {
+            $url = $path;
+        }
+
+        $item['file_url'] = Ad::resolveFileUrl($url);
+
+        if (!$path) {
+            $item['file_path'] = $url;
+        }
+
+        return $item;
     }
 
     /**

@@ -149,4 +149,44 @@ class AdSchedulerServiceTest extends TestCase
         $reloaded = $scheduler->forScreen($screen);
         $this->assertTrue($reloaded['generated_at']->gt($cached['generated_at']));
     }
+
+    public function test_configured_fallback_is_used_when_playlist_empty(): void
+    {
+        $now = Carbon::create(2024, 5, 15, 10, 0, 0);
+        Carbon::setTestNow($now);
+
+        config(['ads.fallback' => [
+            'type' => 'image',
+            'url' => 'https://cdn.example.test/fallback.png',
+            'duration' => 10,
+        ]]);
+
+        $place = Place::create([
+            'name' => ['en' => 'Fallback Place'],
+            'address' => ['en' => '789 Road'],
+            'type' => PlaceType::Cafe,
+        ]);
+
+        $screen = Screen::create([
+            'place_id' => $place->id,
+            'code' => 'SCR-EMPTY',
+        ]);
+
+        /** @var AdSchedulerService $scheduler */
+        $scheduler = app(AdSchedulerService::class);
+
+        $payload = $scheduler->forScreen($screen);
+
+        $this->assertNotSame('', $payload['etag']);
+
+        $items = Collection::make($payload['items']);
+        $this->assertCount(1, $items);
+
+        $fallbackItem = $items->first();
+        $this->assertNull($fallbackItem['ad_id']);
+        $this->assertSame('image', $fallbackItem['file_type']);
+        $this->assertSame('https://cdn.example.test/fallback.png', $fallbackItem['file_url']);
+        $this->assertSame(10, $fallbackItem['duration_seconds']);
+        $this->assertSame(0, $fallbackItem['play_order']);
+    }
 }
