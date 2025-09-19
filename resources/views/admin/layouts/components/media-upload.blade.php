@@ -5,7 +5,7 @@
         <span class="text-muted">{{ $sizeHint }}</span>
     @endisset
     <input type="file" class="form-control-file" id="{{ $fieldId }}" name="{{ $name }}"
-        accept="{{ $acceptedTypes ?? 'image/*,video/mp4' }}" {{ $required ?? '' }}>
+        accept="{{ $acceptedTypes ?? 'image/*,video/mp4' }}" {{ $required ?? '' }} data-media-upload="{{ $fieldId }}">
     @if (!empty($oldFile))
         <input type="hidden" name="old_{{ $name }}" value="{{ $oldFile }}">
     @endif
@@ -41,39 +41,100 @@
 </div>
 @push('custom-js-scripts')
     <script>
-        document.getElementById("{{ $fieldId }}").addEventListener("change", function(event) {
-            var file = event.target.files[0];
-            var previewContainer = document.getElementById("preview_{{ $fieldId }}");
-            if (file) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    if (file.type.startsWith('image/')) {
-                        previewContainer.querySelector("img").src = e.target.result;
-                        previewContainer.querySelector("img").style.display = "block";
-                        previewContainer.querySelector("video").style.display = "none";
-                        previewContainer.querySelector(".pdf-preview").style.display = "none";
-                    } else if (file.type === "video/mp4") {
-                        previewContainer.querySelector("video source").src = e.target.result;
-                        previewContainer.querySelector("video").style.display = "block";
-                        previewContainer.querySelector("img").style.display = "none";
-                        previewContainer.querySelector(".pdf-preview").style.display = "none";
-                        previewContainer.querySelector("video").load();
-                    } else if (file.type === "application/pdf") {
-                        var link = previewContainer.querySelector(".pdf-preview");
-                        link.href = e.target.result;
-                        link.style.display = "inline-block";
-                        previewContainer.querySelector("img").style.display = "none";
-                        previewContainer.querySelector("video").style.display = "none";
-                    }
-                };
-                reader.readAsDataURL(file);
-            } else {
-                previewContainer.querySelector("img").style.display = "none";
-                previewContainer.querySelector("video").style.display = "none";
-                if (previewContainer.querySelector(".pdf-preview")) {
-                    previewContainer.querySelector(".pdf-preview").style.display = "none";
-                }
+        window.registerMediaUpload = window.registerMediaUpload || function(fieldId) {
+            var input = document.getElementById(fieldId);
+            if (!input || input.dataset.mediaUploadBound === '1') {
+                return;
             }
+
+            input.dataset.mediaUploadBound = '1';
+            input.addEventListener("change", function(event) {
+                var file = event.target.files[0];
+                var previewContainer = document.getElementById("preview_" + fieldId);
+
+                if (!previewContainer) {
+                    return;
+                }
+
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (file.type.startsWith('image/')) {
+                            var img = previewContainer.querySelector("img");
+                            if (img) {
+                                img.src = e.target.result;
+                                img.style.display = "block";
+                            }
+
+                            var video = previewContainer.querySelector("video");
+                            if (video) {
+                                video.style.display = "none";
+                            }
+
+                            var pdf = previewContainer.querySelector(".pdf-preview");
+                            if (pdf) {
+                                pdf.style.display = "none";
+                            }
+                        } else if (file.type === "video/mp4") {
+                            var video = previewContainer.querySelector("video");
+                            if (video) {
+                                var source = video.querySelector("source");
+                                if (source) {
+                                    source.src = e.target.result;
+                                }
+                                video.style.display = "block";
+                                video.load();
+                            }
+
+                            var img = previewContainer.querySelector("img");
+                            if (img) {
+                                img.style.display = "none";
+                            }
+
+                            var pdf = previewContainer.querySelector(".pdf-preview");
+                            if (pdf) {
+                                pdf.style.display = "none";
+                            }
+                        } else if (file.type === "application/pdf") {
+                            var link = previewContainer.querySelector(".pdf-preview");
+                            if (link) {
+                                link.href = e.target.result;
+                                link.style.display = "inline-block";
+                            }
+
+                            var img = previewContainer.querySelector("img");
+                            if (img) {
+                                img.style.display = "none";
+                            }
+
+                            var video = previewContainer.querySelector("video");
+                            if (video) {
+                                video.style.display = "none";
+                            }
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    var img = previewContainer.querySelector("img");
+                    if (img) {
+                        img.style.display = "none";
+                    }
+
+                    var video = previewContainer.querySelector("video");
+                    if (video) {
+                        video.style.display = "none";
+                    }
+
+                    var pdf = previewContainer.querySelector(".pdf-preview");
+                    if (pdf) {
+                        pdf.style.display = "none";
+                    }
+                }
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            window.registerMediaUpload("{{ $fieldId }}");
         });
     </script>
 @endpush
