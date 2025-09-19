@@ -138,7 +138,7 @@ Route::group([
         Route::get('/contact-us/edit', [ContactUsPageContentController::class, 'edit'])->name('contact.edit');
         Route::put('/contact-us', [ContactUsPageContentController::class, 'update'])->name('contact.update');
     });
-
+    Route::resource('seo_metas', SeoMetaController::class)->except(['show']);
     Route::get('/cms/pages/{slug}/edit', function (?string $lang, string $slug) {
         $targets = [
             'home' => 'admin.cms.home.edit',
