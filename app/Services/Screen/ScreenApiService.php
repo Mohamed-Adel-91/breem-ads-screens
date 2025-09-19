@@ -5,7 +5,6 @@ namespace App\Services\Screen;
 use App\Enums\ScreenStatus;
 use App\Models\Screen;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class ScreenApiService
@@ -46,42 +45,6 @@ class ScreenApiService
             'meta' => [
                 'handshaken_at' => now(),
             ],
-        ];
-    }
-
-    /**
-     * Record the heartbeat for a given screen.
-     *
-     * @param  array<string, mixed>  $payload
-     * @return array<string, mixed>
-     */
-    public function heartbeat(array $payload): array
-    {
-        $screen = $this->resolveScreen($payload);
-
-        $screen->forceFill([
-            'status' => isset($payload['status'])
-                ? ScreenStatus::from($payload['status'])
-                : ScreenStatus::Online,
-            'last_heartbeat' => now(),
-        ])->save();
-
-        $logStatus = ($payload['status'] ?? ScreenStatus::Online->value) === ScreenStatus::Offline->value
-            ? ScreenStatus::Offline->value
-            : ScreenStatus::Online->value;
-
-        $log = $screen->logs()->create([
-            'current_ad_code' => $payload['current_ad_code'] ?? null,
-            'status' => $logStatus,
-            'reported_at' => isset($payload['reported_at'])
-                ? Carbon::parse($payload['reported_at'])
-                : now(),
-        ]);
-
-        return [
-            'screen' => $screen->fresh(),
-            'log' => $log,
-            'next_heartbeat_at' => now()->addSeconds($this->heartbeatInterval()),
         ];
     }
 
