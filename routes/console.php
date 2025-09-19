@@ -7,4 +7,5 @@ use Illuminate\Support\Facades\Schedule;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+// TODO: remove 
 Schedule::command('screens:check-status')->everyFiveMinutes();
