@@ -6,9 +6,9 @@ use App\Models\Screen;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Messages\SlackMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class ScreenOfflineNotification extends Notification implements ShouldQueue
 {
@@ -37,9 +37,7 @@ class ScreenOfflineNotification extends Notification implements ShouldQueue
             $channels[] = 'mail';
         }
 
-        if ($this->shouldSendSlack() && $notifiable->routeNotificationFor('slack', $this)) {
-            $channels[] = 'slack';
-        }
+        $channels[] = 'log';
 
         return $channels;
     }
@@ -85,38 +83,112 @@ class ScreenOfflineNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the Slack representation of the notification.
+     * Determine if Slack notifications should be attempted.
      */
-    public function toSlack(object $notifiable): SlackMessage
+    protected function shouldSendSlack(object $notifiable): bool
     {
-        $screen = $this->screen->fresh(['place']) ?? $this->screen;
-        $lastHeartbeat = $this->lastHeartbeat ?? $screen->last_heartbeat;
-        $url = $screen->exists
-            ? route('admin.screens.show', ['lang' => app()->getLocale(), 'screen' => $screen])
-            : null;
-
-        return (new SlackMessage())
-            ->error()
-            ->content(':rotating_light: Screen offline detected')
-            ->attachment(function ($attachment) use ($screen, $lastHeartbeat, $url): void {
-                $attachment->title($screen->code, $url ?? '')
-                    ->fields([
-                        'Location' => $screen->place?->name ?? '—',
-                        'Last heartbeat' => $lastHeartbeat
-                            ? $lastHeartbeat->toDateTimeString().' ('.$lastHeartbeat->diffForHumans().')'
-                            : __('Unknown'),
-                        'Detected at' => $this->detectedAt->toDateTimeString(),
-                        'Device UID' => $screen->device_uid ?? __('Not assigned'),
-                    ]);
-            });
+        return filled($this->slackWebhookUrl($notifiable));
     }
 
     /**
-     * Determine if Slack notifications should be attempted.
+     * Post the notification payload to the configured Slack webhook.
      */
-    protected function shouldSendSlack(): bool
+    protected function sendSlackWebhook(object $notifiable): void
     {
-        return filled(config('services.slack.notifications.bot_user_oauth_token'))
-            && filled(config('services.slack.notifications.channel'));
+        $webhookUrl = $this->slackWebhookUrl($notifiable);
+
+        if (! $webhookUrl) {
+            return;
+        }
+
+        try {
+            Http::post($webhookUrl, $this->slackWebhookPayload());
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    /**
+     * Build the payload that will be sent to Slack.
+     */
+    protected function slackWebhookPayload(): array
+    {
+        $screen = $this->screen->fresh(['place']) ?? $this->screen;
+        $lastHeartbeat = $this->lastHeartbeat ?? $screen->last_heartbeat;
+        $detailsUrl = $screen->exists
+            ? route('admin.screens.show', ['lang' => app()->getLocale(), 'screen' => $screen])
+            : null;
+
+        $attachment = [
+            'color' => 'danger',
+            'title' => $screen->code,
+            'fields' => [
+                [
+                    'title' => __('Location'),
+                    'value' => $screen->place?->name ?? '—',
+                    'short' => true,
+                ],
+                [
+                    'title' => __('Last heartbeat'),
+                    'value' => $lastHeartbeat
+                        ? $lastHeartbeat->toDateTimeString().' ('.$lastHeartbeat->diffForHumans().')'
+                        : __('Unknown'),
+                    'short' => true,
+                ],
+                [
+                    'title' => __('Detected at'),
+                    'value' => $this->detectedAt->toDateTimeString(),
+                    'short' => false,
+                ],
+                [
+                    'title' => __('Device UID'),
+                    'value' => $screen->device_uid ?? __('Not assigned'),
+                    'short' => true,
+                ],
+            ],
+        ];
+
+        if ($detailsUrl) {
+            $attachment['title_link'] = $detailsUrl;
+        }
+
+        return [
+            'text' => ':rotating_light: '.__('Screen offline detected'),
+            'attachments' => [$attachment],
+        ];
+    }
+
+    /**
+     * Get the array representation of the notification for the log channel.
+     */
+    public function toArray(object $notifiable): array
+    {
+        if ($this->shouldSendSlack($notifiable)) {
+            $this->sendSlackWebhook($notifiable);
+        }
+
+        $screen = $this->screen->fresh(['place']) ?? $this->screen;
+        $lastHeartbeat = $this->lastHeartbeat ?? $screen->last_heartbeat;
+
+        return [
+            'message' => __('Screen offline detected'),
+            'screen_id' => $screen->id,
+            'screen_code' => $screen->code,
+            'location' => $screen->place?->name,
+            'detected_at' => $this->detectedAt->toDateTimeString(),
+            'last_heartbeat' => $lastHeartbeat?->toDateTimeString(),
+            'device_uid' => $screen->device_uid,
+        ];
+    }
+
+    /**
+     * Resolve the Slack webhook URL for the notification.
+     */
+    protected function slackWebhookUrl(object $notifiable): ?string
+    {
+        $url = $notifiable->routeNotificationFor('slack', $this)
+            ?? config('services.slack.webhook_url');
+
+        return is_string($url) && filled($url) ? $url : null;
     }
 }

@@ -6,9 +6,9 @@ use App\Models\Ad;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Messages\SlackMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class AdExpiringNotification extends Notification implements ShouldQueue
 {
@@ -32,9 +32,7 @@ class AdExpiringNotification extends Notification implements ShouldQueue
             $channels[] = 'mail';
         }
 
-        if ($this->shouldSendSlack() && $notifiable->routeNotificationFor('slack', $this)) {
-            $channels[] = 'slack';
-        }
+        $channels[] = 'log';
 
         return $channels;
     }
@@ -74,39 +72,105 @@ class AdExpiringNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the Slack representation of the notification.
+     * Determine if Slack notifications should be attempted.
      */
-    public function toSlack(object $notifiable): SlackMessage
+    protected function shouldSendSlack(object $notifiable): bool
+    {
+        return filled($this->slackWebhookUrl($notifiable));
+    }
+
+    /**
+     * Post the notification payload to the configured Slack webhook.
+     */
+    protected function sendSlackWebhook(object $notifiable): void
+    {
+        $webhookUrl = $this->slackWebhookUrl($notifiable);
+
+        if (! $webhookUrl) {
+            return;
+        }
+
+        try {
+            Http::post($webhookUrl, $this->slackWebhookPayload());
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    /**
+     * Build the payload that will be sent to Slack.
+     */
+    protected function slackWebhookPayload(): array
     {
         $ad = $this->ad->fresh(['screens']) ?? $this->ad;
         $ad->loadMissing('screens');
         $endDate = $ad->end_date;
-        $url = $ad->exists
-            ? route('admin.ads.show', ['lang' => app()->getLocale(), 'ad' => $ad])
-            : null;
 
-        return (new SlackMessage())
-            ->warning()
-            ->content(':hourglass_flowing_sand: Ad expiring soon')
-            ->attachment(function ($attachment) use ($ad, $endDate, $url): void {
-                $attachment->title($this->title($ad), $url ?? '')
-                    ->fields([
-                        'Ad ID' => (string) $ad->id,
-                        'Ends at' => $endDate instanceof Carbon
-                            ? $endDate->toDateTimeString().' ('.$endDate->diffForHumans().')'
-                            : __('Not set'),
-                        'Screens' => (string) $ad->screens->count(),
-                    ]);
-            });
+        $attachment = [
+            'color' => 'warning',
+            'title' => $this->title($ad),
+            'fields' => [
+                [
+                    'title' => __('Ad ID'),
+                    'value' => (string) $ad->id,
+                    'short' => true,
+                ],
+                [
+                    'title' => __('Ends at'),
+                    'value' => $endDate instanceof Carbon
+                        ? $endDate->toDateTimeString().' ('.$endDate->diffForHumans().')'
+                        : __('Not set'),
+                    'short' => true,
+                ],
+                [
+                    'title' => __('Screens'),
+                    'value' => (string) $ad->screens->count(),
+                    'short' => true,
+                ],
+            ],
+        ];
+
+        if ($ad->exists) {
+            $attachment['title_link'] = route('admin.ads.show', ['lang' => app()->getLocale(), 'ad' => $ad]);
+        }
+
+        return [
+            'text' => ':hourglass_flowing_sand: '.__('Ad expiring soon'),
+            'attachments' => [$attachment],
+        ];
     }
 
     /**
-     * Determine if Slack notifications should be attempted.
+     * Resolve the Slack webhook URL for the notification.
      */
-    protected function shouldSendSlack(): bool
+    protected function slackWebhookUrl(object $notifiable): ?string
     {
-        return filled(config('services.slack.notifications.bot_user_oauth_token'))
-            && filled(config('services.slack.notifications.channel'));
+        $url = $notifiable->routeNotificationFor('slack', $this)
+            ?? config('services.slack.webhook_url');
+
+        return is_string($url) && filled($url) ? $url : null;
+    }
+
+    /**
+     * Get the array representation of the notification for the log channel.
+     */
+    public function toArray(object $notifiable): array
+    {
+        if ($this->shouldSendSlack($notifiable)) {
+            $this->sendSlackWebhook($notifiable);
+        }
+
+        $ad = $this->ad->fresh(['screens']) ?? $this->ad;
+        $ad->loadMissing('screens');
+        $endDate = $ad->end_date;
+
+        return [
+            'message' => __('Ad expiring soon'),
+            'ad_id' => $ad->id,
+            'title' => $this->title($ad),
+            'ends_at' => $endDate instanceof Carbon ? $endDate->toDateTimeString() : null,
+            'screens' => $ad->screens->count(),
+        ];
     }
 
     /**
