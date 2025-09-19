@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ScreenStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Reports\GenerateReportRequest;
 use App\Models\Ad;
