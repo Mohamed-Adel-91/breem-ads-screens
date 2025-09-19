@@ -14,9 +14,12 @@ use App\Http\Controllers\Admin\{
     RoleController
 };
 use App\Http\Controllers\Admin\Cms\{
+    ContactUsPageContentController,
+    HomePageContentController,
     PageController,
     PageSectionController,
     SectionItemController,
+    WhoWeArePageContentController,
 };
 use Illuminate\Support\Facades\Route;
 
@@ -85,8 +88,30 @@ Route::group([
     'where' => ['lang' => 'en|ar'],
     'middleware' => ['auth:admin'],
 ], function () {
-    // Pages edit
-    Route::get('/cms/pages/{slug}/edit', [PageController::class, 'edit'])->name('cms.pages.edit');
+    Route::prefix('cms')->as('cms.')->group(function () {
+        Route::get('/home/edit', [HomePageContentController::class, 'edit'])->name('home.edit');
+        Route::put('/home', [HomePageContentController::class, 'update'])->name('home.update');
+
+        Route::get('/whoweare/edit', [WhoWeArePageContentController::class, 'edit'])->name('whoweare.edit');
+        Route::put('/whoweare', [WhoWeArePageContentController::class, 'update'])->name('whoweare.update');
+
+        Route::get('/contact-us/edit', [ContactUsPageContentController::class, 'edit'])->name('contact.edit');
+        Route::put('/contact-us', [ContactUsPageContentController::class, 'update'])->name('contact.update');
+    });
+
+    Route::get('/cms/pages/{slug}/edit', function (?string $lang, string $slug) {
+        $targets = [
+            'home' => 'admin.cms.home.edit',
+            'whoweare' => 'admin.cms.whoweare.edit',
+            'contact-us' => 'admin.cms.contact.edit',
+        ];
+
+        if (!array_key_exists($slug, $targets)) {
+            abort(404);
+        }
+
+        return redirect()->route($targets[$slug], ['lang' => $lang]);
+    })->name('cms.pages.edit');
 
     // Sections
     Route::patch('/cms/sections/{section}/toggle', [PageSectionController::class, 'toggle'])->name('cms.sections.toggle');
