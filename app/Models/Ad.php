@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\Concerns\HasPivotEvents;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -20,7 +19,6 @@ class Ad extends Model
 {
     use HasFactory;
     use HasTranslations;
-    use HasPivotEvents;
 
     public const UPLOAD_FOLDER = 'upload/ads';
 
@@ -38,25 +36,26 @@ class Ad extends Model
      */
     public array $translatable = ['title', 'description'];
 
-    protected static function booted(): void
+    /**
+     * Flush cached playlists for the given screen identifiers.
+     */
+    public function flushScreensCache(?iterable $screenIds = null): void
     {
-        static::pivotAttached(function (Ad $ad, string $relationName, array $pivotIds, array $pivotIdsAttributes): void {
-            if ($relationName === 'screens') {
-                app(AdSchedulerService::class)->forgetMany($pivotIds);
-            }
-        });
+        $ids = [];
 
-        static::pivotUpdated(function (Ad $ad, string $relationName, array $pivotIds, array $pivotIdsAttributes): void {
-            if ($relationName === 'screens') {
-                app(AdSchedulerService::class)->forgetMany($pivotIds);
+        if (is_null($screenIds)) {
+            $ids = $this->screens()->pluck('screens.id')->all();
+        } else {
+            foreach ($screenIds as $id) {
+                if ($id) {
+                    $ids[] = $id;
+                }
             }
-        });
+        }
 
-        static::pivotDetached(function (Ad $ad, string $relationName, array $pivotIds): void {
-            if ($relationName === 'screens') {
-                app(AdSchedulerService::class)->forgetMany($pivotIds);
-            }
-        });
+        if (!empty($ids)) {
+            app(AdSchedulerService::class)->forgetMany(array_unique($ids));
+        }
     }
 
     /**

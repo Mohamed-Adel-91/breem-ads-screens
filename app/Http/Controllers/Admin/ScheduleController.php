@@ -145,6 +145,8 @@ class ScheduleController extends Controller
         if (!$ad->screens()->where('screens.id', $screenId)->exists()) {
             $order = ($ad->screens()->max('ad_screen.play_order') ?? 0) + 1;
             $ad->screens()->attach($screenId, ['play_order' => $order]);
+
+            $ad->flushScreensCache([$screenId]);
         }
     }
 

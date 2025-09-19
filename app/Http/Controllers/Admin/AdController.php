@@ -252,6 +252,8 @@ class AdController extends Controller
 
     private function syncScreens(Ad $ad, array $screens, array $playOrders): void
     {
+        $previousScreenIds = $ad->screens()->pluck('screens.id')->all();
+
         $syncData = [];
         foreach ($screens as $screenId) {
             $syncData[$screenId] = [
@@ -264,6 +266,10 @@ class AdController extends Controller
         } else {
             $ad->screens()->detach();
         }
+
+        $affectedScreenIds = array_unique(array_merge($previousScreenIds, array_keys($syncData)));
+
+        $ad->flushScreensCache($affectedScreenIds);
     }
 
     private function determineFileType(?UploadedFile $file, ?string $path = null): string
