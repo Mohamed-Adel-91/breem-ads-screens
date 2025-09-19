@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\ScreenStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class AdSchedule extends Model
+class ScreenLog extends Model
 {
     use HasFactory;
 
@@ -23,21 +24,12 @@ class AdSchedule extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
-        'is_active' => 'boolean',
+        'status' => ScreenStatus::class,
+        'reported_at' => 'datetime',
     ];
 
     /**
-     * The ad that owns the schedule.
-     */
-    public function ad(): BelongsTo
-    {
-        return $this->belongsTo(Ad::class);
-    }
-
-    /**
-     * The screen that the schedule is assigned to.
+     * The screen that produced the log entry.
      */
     public function screen(): BelongsTo
     {

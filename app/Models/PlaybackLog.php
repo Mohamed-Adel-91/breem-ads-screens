@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class AdSchedule extends Model
+class PlaybackLog extends Model
 {
     use HasFactory;
 
@@ -23,24 +23,24 @@ class AdSchedule extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
-        'is_active' => 'boolean',
+        'played_at' => 'datetime',
+        'duration' => 'integer',
+        'extra' => 'array',
     ];
 
     /**
-     * The ad that owns the schedule.
-     */
-    public function ad(): BelongsTo
-    {
-        return $this->belongsTo(Ad::class);
-    }
-
-    /**
-     * The screen that the schedule is assigned to.
+     * The screen on which the playback occurred.
      */
     public function screen(): BelongsTo
     {
         return $this->belongsTo(Screen::class);
+    }
+
+    /**
+     * The ad that was played back.
+     */
+    public function ad(): BelongsTo
+    {
+        return $this->belongsTo(Ad::class);
     }
 }
