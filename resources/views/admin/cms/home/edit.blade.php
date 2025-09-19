@@ -2,6 +2,8 @@
 @section('content')
     @php
         $primaryLocale = config('app.locale');
+        $arabicLocale = 'ar';
+        $englishLocale = 'en';
     @endphp
     <div class="page-wrapper">
         @include('admin.layouts.sidebar')
@@ -77,14 +79,22 @@
                                                     'previewPath' => media_path($currentPath),
                                                 ])
                                             </div>
-                                            @foreach ($locales as $locale)
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Alt ({{ strtoupper($locale) }})</label>
-                                                    <input type="text" class="form-control"
-                                                        name="partners[items][{{ $partnerIndex }}][alt][{{ $locale }}]"
-                                                        value="{{ old("partners.items.$partnerIndex.alt.$locale", $itemData[$locale]['alt'] ?? '') }}">
+                                            <div class="col-12">
+                                                <div class="row g-3 flex-md-row-reverse">
+                                                    <div class="col-12 col-md-6">
+                                                        <label class="form-label">Alt ({{ strtoupper($arabicLocale) }})</label>
+                                                        <input type="text" class="form-control" dir="rtl"
+                                                            name="partners[items][{{ $partnerIndex }}][alt][{{ $arabicLocale }}]"
+                                                            value="{{ old("partners.items.$partnerIndex.alt.$arabicLocale", $itemData[$arabicLocale]['alt'] ?? '') }}">
+                                                    </div>
+                                                    <div class="col-12 col-md-6">
+                                                        <label class="form-label">Alt ({{ strtoupper($englishLocale) }})</label>
+                                                        <input type="text" class="form-control"
+                                                            name="partners[items][{{ $partnerIndex }}][alt][{{ $englishLocale }}]"
+                                                            value="{{ old("partners.items.$partnerIndex.alt.$englishLocale", $itemData[$englishLocale]['alt'] ?? '') }}">
+                                                    </div>
                                                 </div>
-                                            @endforeach
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -99,27 +109,66 @@
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
-                                @foreach ($locales as $locale)
-                                    <div class="col-md-6">
-                                        <label class="form-label">Title ({{ strtoupper($locale) }})</label>
-                                        <input type="text" class="form-control" name="about[{{ $locale }}][title]"
-                                            value="{{ old("about.$locale.title", $aboutData[$locale]['title'] ?? '') }}">
+                                <div class="col-12">
+                                    <div class="row g-3 flex-md-row-reverse">
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Title ({{ strtoupper($arabicLocale) }})</label>
+                                            <input type="text" class="form-control" dir="rtl"
+                                                name="about[{{ $arabicLocale }}][title]"
+                                                value="{{ old("about.$arabicLocale.title", $aboutData[$arabicLocale]['title'] ?? '') }}">
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Title ({{ strtoupper($englishLocale) }})</label>
+                                            <input type="text" class="form-control" name="about[{{ $englishLocale }}][title]"
+                                                value="{{ old("about.$englishLocale.title", $aboutData[$englishLocale]['title'] ?? '') }}">
+                                        </div>
                                     </div>
-                                    <div class="col-12">
-                                        <label class="form-label">Description ({{ strtoupper($locale) }})</label>
-                                        <textarea class="form-control" rows="3" name="about[{{ $locale }}][desc]">{{ old("about.$locale.desc", $aboutData[$locale]['desc'] ?? '') }}</textarea>
+                                </div>
+                                <div class="col-12">
+                                    <div class="row g-3 flex-md-row-reverse">
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Description ({{ strtoupper($arabicLocale) }})</label>
+                                            <textarea class="form-control" rows="3" dir="rtl"
+                                                name="about[{{ $arabicLocale }}][desc]">{{ old("about.$arabicLocale.desc", $aboutData[$arabicLocale]['desc'] ?? '') }}</textarea>
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Description ({{ strtoupper($englishLocale) }})</label>
+                                            <textarea class="form-control" rows="3" name="about[{{ $englishLocale }}][desc]">{{ old("about.$englishLocale.desc", $aboutData[$englishLocale]['desc'] ?? '') }}</textarea>
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Read more text ({{ strtoupper($locale) }})</label>
-                                        <input type="text" class="form-control" name="about[{{ $locale }}][readmore_text]"
-                                            value="{{ old("about.$locale.readmore_text", $aboutData[$locale]['readmore_text'] ?? '') }}">
+                                </div>
+                                <div class="col-12">
+                                    <div class="row g-3 flex-md-row-reverse">
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Read more text ({{ strtoupper($arabicLocale) }})</label>
+                                            <input type="text" class="form-control" dir="rtl"
+                                                name="about[{{ $arabicLocale }}][readmore_text]"
+                                                value="{{ old("about.$arabicLocale.readmore_text", $aboutData[$arabicLocale]['readmore_text'] ?? '') }}">
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Read more text ({{ strtoupper($englishLocale) }})</label>
+                                            <input type="text" class="form-control"
+                                                name="about[{{ $englishLocale }}][readmore_text]"
+                                                value="{{ old("about.$englishLocale.readmore_text", $aboutData[$englishLocale]['readmore_text'] ?? '') }}">
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Read more link ({{ strtoupper($locale) }})</label>
-                                        <input type="text" class="form-control" name="about[{{ $locale }}][readmore_link]"
-                                            value="{{ old("about.$locale.readmore_link", $aboutData[$locale]['readmore_link'] ?? '') }}">
+                                </div>
+                                <div class="col-12">
+                                    <div class="row g-3 flex-md-row-reverse">
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Read more link ({{ strtoupper($arabicLocale) }})</label>
+                                            <input type="text" class="form-control" dir="rtl"
+                                                name="about[{{ $arabicLocale }}][readmore_link]"
+                                                value="{{ old("about.$arabicLocale.readmore_link", $aboutData[$arabicLocale]['readmore_link'] ?? '') }}">
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Read more link ({{ strtoupper($englishLocale) }})</label>
+                                            <input type="text" class="form-control"
+                                                name="about[{{ $englishLocale }}][readmore_link]"
+                                                value="{{ old("about.$englishLocale.readmore_link", $aboutData[$englishLocale]['readmore_link'] ?? '') }}">
+                                        </div>
                                     </div>
-                                @endforeach
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -158,20 +207,38 @@
                                                     'previewPath' => media_path($currentIcon),
                                                 ])
                                             </div>
-                                            @foreach ($locales as $locale)
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Number ({{ strtoupper($locale) }})</label>
-                                                    <input type="text" class="form-control"
-                                                        name="stats[items][{{ $statsIndex }}][number][{{ $locale }}]"
-                                                        value="{{ old("stats.items.$statsIndex.number.$locale", $itemData[$locale]['number'] ?? '') }}">
+                                            <div class="col-12">
+                                                <div class="row g-3 flex-md-row-reverse">
+                                                    <div class="col-12 col-md-6">
+                                                        <label class="form-label">Number ({{ strtoupper($arabicLocale) }})</label>
+                                                        <input type="text" class="form-control" dir="rtl"
+                                                            name="stats[items][{{ $statsIndex }}][number][{{ $arabicLocale }}]"
+                                                            value="{{ old("stats.items.$statsIndex.number.$arabicLocale", $itemData[$arabicLocale]['number'] ?? '') }}">
+                                                    </div>
+                                                    <div class="col-12 col-md-6">
+                                                        <label class="form-label">Number ({{ strtoupper($englishLocale) }})</label>
+                                                        <input type="text" class="form-control"
+                                                            name="stats[items][{{ $statsIndex }}][number][{{ $englishLocale }}]"
+                                                            value="{{ old("stats.items.$statsIndex.number.$englishLocale", $itemData[$englishLocale]['number'] ?? '') }}">
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Label ({{ strtoupper($locale) }})</label>
-                                                    <input type="text" class="form-control"
-                                                        name="stats[items][{{ $statsIndex }}][label][{{ $locale }}]"
-                                                        value="{{ old("stats.items.$statsIndex.label.$locale", $itemData[$locale]['label'] ?? '') }}">
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="row g-3 flex-md-row-reverse">
+                                                    <div class="col-12 col-md-6">
+                                                        <label class="form-label">Label ({{ strtoupper($arabicLocale) }})</label>
+                                                        <input type="text" class="form-control" dir="rtl"
+                                                            name="stats[items][{{ $statsIndex }}][label][{{ $arabicLocale }}]"
+                                                            value="{{ old("stats.items.$statsIndex.label.$arabicLocale", $itemData[$arabicLocale]['label'] ?? '') }}">
+                                                    </div>
+                                                    <div class="col-12 col-md-6">
+                                                        <label class="form-label">Label ({{ strtoupper($englishLocale) }})</label>
+                                                        <input type="text" class="form-control"
+                                                            name="stats[items][{{ $statsIndex }}][label][{{ $englishLocale }}]"
+                                                            value="{{ old("stats.items.$statsIndex.label.$englishLocale", $itemData[$englishLocale]['label'] ?? '') }}">
+                                                    </div>
                                                 </div>
-                                            @endforeach
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -187,18 +254,37 @@
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
-                                @foreach ($locales as $locale)
-                                    <div class="col-md-6">
-                                        <label class="form-label">Title ({{ strtoupper($locale) }})</label>
-                                        <input type="text" class="form-control" name="where_us[title][{{ $locale }}]"
-                                            value="{{ old("where_us.title.$locale", $whereData[$locale]['title'] ?? '') }}">
+                                <div class="col-12">
+                                    <div class="row g-3 flex-md-row-reverse">
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Title ({{ strtoupper($arabicLocale) }})</label>
+                                            <input type="text" class="form-control" dir="rtl"
+                                                name="where_us[title][{{ $arabicLocale }}]"
+                                                value="{{ old("where_us.title.$arabicLocale", $whereData[$arabicLocale]['title'] ?? '') }}">
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Title ({{ strtoupper($englishLocale) }})</label>
+                                            <input type="text" class="form-control" name="where_us[title][{{ $englishLocale }}]"
+                                                value="{{ old("where_us.title.$englishLocale", $whereData[$englishLocale]['title'] ?? '') }}">
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Brochure text ({{ strtoupper($locale) }})</label>
-                                        <input type="text" class="form-control" name="where_us[brochure_text][{{ $locale }}]"
-                                            value="{{ old("where_us.brochure_text.$locale", $whereData[$locale]['brochure']['text'] ?? '') }}">
+                                </div>
+                                <div class="col-12">
+                                    <div class="row g-3 flex-md-row-reverse">
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Brochure text ({{ strtoupper($arabicLocale) }})</label>
+                                            <input type="text" class="form-control" dir="rtl"
+                                                name="where_us[brochure_text][{{ $arabicLocale }}]"
+                                                value="{{ old("where_us.brochure_text.$arabicLocale", $whereData[$arabicLocale]['brochure']['text'] ?? '') }}">
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">Brochure text ({{ strtoupper($englishLocale) }})</label>
+                                            <input type="text" class="form-control"
+                                                name="where_us[brochure_text][{{ $englishLocale }}]"
+                                                value="{{ old("where_us.brochure_text.$englishLocale", $whereData[$englishLocale]['brochure']['text'] ?? '') }}">
+                                        </div>
                                     </div>
-                                @endforeach
+                                </div>
                                 <div class="col-md-6">
                                     @include('admin.layouts.components.media-upload', [
                                         'label' => 'Brochure Icon',
@@ -250,14 +336,22 @@
                                                         'previewPath' => media_path($currentImage),
                                                     ])
                                                 </div>
-                                                @foreach ($locales as $locale)
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Overlay text ({{ strtoupper($locale) }})</label>
-                                                        <input type="text" class="form-control"
-                                                            name="where_us[items][{{ $whereIndex }}][overlay][{{ $locale }}]"
-                                                            value="{{ old("where_us.items.$whereIndex.overlay.$locale", $itemData[$locale]['overlay_text'] ?? '') }}">
+                                                <div class="col-12">
+                                                    <div class="row g-3 flex-md-row-reverse">
+                                                        <div class="col-12 col-md-6">
+                                                            <label class="form-label">Overlay text ({{ strtoupper($arabicLocale) }})</label>
+                                                            <input type="text" class="form-control" dir="rtl"
+                                                                name="where_us[items][{{ $whereIndex }}][overlay][{{ $arabicLocale }}]"
+                                                                value="{{ old("where_us.items.$whereIndex.overlay.$arabicLocale", $itemData[$arabicLocale]['overlay_text'] ?? '') }}">
+                                                        </div>
+                                                        <div class="col-12 col-md-6">
+                                                            <label class="form-label">Overlay text ({{ strtoupper($englishLocale) }})</label>
+                                                            <input type="text" class="form-control"
+                                                                name="where_us[items][{{ $whereIndex }}][overlay][{{ $englishLocale }}]"
+                                                                value="{{ old("where_us.items.$whereIndex.overlay.$englishLocale", $itemData[$englishLocale]['overlay_text'] ?? '') }}">
+                                                        </div>
                                                     </div>
-                                                @endforeach
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -344,12 +438,20 @@
                             'inputId' => 'partners_item___INDEX___image',
                         ])
                     </div>
-                    @foreach ($locales as $locale)
-                        <div class="col-md-6">
-                            <label class="form-label">Alt ({{ strtoupper($locale) }})</label>
-                            <input type="text" class="form-control" name="partners[items][__INDEX__][alt][{{ $locale }}]">
+                    <div class="col-12">
+                        <div class="row g-3 flex-md-row-reverse">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Alt ({{ strtoupper($arabicLocale) }})</label>
+                                <input type="text" class="form-control" dir="rtl"
+                                    name="partners[items][__INDEX__][alt][{{ $arabicLocale }}]">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Alt ({{ strtoupper($englishLocale) }})</label>
+                                <input type="text" class="form-control"
+                                    name="partners[items][__INDEX__][alt][{{ $englishLocale }}]">
+                            </div>
                         </div>
-                    @endforeach
+                    </div>
                 </div>
             </div>
         </div>
@@ -374,16 +476,34 @@
                             'inputId' => 'stats_item___INDEX___icon',
                         ])
                     </div>
-                    @foreach ($locales as $locale)
-                        <div class="col-md-6">
-                            <label class="form-label">Number ({{ strtoupper($locale) }})</label>
-                            <input type="text" class="form-control" name="stats[items][__INDEX__][number][{{ $locale }}]">
+                    <div class="col-12">
+                        <div class="row g-3 flex-md-row-reverse">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Number ({{ strtoupper($arabicLocale) }})</label>
+                                <input type="text" class="form-control" dir="rtl"
+                                    name="stats[items][__INDEX__][number][{{ $arabicLocale }}]">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Number ({{ strtoupper($englishLocale) }})</label>
+                                <input type="text" class="form-control"
+                                    name="stats[items][__INDEX__][number][{{ $englishLocale }}]">
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Label ({{ strtoupper($locale) }})</label>
-                            <input type="text" class="form-control" name="stats[items][__INDEX__][label][{{ $locale }}]">
+                    </div>
+                    <div class="col-12">
+                        <div class="row g-3 flex-md-row-reverse">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Label ({{ strtoupper($arabicLocale) }})</label>
+                                <input type="text" class="form-control" dir="rtl"
+                                    name="stats[items][__INDEX__][label][{{ $arabicLocale }}]">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Label ({{ strtoupper($englishLocale) }})</label>
+                                <input type="text" class="form-control"
+                                    name="stats[items][__INDEX__][label][{{ $englishLocale }}]">
+                            </div>
                         </div>
-                    @endforeach
+                    </div>
                 </div>
             </div>
         </div>
@@ -407,12 +527,20 @@
                             'inputId' => 'where_item___INDEX___image',
                         ])
                     </div>
-                    @foreach ($locales as $locale)
-                        <div class="col-md-6">
-                            <label class="form-label">Overlay text ({{ strtoupper($locale) }})</label>
-                            <input type="text" class="form-control" name="where_us[items][__INDEX__][overlay][{{ $locale }}]">
+                    <div class="col-12">
+                        <div class="row g-3 flex-md-row-reverse">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Overlay text ({{ strtoupper($arabicLocale) }})</label>
+                                <input type="text" class="form-control" dir="rtl"
+                                    name="where_us[items][__INDEX__][overlay][{{ $arabicLocale }}]">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Overlay text ({{ strtoupper($englishLocale) }})</label>
+                                <input type="text" class="form-control"
+                                    name="where_us[items][__INDEX__][overlay][{{ $englishLocale }}]">
+                            </div>
                         </div>
-                    @endforeach
+                    </div>
                 </div>
             </div>
         </div>
