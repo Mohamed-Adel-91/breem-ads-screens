@@ -11,12 +11,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
 
 class Ad extends Model
 {
     use HasFactory;
     use HasTranslations;
+
+    public const UPLOAD_FOLDER = 'upload/ads';
 
     /**
      * The attributes that aren't mass assignable.
@@ -44,6 +47,24 @@ class Ad extends Model
         'start_date' => 'datetime',
         'end_date' => 'datetime',
     ];
+
+    /**
+     * Accessor to resolve the full URL for the creative file.
+     */
+    public function getFileUrlAttribute(): ?string
+    {
+        $path = $this->file_path;
+
+        if (!$path) {
+            return null;
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
+
+        return asset($path);
+    }
 
     /**
      * Get the schedules assigned to the ad.
