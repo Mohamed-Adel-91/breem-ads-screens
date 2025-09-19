@@ -12,4 +12,7 @@ interface FileServiceInterface
     public function updateFiles(Model $model, Request $request, array $fields, string $baseFolder): void;
 
     public function deleteFile(string $filename, string $folder): void;
+
+    public function uploadCmsFile(Request $request, string $field, string $baseFolder, ?string $currentPath = null, ?string $oldField = null): ?string;
 }
+

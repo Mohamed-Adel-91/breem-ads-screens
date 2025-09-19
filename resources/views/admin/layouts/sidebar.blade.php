@@ -1,4 +1,4 @@
-﻿<!-- Sidebar wrapper start -->
+<!-- Sidebar wrapper start -->
 <nav id="sidebar" class="sidebar-wrapper">
     <!-- Sidebar brand start  -->
     <div class="sidebar-brand d-flex justify-content-center"
@@ -105,6 +105,18 @@
                             <li class="{{ Request::is('dashboard/contact-submissions') ? 'active' : '' }}">
                                 <a href="{{ route('admin.contact_submissions.index', ['lang' => app()->getLocale()]) }}"
                                     class="{{ Request::is('dashboard/contact-submissions') ? 'current-page' : '' }}">{{ __('admin.sidebar.all_submissions') }}</a>
+                            <li class="{{ request()->routeIs('admin.cms.home.*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.cms.home.edit', ['lang' => app()->getLocale()]) }}"
+                                    class="{{ request()->routeIs('admin.cms.home.*') ? 'current-page' : '' }}">{{ __('admin.sidebar.home_page') }} Editor</a>
+                            </li>
+                            <li class="{{ request()->routeIs('admin.cms.who.*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.cms.who.edit', ['lang' => app()->getLocale()]) }}"
+                                    class="{{ request()->routeIs('admin.cms.who.*') ? 'current-page' : '' }}">{{ __('admin.sidebar.who_we_are') }} Editor</a>
+                            </li>
+                            <li class="{{ request()->routeIs('admin.cms.contact.*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.cms.contact.edit', ['lang' => app()->getLocale()]) }}"
+                                    class="{{ request()->routeIs('admin.cms.contact.*') ? 'current-page' : '' }}">{{ __('admin.sidebar.contact_us') }} Editor</a>
+                            </li>
                             </li>
                         </ul>
                     </div>

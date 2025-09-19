@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\Admin\{
     AuthController,
@@ -17,6 +17,9 @@ use App\Http\Controllers\Admin\Cms\{
     PageController,
     PageSectionController,
     SectionItemController,
+    HomePageController,
+    WhoWeArePageController,
+    ContactUsPageController
 };
 use Illuminate\Support\Facades\Route;
 
@@ -88,6 +91,16 @@ Route::group([
     // Pages edit
     Route::get('/cms/pages/{slug}/edit', [PageController::class, 'edit'])->name('cms.pages.edit');
 
+    // Dedicated editors
+    Route::get('/cms/home', [HomePageController::class, 'edit'])->name('cms.home.edit');
+    Route::put('/cms/home', [HomePageController::class, 'update'])->name('cms.home.update');
+
+    Route::get('/cms/who-we-are', [WhoWeArePageController::class, 'edit'])->name('cms.who.edit');
+    Route::put('/cms/who-we-are', [WhoWeArePageController::class, 'update'])->name('cms.who.update');
+
+    Route::get('/cms/contact-us', [ContactUsPageController::class, 'edit'])->name('cms.contact.edit');
+    Route::put('/cms/contact-us', [ContactUsPageController::class, 'update'])->name('cms.contact.update');
+
     // Sections
     Route::patch('/cms/sections/{section}/toggle', [PageSectionController::class, 'toggle'])->name('cms.sections.toggle');
     Route::patch('/cms/sections/{section}', [PageSectionController::class, 'update'])->name('cms.sections.update');
@@ -102,3 +115,12 @@ Route::group([
     Route::get('/contact-submissions', [ContactSubmissionController::class, 'index'])->name('contact_submissions.index');
     Route::delete('/contact-submissions/{submission}', [ContactSubmissionController::class, 'destroy'])->name('contact_submissions.destroy');
 });
+
+
+
+
+
+
+
+
+
