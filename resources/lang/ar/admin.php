@@ -9,6 +9,13 @@ return [
         'login_button' => 'تسجيل الدخول',
     ],
     'sidebar' => [
+        'dashboard' => 'لوحة التحكم',
+        'ads' => 'الإعلانات',
+        'screens' => 'الشاشات',
+        'places' => 'المواقع',
+        'monitoring' => 'المراقبة',
+        'reports' => 'التقارير',
+        'logs' => 'السجلات',
         'general_settings' => 'الإعدادات العامة',
         'newsletter' => 'النشرة الإخبارية',
         'main_settings' => 'الإعدادات الرئيسية',

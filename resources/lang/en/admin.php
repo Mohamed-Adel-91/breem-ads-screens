@@ -9,6 +9,13 @@ return [
         'login_button' => 'Login',
     ],
     'sidebar' => [
+        'dashboard' => 'Dashboard',
+        'ads' => 'Ads',
+        'screens' => 'Screens',
+        'places' => 'Places',
+        'monitoring' => 'Monitoring',
+        'reports' => 'Reports',
+        'logs' => 'Logs',
         'general_settings' => 'General Settings',
         'newsletter' => 'Newsletter',
         'main_settings' => 'Main Settings',
