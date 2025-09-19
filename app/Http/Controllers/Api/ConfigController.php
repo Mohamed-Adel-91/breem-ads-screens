@@ -13,8 +13,7 @@ class ConfigController extends Controller
 {
     public function __construct(
         protected DeviceConfigService $configService
-    ) {
-    }
+    ) {}
 
     /**
      * Return the configuration payload for the screen.
@@ -26,7 +25,7 @@ class ConfigController extends Controller
 
         if ($etag && $request->ifNoneMatch() && hash_equals($etag, $request->ifNoneMatch())) {
             return response()
-                ->noContent(Response::HTTP_NOT_MODIFIED)
+                ->json(null, Response::HTTP_NOT_MODIFIED)
                 ->setEtag($etag);
         }
 
