@@ -117,10 +117,12 @@
                                         <td class="px-4 py-3 text-gray-700">{{ $screen->offline_logs_count }}</td>
                                         <td class="px-4 py-3 text-gray-700">{{ $screen->active_schedule_count }}</td>
                                         <td class="px-4 py-3">
-                                            <a href="{{ route('admin.monitoring.screens.show', ['lang' => $lang, 'screen' => $screen->id]) }}"
-                                               class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                                {{ __('View') }}
-                                            </a>
+                                            @can('monitoring.view')
+                                                <a href="{{ route('admin.monitoring.screens.show', ['lang' => $lang, 'screen' => $screen->id]) }}"
+                                                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                                                    {{ __('View') }}
+                                                </a>
+                                            @endcan
                                         </td>
                                     </tr>
                                 @empty

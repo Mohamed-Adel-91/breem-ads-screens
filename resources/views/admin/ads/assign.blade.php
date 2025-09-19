@@ -5,10 +5,12 @@
                 <h1 class="text-2xl font-semibold text-gray-900">{{ __('Assign screens to ad') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">{{ $ad->getTranslation('title', app()->getLocale()) ?? __('Ad #:id', ['id' => $ad->id]) }}</p>
             </div>
-            <a href="{{ route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id]) }}"
-               class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                {{ __('Back to ad') }}
-            </a>
+            @can('ads.view')
+                <a href="{{ route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id]) }}"
+                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    {{ __('Back to ad') }}
+                </a>
+            @endcan
         </div>
     </x-slot>
 
@@ -32,6 +34,9 @@
                         @if (strtoupper($assignMethod) !== 'POST')
                             @method($assignMethod)
                         @endif
+                        @cannot('ads.edit')
+                            <fieldset disabled>
+                        @endcannot
                         <div class="grid gap-6 sm:grid-cols-2">
                             <div>
                                 <label for="screen_ids" class="block text-sm font-medium text-gray-700">{{ __('Available screens') }}</label>
@@ -83,12 +88,18 @@
                             </table>
                         </div>
 
+                        @cannot('ads.edit')
+                            </fieldset>
+                        @endcannot
+
                         <div class="mt-6 flex justify-end">
-                            <button type="submit"
-                                    class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    @unless($assignAction) disabled @endunless>
-                                {{ __('Save assignments') }}
-                            </button>
+                            @can('ads.edit')
+                                <button type="submit"
+                                        class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                        @unless($assignAction) disabled @endunless>
+                                    {{ __('Save assignments') }}
+                                </button>
+                            @endcan
                         </div>
                     </form>
                 </div>

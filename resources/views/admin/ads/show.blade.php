@@ -12,9 +12,15 @@
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">{{ $ad->getTranslation('title', app()->getLocale()) ?? __('Ad details') }}</h5>
                                 <div class="d-flex gap-2">
-                                    <a href="{{ route('admin.ads.edit', ['lang' => $lang, 'ad' => $ad->id]) }}" class="btn btn-primary btn-sm">{{ __('Edit') }}</a>
-                                    <a href="{{ route('admin.ads.schedules.index', ['lang' => $lang, 'ad' => $ad->id]) }}" class="btn btn-light btn-sm">{{ __('Manage schedules') }}</a>
-                                    <a href="{{ route('admin.ads.index', ['lang' => $lang]) }}" class="btn btn-outline-secondary btn-sm">{{ __('Back to list') }}</a>
+                                    @can('ads.edit')
+                                        <a href="{{ route('admin.ads.edit', ['lang' => $lang, 'ad' => $ad->id]) }}" class="btn btn-primary btn-sm">{{ __('Edit') }}</a>
+                                    @endcan
+                                    @can('ads.view')
+                                        <a href="{{ route('admin.ads.schedules.index', ['lang' => $lang, 'ad' => $ad->id]) }}" class="btn btn-light btn-sm">{{ __('Manage schedules') }}</a>
+                                    @endcan
+                                    @can('ads.view')
+                                        <a href="{{ route('admin.ads.index', ['lang' => $lang]) }}" class="btn btn-outline-secondary btn-sm">{{ __('Back to list') }}</a>
+                                    @endcan
                                 </div>
                             </div>
                             <div class="card-body">

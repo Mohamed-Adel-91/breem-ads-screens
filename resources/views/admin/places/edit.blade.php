@@ -5,10 +5,12 @@
                 <h1 class="text-2xl font-semibold text-gray-900">{{ __('Edit place') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">{{ __('Update translations, addresses, or type classifications.') }}</p>
             </div>
-            <a href="{{ route('admin.places.show', ['lang' => $lang, 'place' => $place->id]) }}"
-               class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                {{ __('Back to details') }}
-            </a>
+            @can('places.view')
+                <a href="{{ route('admin.places.show', ['lang' => $lang, 'place' => $place->id]) }}"
+                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    {{ __('Back to details') }}
+                </a>
+            @endcan
         </div>
     </x-slot>
 

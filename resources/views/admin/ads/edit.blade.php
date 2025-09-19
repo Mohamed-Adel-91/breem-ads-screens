@@ -5,10 +5,12 @@
                 <h1 class="text-2xl font-semibold text-gray-900">{{ __('Edit ad') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">{{ __('Update metadata, creatives, and default scheduling information for this advertisement.') }}</p>
             </div>
-            <a href="{{ route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id]) }}"
-               class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                {{ __('Back to details') }}
-            </a>
+            @can('ads.view')
+                <a href="{{ route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id]) }}"
+                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    {{ __('Back to details') }}
+                </a>
+            @endcan
         </div>
     </x-slot>
 

@@ -5,10 +5,12 @@
                 <h1 class="text-2xl font-semibold text-gray-900">{{ __('Screens') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">{{ __('Monitor the deployment status of screens and access quick diagnostics.') }}</p>
             </div>
-            <a href="{{ route('admin.screens.create', ['lang' => $lang]) }}"
-               class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                {{ __('Create screen') }}
-            </a>
+            @can('screens.create')
+                <a href="{{ route('admin.screens.create', ['lang' => $lang]) }}"
+                   class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    {{ __('Create screen') }}
+                </a>
+            @endcan
         </div>
     </x-slot>
 
@@ -115,14 +117,18 @@
                                         <td class="px-4 py-3 text-gray-700">{{ optional($screen->last_heartbeat)->format('Y-m-d H:i') ?? '—' }}</td>
                                         <td class="px-4 py-3">
                                             <div class="flex flex-wrap gap-2">
-                                                <a href="{{ route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id]) }}"
-                                                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                                    {{ __('View') }}
-                                                </a>
-                                                <a href="{{ route('admin.screens.edit', ['lang' => $lang, 'screen' => $screen->id]) }}"
-                                                   class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                                                    {{ __('Edit') }}
-                                                </a>
+                                                @can('screens.view')
+                                                    <a href="{{ route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id]) }}"
+                                                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                                                        {{ __('View') }}
+                                                    </a>
+                                                @endcan
+                                                @can('screens.edit')
+                                                    <a href="{{ route('admin.screens.edit', ['lang' => $lang, 'screen' => $screen->id]) }}"
+                                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
+                                                        {{ __('Edit') }}
+                                                    </a>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>
