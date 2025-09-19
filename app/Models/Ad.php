@@ -96,7 +96,11 @@ class Ad extends Model
         $disk = config('filesystems.default', env('FILESYSTEM_DISK'));
 
         if ($disk === 's3') {
-            return Storage::disk('s3')->url($path);
+            if (Storage::disk('s3')->exists($path)) {
+                return Storage::disk('s3')->url($path);
+            }
+            // Fallback: generate a full S3 URL manually if needed
+            return config('filesystems.disks.s3.url') . '/' . ltrim($path, '/');
         }
 
         return asset(ltrim($path, '/'));
