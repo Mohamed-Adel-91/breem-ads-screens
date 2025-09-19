@@ -123,24 +123,20 @@ class FileService implements FileServiceInterface
         $folder = $this->buildModelFolder($baseFolder);
         $existingFile = $existing ? basename($existing) : null;
 
-        $stub = new class($existingFile) extends Model {
+        $stub = new class extends Model {
             protected $table = 'file_service_stub';
             public $timestamps = false;
             protected $fillable = ['path'];
-
-            public function __construct(?string $existing)
-            {
-                parent::__construct();
-                if ($existing) {
-                    $this->setAttribute('path', $existing);
-                }
-            }
 
             public function save(array $options = [])
             {
                 return true;
             }
         };
+
+        if ($existingFile) {
+            $stub->setAttribute('path', $existingFile);
+        }
 
         $uploaded = $this->uploadFile([
             $request->file($field)
@@ -157,3 +153,4 @@ class FileService implements FileServiceInterface
         return $existing;
     }
 }
+
