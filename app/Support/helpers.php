@@ -13,6 +13,7 @@ if (! function_exists('media_path')) {
             'http://', 'https://',
             '/storage', 'storage/',
             '/frontend/', 'frontend/',
+            '/cms/', 'cms/',
         ])) {
             return ltrim($path, '/');
         }

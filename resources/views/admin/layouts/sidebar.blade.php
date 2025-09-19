@@ -71,31 +71,8 @@
                         </ul>
                     </div>
                 </li>
-                            <li
-                    class="sidebar-dropdown {{ Request::is('dashboard/cms/pages/*') ? 'active' : '' }}">
-                    <a href="#">
-                        <i class="fas fa-sitemap" aria-hidden="true"></i>
-                        <span class="menu-text">{{ __('admin.sidebar.website_cms') }}</span>
-                    </a>
-                    <div class="sidebar-submenu">
-                        <ul>
-                            <li class="{{ Request::is('dashboard/cms/pages/home/edit') ? 'active' : '' }}">
-                                <a href="{{ route('admin.cms.pages.edit', ['lang' => app()->getLocale(), 'slug' => 'home']) }}"
-                                    class="{{ Request::is('dashboard/cms/pages/home/edit') ? 'current-page' : '' }}">{{ __('admin.sidebar.home_page') }}</a>
-                            </li>
-                            <li class="{{ Request::is('dashboard/cms/pages/whoweare/edit') ? 'active' : '' }}">
-                                <a href="{{ route('admin.cms.pages.edit', ['lang' => app()->getLocale(), 'slug' => 'whoweare']) }}"
-                                    class="{{ Request::is('dashboard/cms/pages/whoweare/edit') ? 'current-page' : '' }}">{{ __('admin.sidebar.who_we_are') }}</a>
-                            </li>
-                            <li class="{{ Request::is('dashboard/cms/pages/contact-us/edit') ? 'active' : '' }}">
-                                <a href="{{ route('admin.cms.pages.edit', ['lang' => app()->getLocale(), 'slug' => 'contact-us']) }}"
-                                    class="{{ Request::is('dashboard/cms/pages/contact-us/edit') ? 'current-page' : '' }}">{{ __('admin.sidebar.contact_us') }}</a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
                 <li
-                    class="sidebar-dropdown {{ Request::is('dashboard/contact-submissions*') ? 'active' : '' }}">
+                    class="sidebar-dropdown {{ Request::is('dashboard/contact-submissions*') || Request::is('dashboard/cms/home/edit') || Request::is('dashboard/cms/whoweare/edit') || Request::is('dashboard/cms/contact-us/edit') || Request::is('*admin-panel/cms/home/*') || Request::is('*admin-panel/cms/whoweare/*') || Request::is('*admin-panel/cms/contact-us/*') ? 'active' : '' }}">
                     <a href="#">
                         <i class="fas fa-inbox" aria-hidden="true"></i>
                         <span class="menu-text">{{ __('admin.sidebar.contact_submissions') }}</span>
@@ -106,9 +83,22 @@
                                 <a href="{{ route('admin.contact_submissions.index', ['lang' => app()->getLocale()]) }}"
                                     class="{{ Request::is('dashboard/contact-submissions') ? 'current-page' : '' }}">{{ __('admin.sidebar.all_submissions') }}</a>
                             </li>
+                            <li class="{{ Request::is('dashboard/cms/home/edit') || Request::is('*admin-panel/cms/home/edit') ? 'active' : '' }}">
+                                <a href="{{ route('admin.cms.home.edit', ['lang' => app()->getLocale()]) }}"
+                                    class="{{ Request::is('dashboard/cms/home/edit') || Request::is('*admin-panel/cms/home/edit') ? 'current-page' : '' }}">{{ __('admin.sidebar.home_page') }}</a>
+                            </li>
+                            <li class="{{ Request::is('dashboard/cms/whoweare/edit') || Request::is('*admin-panel/cms/whoweare/edit') ? 'active' : '' }}">
+                                <a href="{{ route('admin.cms.whoweare.edit', ['lang' => app()->getLocale()]) }}"
+                                    class="{{ Request::is('dashboard/cms/whoweare/edit') || Request::is('*admin-panel/cms/whoweare/edit') ? 'current-page' : '' }}">{{ __('admin.sidebar.who_we_are') }}</a>
+                            </li>
+                            <li class="{{ Request::is('dashboard/cms/contact-us/edit') || Request::is('*admin-panel/cms/contact-us/edit') ? 'active' : '' }}">
+                                <a href="{{ route('admin.cms.contact.edit', ['lang' => app()->getLocale()]) }}"
+                                    class="{{ Request::is('dashboard/cms/contact-us/edit') || Request::is('*admin-panel/cms/contact-us/edit') ? 'current-page' : '' }}">{{ __('admin.sidebar.contact_us') }}</a>
+                            </li>
                         </ul>
                     </div>
-                </li></ul>
+                </li>
+            </ul>
         </div>
         <!-- sidebar menu end -->
     </div>
