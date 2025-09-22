@@ -5,10 +5,12 @@
                 <h1 class="text-2xl font-semibold text-gray-900">{{ __('Create place') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">{{ __('Register a new venue that can host screens and campaigns.') }}</p>
             </div>
-            <a href="{{ route('admin.places.index', ['lang' => $lang]) }}"
-               class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                {{ __('Back to list') }}
-            </a>
+            @can('places.view')
+                <a href="{{ route('admin.places.index', ['lang' => $lang]) }}"
+                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    {{ __('Back to list') }}
+                </a>
+            @endcan
         </div>
     </x-slot>
 

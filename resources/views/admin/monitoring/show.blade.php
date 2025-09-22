@@ -5,10 +5,12 @@
                 <h1 class="text-2xl font-semibold text-gray-900">{{ __('Screen monitoring') }} — {{ $screen->code }}</h1>
                 <p class="mt-1 text-sm text-gray-500">{{ data_get($screen->place?->getTranslations('name'), app()->getLocale()) ?? __('Place #:id', ['id' => $screen->place_id]) }}</p>
             </div>
-            <a href="{{ route('admin.monitoring.index', ['lang' => $lang]) }}"
-               class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                {{ __('Back to monitoring') }}
-            </a>
+            @can('monitoring.view')
+                <a href="{{ route('admin.monitoring.index', ['lang' => $lang]) }}"
+                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    {{ __('Back to monitoring') }}
+                </a>
+            @endcan
         </div>
     </x-slot>
 

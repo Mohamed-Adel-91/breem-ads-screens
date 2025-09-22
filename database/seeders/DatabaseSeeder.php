@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             ->call(AdminUserSeeder::class)
             ->call(HomePageSeeder::class)
             ->call(WhoWeArePageSeeder::class)
-            ->call(ContactUsPageSeeder::class);
+            ->call(ContactUsPageSeeder::class)
+            ->call(DemoSeeder::class);
     }
 }

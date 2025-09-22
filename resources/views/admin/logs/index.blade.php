@@ -71,11 +71,13 @@
                                 $queryParams = collect($filters)->filter(fn ($value) => filled($value))->all();
                             @endphp
 
-                            <div class="d-flex flex-wrap gap-2 mb-3">
-                                <a href="{{ route('admin.logs.download', array_merge(['lang' => $lang, 'type' => 'system'])) }}" class="btn btn-outline-secondary btn-sm">{{ __('Download system log') }}</a>
-                                <a href="{{ route('admin.logs.download', array_merge(['lang' => $lang, 'type' => 'screen'], $queryParams)) }}" class="btn btn-outline-secondary btn-sm">{{ __('Export screen logs') }}</a>
-                                <a href="{{ route('admin.logs.download', array_merge(['lang' => $lang, 'type' => 'playback'], $queryParams)) }}" class="btn btn-outline-secondary btn-sm">{{ __('Export playback logs') }}</a>
-                            </div>
+                            @can('logs.export')
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <a href="{{ route('admin.logs.download', array_merge(['lang' => $lang, 'type' => 'system'])) }}" class="btn btn-outline-secondary btn-sm">{{ __('Download system log') }}</a>
+                                    <a href="{{ route('admin.logs.download', array_merge(['lang' => $lang, 'type' => 'screen'], $queryParams)) }}" class="btn btn-outline-secondary btn-sm">{{ __('Export screen logs') }}</a>
+                                    <a href="{{ route('admin.logs.download', array_merge(['lang' => $lang, 'type' => 'playback'], $queryParams)) }}" class="btn btn-outline-secondary btn-sm">{{ __('Export playback logs') }}</a>
+                                </div>
+                            @endcan
 
                             <div class="card mb-3">
                                 <div class="card-header d-flex justify-content-between align-items-center">

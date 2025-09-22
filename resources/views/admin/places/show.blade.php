@@ -12,7 +12,9 @@
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">{{ data_get($place->getTranslations('name'), app()->getLocale()) ?? __('Place #:id', ['id' => $place->id]) }}</h5>
                                 <div class="d-flex gap-2">
-                                    <a href="{{ route('admin.places.index', ['lang' => $lang]) }}" class="btn btn-sm btn-light">{{ __('Back to list') }}</a>
+                                    @can('places.view')
+                                        <a href="{{ route('admin.places.index', ['lang' => $lang]) }}" class="btn btn-sm btn-light">{{ __('Back to list') }}</a>
+                                    @endcan
                                     @can('places.edit')
                                         <a href="{{ route('admin.places.edit', ['lang' => $lang, 'place' => $place->id]) }}" class="btn btn-sm btn-outline-primary">{{ __('Edit') }}</a>
                                     @endcan

@@ -106,13 +106,25 @@ class AdController extends Controller
         $data = $request->validated();
 
         $filePath = $this->fileService->uploadSingle($request, 'creative', Ad::UPLOAD_FOLDER);
+        $fileType = $this->determineFileType($request->file('creative'), $filePath);
+
+        $hasDurationValue = array_key_exists('duration_seconds', $data) && $data['duration_seconds'] !== null;
+        $requestedDuration = $hasDurationValue ? (int) $data['duration_seconds'] : null;
+        $durationSeconds = $this->resolveDurationSeconds(
+            $request,
+            $fileType,
+            $filePath,
+            true,
+            $hasDurationValue,
+            $requestedDuration
+        );
 
         $ad = new Ad();
         $ad->title = $this->prepareTranslations($data['title'] ?? []);
         $ad->description = $this->prepareTranslations($data['description'] ?? []);
         $ad->file_path = $filePath;
-        $ad->file_type = $this->determineFileType($request->file('creative'), $filePath);
-        $ad->duration_seconds = (int) ($data['duration_seconds'] ?? 0);
+        $ad->file_type = $fileType;
+        $ad->duration_seconds = $durationSeconds;
         $ad->status = AdStatus::from($data['status'] ?? AdStatus::Pending->value);
         $ad->created_by = $data['created_by'];
         $ad->approved_by = $data['approved_by'] ?? null;
@@ -183,14 +195,32 @@ class AdController extends Controller
         $data = $request->validated();
 
         $filePath = $this->fileService->uploadSingle($request, 'creative', Ad::UPLOAD_FOLDER, $ad->file_path);
-        if ($filePath && $filePath !== $ad->file_path) {
+        $fileChanged = $filePath && $filePath !== $ad->file_path;
+
+        if ($fileChanged) {
+            $fileType = $this->determineFileType($request->file('creative'), $filePath);
             $ad->file_path = $filePath;
-            $ad->file_type = $this->determineFileType($request->file('creative'), $filePath);
+            $ad->file_type = $fileType;
+        } else {
+            $fileType = $ad->file_type;
+            $filePath = $ad->file_path;
         }
+
+        $hasDurationValue = array_key_exists('duration_seconds', $data) && $data['duration_seconds'] !== null;
+        $requestedDuration = $hasDurationValue ? (int) $data['duration_seconds'] : null;
+        $durationSeconds = $this->resolveDurationSeconds(
+            $request,
+            $fileType,
+            $filePath,
+            $fileChanged,
+            $hasDurationValue,
+            $requestedDuration,
+            $ad->duration_seconds !== null ? (int) $ad->duration_seconds : null
+        );
 
         $ad->title = $this->prepareTranslations($data['title'] ?? []);
         $ad->description = $this->prepareTranslations($data['description'] ?? []);
-        $ad->duration_seconds = (int) ($data['duration_seconds'] ?? $ad->duration_seconds);
+        $ad->duration_seconds = $durationSeconds;
         $ad->status = AdStatus::from($data['status'] ?? $ad->status->value);
         $ad->created_by = $data['created_by'];
         $ad->approved_by = $data['approved_by'] ?? null;
@@ -272,6 +302,94 @@ class AdController extends Controller
         $ad->flushScreensCache($affectedScreenIds);
     }
 
+    private function resolveDurationSeconds(StoreAdRequest|UpdateAdRequest $request, string $fileType, ?string $filePath, bool $fileChanged, bool $hasDurationValue, ?int $requestedDuration, ?int $currentDuration = null): int
+    {
+        $duration = $hasDurationValue ? (int) ($requestedDuration ?? 0) : ($currentDuration ?? 0);
+
+        if ($fileType !== 'video') {
+            return $duration;
+        }
+
+        if (!$fileChanged) {
+            return $duration;
+        }
+
+        if ($hasDurationValue && $duration > 0) {
+            return $duration;
+        }
+
+        if (!config('ads.try_ffprobe', true)) {
+            return $duration;
+        }
+
+        $probedDuration = $this->probeVideoDuration($filePath);
+
+        if ($probedDuration === null) {
+            $request->failDurationProbe();
+        }
+
+        return $probedDuration;
+    }
+
+    private function probeVideoDuration(?string $filePath): ?int
+    {
+        if (!$filePath) {
+            return null;
+        }
+
+        $absolutePath = $this->absoluteCreativePath($filePath);
+
+        if (!$absolutePath || !is_file($absolutePath)) {
+            return null;
+        }
+
+        $commandTemplate = config('ads.ffprobe.command');
+
+        if (!is_string($commandTemplate) || trim($commandTemplate) === '') {
+            return null;
+        }
+
+        if (!function_exists('shell_exec')) {
+            return null;
+        }
+
+        $escapedPath = escapeshellarg($absolutePath);
+
+        if (str_contains($commandTemplate, '{path}')) {
+            $command = str_replace('{path}', $escapedPath, $commandTemplate);
+        } elseif (str_contains($commandTemplate, '%s')) {
+            $command = sprintf($commandTemplate, $escapedPath);
+        } else {
+            $command = $commandTemplate . ' ' . $escapedPath;
+        }
+
+        $output = @shell_exec($command);
+
+        if (!is_string($output)) {
+            return null;
+        }
+
+        $output = trim($output);
+
+        if ($output === '' || !is_numeric($output)) {
+            return null;
+        }
+
+        return (int) round((float) $output);
+    }
+
+    private function absoluteCreativePath(?string $filePath): ?string
+    {
+        if (!$filePath) {
+            return null;
+        }
+
+        if (str_starts_with($filePath, 'http://') || str_starts_with($filePath, 'https://')) {
+            return null;
+        }
+
+        return public_path(ltrim($filePath, '/'));
+    }
     private function determineFileType(?UploadedFile $file, ?string $path = null): string
     {
         $extension = null;
@@ -289,3 +407,4 @@ class AdController extends Controller
         };
     }
 }
+

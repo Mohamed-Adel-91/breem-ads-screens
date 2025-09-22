@@ -5,10 +5,12 @@
                 <h1 class="text-2xl font-semibold text-gray-900">{{ __('Create ad') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">{{ __('Upload the creative, choose its owner, and configure the default playback settings.') }}</p>
             </div>
-            <a href="{{ route('admin.ads.index', ['lang' => $lang]) }}"
-               class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                {{ __('Back to list') }}
-            </a>
+            @can('ads.view')
+                <a href="{{ route('admin.ads.index', ['lang' => $lang]) }}"
+                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    {{ __('Back to list') }}
+                </a>
+            @endcan
         </div>
     </x-slot>
 

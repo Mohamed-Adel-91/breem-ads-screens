@@ -6,14 +6,18 @@
                 <p class="mt-1 text-sm text-gray-500">{{ __('Detailed telemetry and assignments for this screen.') }}</p>
             </div>
             <div class="flex flex-wrap gap-3">
-                <a href="{{ route('admin.screens.edit', ['lang' => $lang, 'screen' => $screen->id]) }}"
-                   class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                    {{ __('Edit screen') }}
-                </a>
-                <a href="{{ route('admin.screens.index', ['lang' => $lang]) }}"
-                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                    {{ __('Back to list') }}
-                </a>
+                @can('screens.edit')
+                    <a href="{{ route('admin.screens.edit', ['lang' => $lang, 'screen' => $screen->id]) }}"
+                       class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
+                        {{ __('Edit screen') }}
+                    </a>
+                @endcan
+                @can('screens.view')
+                    <a href="{{ route('admin.screens.index', ['lang' => $lang]) }}"
+                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                        {{ __('Back to list') }}
+                    </a>
+                @endcan
             </div>
         </div>
     </x-slot>

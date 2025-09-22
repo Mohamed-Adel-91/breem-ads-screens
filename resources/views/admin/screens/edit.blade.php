@@ -5,10 +5,12 @@
                 <h1 class="text-2xl font-semibold text-gray-900">{{ __('Edit screen') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">{{ __('Adjust device information or update its current status.') }}</p>
             </div>
-            <a href="{{ route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id]) }}"
-               class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                {{ __('Back to details') }}
-            </a>
+            @can('screens.view')
+                <a href="{{ route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id]) }}"
+                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    {{ __('Back to details') }}
+                </a>
+            @endcan
         </div>
     </x-slot>
 

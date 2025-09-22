@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
 
@@ -76,8 +77,14 @@ class Ad extends Model
      */
     public function getFileUrlAttribute(): ?string
     {
-        $path = $this->file_path;
+        return static::resolveFileUrl($this->file_path);
+    }
 
+    /**
+     * Resolve a file path or URL into an absolute URL for playback.
+     */
+    public static function resolveFileUrl(?string $path): ?string
+    {
         if (!$path) {
             return null;
         }
@@ -86,7 +93,17 @@ class Ad extends Model
             return $path;
         }
 
-        return asset($path);
+        $disk = config('filesystems.default', env('FILESYSTEM_DISK'));
+
+        if ($disk === 's3') {
+            if (Storage::disk('s3')->exists($path)) {
+                return Storage::disk('s3')->url($path);
+            }
+            // Fallback: generate a full S3 URL manually if needed
+            return config('filesystems.disks.s3.url') . '/' . ltrim($path, '/');
+        }
+
+        return asset(ltrim($path, '/'));
     }
 
     /**

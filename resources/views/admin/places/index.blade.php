@@ -5,10 +5,12 @@
                 <h1 class="text-2xl font-semibold text-gray-900">{{ __('Places') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">{{ __('Manage venues and see which screens are attached to each location.') }}</p>
             </div>
-            <a href="{{ route('admin.places.create', ['lang' => $lang]) }}"
-               class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                {{ __('Create place') }}
-            </a>
+            @can('places.create')
+                <a href="{{ route('admin.places.create', ['lang' => $lang]) }}"
+                   class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
+                    {{ __('Create place') }}
+                </a>
+            @endcan
         </div>
     </x-slot>
 
@@ -87,14 +89,18 @@
                                         <td class="px-4 py-3 text-gray-700">{{ $place->screens_count }}</td>
                                         <td class="px-4 py-3">
                                             <div class="flex flex-wrap gap-2">
-                                                <a href="{{ route('admin.places.show', ['lang' => $lang, 'place' => $place->id]) }}"
-                                                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                                    {{ __('View') }}
-                                                </a>
-                                                <a href="{{ route('admin.places.edit', ['lang' => $lang, 'place' => $place->id]) }}"
-                                                   class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                                                    {{ __('Edit') }}
-                                                </a>
+                                                @can('places.view')
+                                                    <a href="{{ route('admin.places.show', ['lang' => $lang, 'place' => $place->id]) }}"
+                                                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                                                        {{ __('View') }}
+                                                    </a>
+                                                @endcan
+                                                @can('places.edit')
+                                                    <a href="{{ route('admin.places.edit', ['lang' => $lang, 'place' => $place->id]) }}"
+                                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
+                                                        {{ __('Edit') }}
+                                                    </a>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>

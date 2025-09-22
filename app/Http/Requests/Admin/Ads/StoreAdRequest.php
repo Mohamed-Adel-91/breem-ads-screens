@@ -3,8 +3,10 @@
 namespace App\Http\Requests\Admin\Ads;
 
 use App\Enums\AdStatus;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class StoreAdRequest extends FormRequest
 {
@@ -36,5 +38,18 @@ class StoreAdRequest extends FormRequest
             'play_order' => ['nullable', 'array'],
             'play_order.*' => ['nullable', 'integer', 'min:0'],
         ];
+    }
+
+    public function failDurationProbe(): never
+    {
+        $validator = $this->getValidatorInstance();
+
+        $validator->after(function (Validator $validator): void {
+            $validator->errors()->add('duration_seconds', __('duration_seconds required when probe unavailable'));
+        });
+
+        $validator->fails();
+
+        throw new ValidationException($validator);
     }
 }

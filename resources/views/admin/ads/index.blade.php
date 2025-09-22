@@ -5,10 +5,12 @@
                 <h1 class="text-2xl font-semibold text-gray-900">{{ __('Ads') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">{{ __('Review, filter, and manage advertising creatives across all screens.') }}</p>
             </div>
-            <a href="{{ route('admin.ads.create', ['lang' => $lang]) }}"
-               class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                {{ __('admin.buttons.new') }}
-            </a>
+            @can('ads.create')
+                <a href="{{ route('admin.ads.create', ['lang' => $lang]) }}"
+                   class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    {{ __('admin.buttons.new') }}
+                </a>
+            @endcan
         </div>
     </x-slot>
 
@@ -137,23 +139,29 @@
                                         <td class="px-4 py-3 text-gray-700">{{ optional($ad->creator)->name ?? '—' }}</td>
                                         <td class="px-4 py-3">
                                             <div class="flex flex-wrap gap-2">
-                                                <a href="{{ route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id]) }}"
-                                                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                                    {{ __('View') }}
-                                                </a>
-                                                <a href="{{ route('admin.ads.edit', ['lang' => $lang, 'ad' => $ad->id]) }}"
-                                                   class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                                                    {{ __('Edit') }}
-                                                </a>
-                                                <form method="POST" action="{{ route('admin.ads.destroy', ['lang' => $lang, 'ad' => $ad->id]) }}"
-                                                      onsubmit="return confirm('{{ __('Are you sure?') }}');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                            class="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-500">
-                                                        {{ __('Delete') }}
-                                                    </button>
-                                                </form>
+                                                @can('ads.view')
+                                                    <a href="{{ route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id]) }}"
+                                                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                                                        {{ __('View') }}
+                                                    </a>
+                                                @endcan
+                                                @can('ads.edit')
+                                                    <a href="{{ route('admin.ads.edit', ['lang' => $lang, 'ad' => $ad->id]) }}"
+                                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
+                                                        {{ __('Edit') }}
+                                                    </a>
+                                                @endcan
+                                                @can('ads.delete')
+                                                    <form method="POST" action="{{ route('admin.ads.destroy', ['lang' => $lang, 'ad' => $ad->id]) }}"
+                                                          onsubmit="return confirm('{{ __('Are you sure?') }}');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                                class="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-500">
+                                                            {{ __('Delete') }}
+                                                        </button>
+                                                    </form>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>

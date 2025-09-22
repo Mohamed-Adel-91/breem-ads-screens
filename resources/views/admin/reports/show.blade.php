@@ -6,14 +6,18 @@
                 <p class="mt-1 text-sm text-gray-500">{{ __('Report type:') }} {{ ucfirst(str_replace('-', ' ', $report->type)) }}</p>
             </div>
             <div class="flex flex-wrap gap-3">
-                <a href="{{ route('admin.reports.index', ['lang' => $lang]) }}"
-                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                    {{ __('Back to reports') }}
-                </a>
-                <a href="{{ route('admin.reports.download', ['lang' => $lang, 'report' => $report->id]) }}"
-                   class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                    {{ __('Download CSV') }}
-                </a>
+                @can('reports.view')
+                    <a href="{{ route('admin.reports.index', ['lang' => $lang]) }}"
+                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                        {{ __('Back to reports') }}
+                    </a>
+                @endcan
+                @can('reports.view')
+                    <a href="{{ route('admin.reports.download', ['lang' => $lang, 'report' => $report->id]) }}"
+                       class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
+                        {{ __('Download CSV') }}
+                    </a>
+                @endcan
             </div>
         </div>
     </x-slot>
