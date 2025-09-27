@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::prefix('v1')
-    ->middleware(['api', 'throttle:api', 'screen.auth'])
+    ->middleware(['api', 'throttle:api.v1', 'screen.auth'])
     ->group(function (): void {
         Route::bind('screen', function (string $value): Screen {
             return Screen::query()
