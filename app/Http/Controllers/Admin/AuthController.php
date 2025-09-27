@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -62,7 +63,7 @@ class AuthController extends Controller
             session()->forget('otp_admin_id');
             return redirect()->route('admin.dashboard', ['lang' => $lang]);
         }
-        return back()->with('error', 'رمز التحقق غير صحيح.');
+        return back()->with('error', Lang::t('admin.flash.auth.invalid_otp', 'رمز التحقق غير صحيح.'));
     }
 
     public function login(Request $request, string $lang)
@@ -77,7 +78,7 @@ class AuthController extends Controller
             return redirect()->route('admin.dashboard', ['lang' => $lang]);
         }
 
-        session()->flash('error', 'بيانات المدخلة غير صحيحة.');
+        session()->flash('error', Lang::t('admin.flash.auth.invalid_credentials', 'بيانات المدخلة غير صحيحة.'));
 
         return back();
     }

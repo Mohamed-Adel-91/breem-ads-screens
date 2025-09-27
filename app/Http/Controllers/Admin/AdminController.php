@@ -6,9 +6,10 @@ use App\Contracts\FileServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AdminRequest;
 use App\Models\Admin;
+use App\Support\Lang;
 use Illuminate\Support\Facades\Auth;
-use Spatie\Permission\Models\Role as SpatieRole;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role as SpatieRole;
 
 
 class AdminController extends Controller
@@ -25,7 +26,7 @@ class AdminController extends Controller
         $this->authorizeAdmin('admins.view');
         $data = Admin::paginate(25);
         return view('admin.admins.index')->with([
-            'pageName' => 'قائمة المسؤولين',
+            'pageName' => Lang::t('admin.pages.admins.index', 'قائمة المسؤولين'),
             'data' => $data,
         ]);
     }
@@ -34,7 +35,7 @@ class AdminController extends Controller
     {
         $this->authorizeAdmin('admins.create');
         return view('admin.admins.form')->with([
-            'pageName' => 'إنشاء مسؤول جديد',
+            'pageName' => Lang::t('admin.pages.admins.create', 'إنشاء مسؤول جديد'),
             'availableRoles' => SpatieRole::where('guard_name', 'admin')->pluck('name', 'id'),
             'availablePermissions' => Permission::where('guard_name', 'admin')->pluck('name', 'id'),
         ]);
@@ -55,14 +56,15 @@ class AdminController extends Controller
         }
         $folder = Admin::UPLOAD_FOLDER;
         $this->fileService->storeFiles($admin, $request, ['profile_picture'], $folder);
-        return redirect()->route('admin.admins.index')->with('success', 'تم إنشاء المسؤول بنجاح.');
+        return redirect()->route('admin.admins.index')
+            ->with('success', Lang::t('admin.flash.admins.created', 'تم إنشاء المسؤول بنجاح.'));
     }
 
     public function edit(string $lang, Admin $admin)
     {
         $this->authorizeAdmin('admins.edit');
         return view('admin.admins.form')->with([
-            'pageName' => 'تعديل مسؤول',
+            'pageName' => Lang::t('admin.pages.admins.edit', 'تعديل مسؤول'),
             'data' => $admin,
             'availableRoles' => SpatieRole::where('guard_name', 'admin')->pluck('name', 'id'),
             'availablePermissions' => Permission::where('guard_name', 'admin')->pluck('name', 'id'),
@@ -88,20 +90,22 @@ class AdminController extends Controller
         $folder = Admin::UPLOAD_FOLDER;
         $this->fileService->updateFiles($admin, $request, ['profile_picture'], $folder);
         return redirect()->route('admin.admins.index', $request->query())
-            ->with('success', 'تم تحديث المسؤول بنجاح.');
+            ->with('success', Lang::t('admin.flash.admins.updated', 'تم تحديث المسؤول بنجاح.'));
     }
 
     public function destroy(string $lang, Admin $admin)
     {
         $this->authorizeAdmin('admins.edit');
         if ($admin->hasRole('super-admin')) {
-            return redirect()->route('admin.admins.index')->with('error', 'لا يمكن حذف المسؤول الرئيسي.');
+            return redirect()->route('admin.admins.index')
+                ->with('error', Lang::t('admin.flash.admins.cannot_delete_super_admin', 'لا يمكن حذف المسؤول الرئيسي.'));
         }
         if ($admin->profile_picture) {
             $this->fileService->deleteFile($admin->profile_picture, Admin::UPLOAD_FOLDER);
         }
         $admin->delete();
-        return redirect()->route('admin.admins.index')->with('success', 'تم حذف المسؤول بنجاح.');
+        return redirect()->route('admin.admins.index')
+            ->with('success', Lang::t('admin.flash.admins.deleted', 'تم حذف المسؤول بنجاح.'));
     }
 
     protected function authorizeAdmin(string $permission): void

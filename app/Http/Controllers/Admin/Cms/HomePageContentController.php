@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Cms;
 
 use App\Models\SectionItem;
+use App\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -137,7 +138,7 @@ class HomePageContentController extends BasePageContentController
 
         return redirect()
             ->route('admin.cms.home.edit', ['lang' => $lang])
-            ->with('success', 'تم تحديث محتوى صفحة الرئيسية بنجاح.');
+            ->with('success', Lang::t('admin.flash.cms.home_updated', 'تم تحديث محتوى صفحة الرئيسية بنجاح.'));
     }
 
     protected function updateBannerSection(Request $request, $section): void

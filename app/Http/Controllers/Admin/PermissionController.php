@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Helpers\RoutesHelper;
 use App\Http\Controllers\Controller;
+use App\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
@@ -15,7 +16,7 @@ class PermissionController extends Controller
         $permissions = Permission::where('guard_name', 'admin')->paginate(25);
 
         return view('admin.permissions.index')->with([
-            'pageName' => 'قائمة الصلاحيات',
+            'pageName' => Lang::t('admin.pages.permissions.index', 'قائمة الصلاحيات'),
             'data' => $permissions,
         ]);
     }
@@ -23,7 +24,7 @@ class PermissionController extends Controller
     public function create()
     {
         return view('admin.permissions.form')->with([
-            'pageName' => 'إنشاء صلاحية',
+            'pageName' => Lang::t('admin.pages.permissions.create', 'إنشاء صلاحية'),
             'routes' => RoutesHelper::getAdminRouteNames(),
         ]);
     }
@@ -45,7 +46,8 @@ class PermissionController extends Controller
             'guard_name' => 'admin',
         ]);
 
-        return redirect()->route('admin.permissions.index')->with('success', 'تم إنشاء الصلاحية بنجاح.');
+        return redirect()->route('admin.permissions.index')
+            ->with('success', Lang::t('admin.flash.permissions.created', 'تم إنشاء الصلاحية بنجاح.'));
     }
 
     public function edit(string $lang, Permission $permission)
@@ -53,7 +55,7 @@ class PermissionController extends Controller
         abort_unless($permission->guard_name === 'admin', 404);
 
         return view('admin.permissions.form')->with([
-            'pageName' => 'تعديل صلاحية',
+            'pageName' => Lang::t('admin.pages.permissions.edit', 'تعديل صلاحية'),
             'routes' => RoutesHelper::getAdminRouteNames(),
             'data' => $permission,
         ]);
@@ -78,7 +80,8 @@ class PermissionController extends Controller
             'name' => $data['name'],
         ]);
 
-        return redirect()->route('admin.permissions.index')->with('success', 'تم تحديث الصلاحية بنجاح.');
+        return redirect()->route('admin.permissions.index')
+            ->with('success', Lang::t('admin.flash.permissions.updated', 'تم تحديث الصلاحية بنجاح.'));
     }
 
     public function destroy(string $lang, Permission $permission)
@@ -86,6 +89,7 @@ class PermissionController extends Controller
         abort_unless($permission->guard_name === 'admin', 404);
         $permission->delete();
 
-        return redirect()->route('admin.permissions.index')->with('success', 'تم حذف الصلاحية بنجاح.');
+        return redirect()->route('admin.permissions.index')
+            ->with('success', Lang::t('admin.flash.permissions.deleted', 'تم حذف الصلاحية بنجاح.'));
     }
 }

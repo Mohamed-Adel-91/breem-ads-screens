@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Helpers\RoutesHelper;
 use App\Http\Controllers\Controller;
 use App\Models\SeoMeta;
+use App\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,7 +16,7 @@ class SeoMetaController extends Controller
     {
         $data = SeoMeta::orderBy('created_at', 'desc')->paginate(25);
         return view('admin.seo_metas.index', compact('data'))
-            ->with('pageName', 'إدارة ميتا سيو');
+            ->with('pageName', Lang::t('admin.pages.seo_metas.index', 'إدارة ميتا سيو'));
     }
 
     public function create()
@@ -23,7 +24,7 @@ class SeoMetaController extends Controller
         $pagesRoutes = RoutesHelper::getFrontendRoutes();
 
         return view('admin.seo_metas.form', compact('pagesRoutes'))
-            ->with('pageName', 'إنشاء ميتا سيو');
+            ->with('pageName', Lang::t('admin.pages.seo_metas.create', 'إنشاء ميتا سيو'));
     }
 
     public function store(Request $request)
@@ -45,7 +46,7 @@ class SeoMetaController extends Controller
             ->withProperties($data)
             ->log('Created SEO Meta');
         return redirect()->route('admin.seo_metas.index')
-            ->with('success', 'تم إنشاء بيانات تحسين محركات البحث بنجاح.');
+            ->with('success', Lang::t('admin.flash.seo_metas.created', 'تم إنشاء بيانات تحسين محركات البحث بنجاح.'));
     }
 
     public function edit(string $lang, SeoMeta $seoMeta)
@@ -53,7 +54,7 @@ class SeoMetaController extends Controller
         $pagesRoutes = RoutesHelper::getFrontendRoutes();
 
         return view('admin.seo_metas.form', compact('seoMeta', 'pagesRoutes'))
-            ->with('pageName', 'تعديل ميتا سيو');
+            ->with('pageName', Lang::t('admin.pages.seo_metas.edit', 'تعديل ميتا سيو'));
     }
     public function update(Request $request, string $lang, SeoMeta $seoMeta)
     {
@@ -75,7 +76,7 @@ class SeoMetaController extends Controller
             ->log('Updated SEO Meta');
 
         return redirect()->route('admin.seo_metas.index', array_merge(['lang' => $lang], $request->query()))
-            ->with('success', 'تم تحديث بيانات تحسين محركات البحث بنجاح.');
+            ->with('success', Lang::t('admin.flash.seo_metas.updated', 'تم تحديث بيانات تحسين محركات البحث بنجاح.'));
     }
     public function destroy(string $lang, SeoMeta $seoMeta)
     {
@@ -86,6 +87,6 @@ class SeoMetaController extends Controller
             ->withProperties(['name' => $seoMeta->name])
             ->log('Deleted SEO Meta');
         return redirect()->route('admin.seo_metas.index', ['lang' => $lang])
-            ->with('success', 'تم حذف بيانات تحسين محركات البحث بنجاح.');
+            ->with('success', Lang::t('admin.flash.seo_metas.deleted', 'تم حذف بيانات تحسين محركات البحث بنجاح.'));
     }
 }

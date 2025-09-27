@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\Ads\UpdateScheduleRequest;
 use App\Models\Ad;
 use App\Models\AdSchedule;
 use App\Models\Screen;
+use App\Support\Lang;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -46,7 +47,7 @@ class ScheduleController extends Controller
         ];
 
         return view('admin.ads.schedules.index', [
-            'pageName' => 'جداول عرض الإعلان',
+            'pageName' => Lang::t('admin.pages.schedules.index', 'جداول عرض الإعلان'),
             'lang' => $lang,
             'ad' => $ad->loadMissing('screens.place'),
             'schedules' => $schedules,
@@ -86,7 +87,7 @@ class ScheduleController extends Controller
 
         return redirect()
             ->route('admin.ads.schedules.index', ['lang' => $lang, 'ad' => $ad->id])
-            ->with('success', __('Schedule created successfully.'));
+            ->with('success', Lang::t('admin.flash.schedules.created', 'Schedule created successfully.'));
     }
 
     public function update(string $lang, UpdateScheduleRequest $request, Ad $ad, AdSchedule $schedule): RedirectResponse
@@ -119,7 +120,7 @@ class ScheduleController extends Controller
 
         return redirect()
             ->route('admin.ads.schedules.index', ['lang' => $lang, 'ad' => $ad->id])
-            ->with('success', __('Schedule updated successfully.'));
+            ->with('success', Lang::t('admin.flash.schedules.updated', 'Schedule updated successfully.'));
     }
 
     public function destroy(string $lang, Ad $ad, AdSchedule $schedule): RedirectResponse
@@ -137,7 +138,7 @@ class ScheduleController extends Controller
 
         return redirect()
             ->route('admin.ads.schedules.index', ['lang' => $lang, 'ad' => $ad->id])
-            ->with('success', __('Schedule deleted successfully.'));
+            ->with('success', Lang::t('admin.flash.schedules.deleted', 'Schedule deleted successfully.'));
     }
 
     private function ensureScreenAttachment(Ad $ad, int $screenId): void

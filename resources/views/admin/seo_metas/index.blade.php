@@ -15,24 +15,27 @@
                                         <div class="col-md-6 d-flex justify-content-end p-0">
                                             <button type="button" class="btn btn-primary" style="margin-top: 20px;">
                                                 <a href="{{ route('admin.seo_metas.create', ['lang' => app()->getLocale()]) }}" style="color: #fff;">
-                                                    <i class="icon-plus-circle mr-1"></i> New
+                                                    <i class="icon-plus-circle mr-1"></i> @t('admin.table.new')
                                                 </a>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            @include('admin.partials.results-summary', ['data' => $data, 'label' => 'record(s)'])
+                            @include('admin.partials.results-summary', [
+                                'data' => $data,
+                                'label' => \App\Support\Lang::t('admin.seo_metas.results_label', 'record(s)'),
+                            ])
                             <div class="table-responsive">
                                 <table class="table custom-table m-0">
                                     <thead>
                                         <tr>
                                             <th>#</th>
-                                            <th>العنوان (EN)</th>
-                                            <th>العنوان (AR)</th>
-                                            <th>تاريخ الإنشاء</th>
-                                            <th>تاريخ التحديث</th>
-                                            <th>الخيارات</th>
+                                            <th>@t('admin.seo_metas.table.title_en')</th>
+                                            <th>@t('admin.seo_metas.table.title_ar')</th>
+                                            <th>@t('admin.table.created_at')</th>
+                                            <th>@t('admin.table.updated_at')</th>
+                                            <th>@t('admin.table.options')</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -48,7 +51,7 @@
                                                         <div class="td-actions">
                                                             <a href="{{ route('admin.seo_metas.edit', ['lang' => app()->getLocale(), 'seo_meta' => $seoMeta->id]) }}"
                                                                 class="icon bg-info" data-toggle="tooltip"
-                                                                data-placement="top" title="Edit SEO Meta">
+                                                                data-placement="top" title="@t('admin.seo_metas.actions.edit')">
                                                                 <i class="icon-edit"></i>
                                                             </a>
                                                             <form method="POST" id="delete_form_{{ $seoMeta->id }}"
@@ -58,7 +61,7 @@
                                                                 @method('DELETE')
                                                                 <button type="submit" class="icon red"
                                                                     data-toggle="tooltip" data-placement="top"
-                                                                    title="Delete Row"
+                                                                    title="@t('admin.seo_metas.actions.delete')"
                                                                     onclick="checker(event, {{ $seoMeta->id }})">
                                                                     <i class="icon-cancel"></i>
                                                                 </button>
@@ -71,7 +74,7 @@
                                             <tr>
                                                 <td colspan="11" class="text-center">
                                                     <div class="alert alert-danger">
-                                                        لا توجد سجلات لبيانات تحسين محركات البحث مطابقة للمعايير.
+                                                        @t('admin.seo_metas.messages.empty')
                                                     </div>
                                                 </td>
                                             </tr>

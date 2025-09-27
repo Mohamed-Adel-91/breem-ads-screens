@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Places\StorePlaceRequest;
 use App\Http\Requests\Admin\Places\UpdatePlaceRequest;
 use App\Models\Place;
+use App\Support\Lang;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class PlaceController extends Controller
         $places = $query->paginate(20)->withQueryString();
 
         return view('admin.places.index', [
-            'pageName' => 'الأماكن',
+            'pageName' => Lang::t('admin.pages.places.index', 'الأماكن'),
             'lang' => $lang,
             'places' => $places,
             'filters' => [
@@ -57,7 +58,7 @@ class PlaceController extends Controller
         ]);
 
         return view('admin.places.create', [
-            'pageName' => 'إضافة مكان جديد',
+            'pageName' => Lang::t('admin.pages.places.create', 'إضافة مكان جديد'),
             'lang' => $lang,
             'place' => $place,
             'types' => $this->availableTypes(),
@@ -82,7 +83,7 @@ class PlaceController extends Controller
 
         return redirect()
             ->route('admin.places.show', ['lang' => $lang, 'place' => $place->id])
-            ->with('success', __('Place created successfully.'));
+            ->with('success', Lang::t('admin.flash.places.created', 'Place created successfully.'));
     }
 
     public function show(string $lang, Place $place): View
@@ -90,7 +91,7 @@ class PlaceController extends Controller
         $place->load(['screens' => fn ($builder) => $builder->withCount(['schedules', 'ads'])]);
 
         return view('admin.places.show', [
-            'pageName' => 'تفاصيل المكان',
+            'pageName' => Lang::t('admin.pages.places.show', 'تفاصيل المكان'),
             'lang' => $lang,
             'place' => $place,
         ]);
@@ -99,7 +100,7 @@ class PlaceController extends Controller
     public function edit(string $lang, Place $place): View
     {
         return view('admin.places.edit', [
-            'pageName' => 'تعديل المكان',
+            'pageName' => Lang::t('admin.pages.places.edit', 'تعديل المكان'),
             'lang' => $lang,
             'place' => $place,
             'types' => $this->availableTypes(),
@@ -124,7 +125,7 @@ class PlaceController extends Controller
 
         return redirect()
             ->route('admin.places.show', ['lang' => $lang, 'place' => $place->id])
-            ->with('success', __('Place updated successfully.'));
+            ->with('success', Lang::t('admin.flash.places.updated', 'Place updated successfully.'));
     }
 
     public function destroy(string $lang, Place $place): RedirectResponse
@@ -132,7 +133,7 @@ class PlaceController extends Controller
         if ($place->screens()->exists()) {
             return redirect()
                 ->route('admin.places.show', ['lang' => $lang, 'place' => $place->id])
-                ->with('error', __('Cannot delete a place while it still has screens attached.'));
+                ->with('error', Lang::t('admin.flash.places.cannot_delete_with_screens', 'Cannot delete a place while it still has screens attached.'));
         }
 
         $placeId = $place->id;
@@ -146,7 +147,7 @@ class PlaceController extends Controller
 
         return redirect()
             ->route('admin.places.index', ['lang' => $lang])
-            ->with('success', __('Place deleted successfully.'));
+            ->with('success', Lang::t('admin.flash.places.deleted', 'Place deleted successfully.'));
     }
 
     private function availableTypes(): array

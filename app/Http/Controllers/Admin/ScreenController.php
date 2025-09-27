@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\Screens\StoreScreenRequest;
 use App\Http\Requests\Admin\Screens\UpdateScreenRequest;
 use App\Models\Place;
 use App\Models\Screen;
+use App\Support\Lang;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -52,7 +53,7 @@ class ScreenController extends Controller
         ];
 
         return view('admin.screens.index', [
-            'pageName' => 'الشاشات',
+            'pageName' => Lang::t('admin.pages.screens.index', 'الشاشات'),
             'lang' => $lang,
             'screens' => $screens,
             'places' => Place::orderBy('id')->get(),
@@ -73,7 +74,7 @@ class ScreenController extends Controller
         ]);
 
         return view('admin.screens.create', [
-            'pageName' => 'إضافة شاشة جديدة',
+            'pageName' => Lang::t('admin.pages.screens.create', 'إضافة شاشة جديدة'),
             'lang' => $lang,
             'screen' => $screen,
             'places' => Place::orderBy('id')->get(),
@@ -103,7 +104,7 @@ class ScreenController extends Controller
 
         return redirect()
             ->route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id])
-            ->with('success', __('Screen created successfully.'));
+            ->with('success', Lang::t('admin.flash.screens.created', 'Screen created successfully.'));
     }
 
     public function show(string $lang, Screen $screen): View
@@ -134,7 +135,7 @@ class ScreenController extends Controller
         ];
 
         return view('admin.screens.show', [
-            'pageName' => 'تفاصيل الشاشة',
+            'pageName' => Lang::t('admin.pages.screens.show', 'تفاصيل الشاشة'),
             'lang' => $lang,
             'screen' => $screen,
             'recentLogs' => $recentLogs,
@@ -147,7 +148,7 @@ class ScreenController extends Controller
     public function edit(string $lang, Screen $screen): View
     {
         return view('admin.screens.edit', [
-            'pageName' => 'تعديل الشاشة',
+            'pageName' => Lang::t('admin.pages.screens.edit', 'تعديل الشاشة'),
             'lang' => $lang,
             'screen' => $screen,
             'places' => Place::orderBy('id')->get(),
@@ -177,7 +178,7 @@ class ScreenController extends Controller
 
         return redirect()
             ->route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id])
-            ->with('success', __('Screen updated successfully.'));
+            ->with('success', Lang::t('admin.flash.screens.updated', 'Screen updated successfully.'));
     }
 
     public function destroy(string $lang, Screen $screen): RedirectResponse
@@ -194,7 +195,7 @@ class ScreenController extends Controller
 
         return redirect()
             ->route('admin.screens.index', ['lang' => $lang])
-            ->with('success', __('Screen deleted successfully.'));
+            ->with('success', Lang::t('admin.flash.screens.deleted', 'Screen deleted successfully.'));
     }
 
     private function availableStatuses(): array

@@ -11,6 +11,7 @@ use App\Models\Ad;
 use App\Models\Screen;
 use App\Models\User;
 use App\Services\Screen\AdSchedulerService;
+use App\Support\Lang;
 use App\Support\VideoProbe;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -73,7 +74,7 @@ class AdController extends Controller
         ];
 
         return view('admin.ads.index', [
-            'pageName' => 'قائمة الإعلانات',
+            'pageName' => Lang::t('admin.pages.ads.index', 'قائمة الإعلانات'),
             'lang' => $lang,
             'ads' => $ads,
             'statuses' => $this->availableStatuses(),
@@ -97,7 +98,7 @@ class AdController extends Controller
         ]);
 
         return view('admin.ads.create', [
-            'pageName' => 'إنشاء إعلان جديد',
+            'pageName' => Lang::t('admin.pages.ads.create', 'إنشاء إعلان جديد'),
             'lang' => $lang,
             'ad' => $ad,
             'statuses' => $this->availableStatuses(),
@@ -160,7 +161,7 @@ class AdController extends Controller
 
         return redirect()
             ->route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id])
-            ->with('success', __('Ad created successfully.'));
+            ->with('success', Lang::t('admin.flash.ads.created', 'Ad created successfully.'));
     }
 
     public function show(string $lang, Ad $ad): View
@@ -182,7 +183,7 @@ class AdController extends Controller
             ->sortKeysDesc();
 
         return view('admin.ads.show', [
-            'pageName' => 'تفاصيل الإعلان',
+            'pageName' => Lang::t('admin.pages.ads.show', 'تفاصيل الإعلان'),
             'lang' => $lang,
             'ad' => $ad,
             'playbackStats' => $playbackStats,
@@ -196,7 +197,7 @@ class AdController extends Controller
         $ad->load('screens');
 
         return view('admin.ads.edit', [
-            'pageName' => 'تعديل الإعلان',
+            'pageName' => Lang::t('admin.pages.ads.edit', 'تعديل الإعلان'),
             'lang' => $lang,
             'ad' => $ad,
             'statuses' => $this->availableStatuses(),
@@ -267,7 +268,7 @@ class AdController extends Controller
 
         return redirect()
             ->route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id])
-            ->with('success', __('Ad updated successfully.'));
+            ->with('success', Lang::t('admin.flash.ads.updated', 'Ad updated successfully.'));
     }
 
     public function destroy(string $lang, Ad $ad): RedirectResponse
@@ -301,7 +302,7 @@ class AdController extends Controller
 
         return redirect()
             ->route('admin.ads.index', ['lang' => $lang])
-            ->with('success', __('Ad deleted successfully.'));
+            ->with('success', Lang::t('admin.flash.ads.deleted', 'Ad deleted successfully.'));
     }
 
     private function availableStatuses(): array

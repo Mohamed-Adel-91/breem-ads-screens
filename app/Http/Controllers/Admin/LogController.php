@@ -8,6 +8,7 @@ use App\Models\Ad;
 use App\Models\PlaybackLog;
 use App\Models\Screen;
 use App\Models\ScreenLog;
+use App\Support\Lang;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +26,7 @@ class LogController extends Controller
         $playbackLogs = $this->playbackLogsQuery($request)->paginate(20, ['*'], 'playback_page')->withQueryString();
 
         return view('admin.logs.index', [
-            'pageName' => 'سجلات النظام',
+            'pageName' => Lang::t('admin.pages.logs.index', 'سجلات النظام'),
             'lang' => $lang,
             'screenLogs' => $screenLogs,
             'playbackLogs' => $playbackLogs,
@@ -51,7 +52,8 @@ class LogController extends Controller
         if ($type === 'system') {
             $path = storage_path('logs/laravel.log');
             if (!file_exists($path)) {
-                return redirect()->route('admin.logs.index', ['lang' => $lang])->with('error', __('System log file not found.'));
+                return redirect()->route('admin.logs.index', ['lang' => $lang])
+                    ->with('error', Lang::t('admin.flash.logs.system_file_missing', 'System log file not found.'));
             }
 
             activity()

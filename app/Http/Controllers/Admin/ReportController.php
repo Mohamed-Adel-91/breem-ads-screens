@@ -10,6 +10,7 @@ use App\Models\PlaybackLog;
 use App\Models\Report;
 use App\Models\Screen;
 use App\Models\ScreenLog;
+use App\Support\Lang;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -35,7 +36,7 @@ class ReportController extends Controller
         $reports = $query->paginate(20)->withQueryString();
 
         return view('admin.reports.index', [
-            'pageName' => 'التقارير',
+            'pageName' => Lang::t('admin.pages.reports.index', 'التقارير'),
             'lang' => $lang,
             'reports' => $reports,
             'filters' => [
@@ -68,7 +69,7 @@ class ReportController extends Controller
 
         return redirect()
             ->route('admin.reports.show', ['lang' => $lang, 'report' => $report->id])
-            ->with('success', __('Report generated successfully.'));
+            ->with('success', Lang::t('admin.flash.reports.generated', 'Report generated successfully.'));
     }
 
     public function show(string $lang, Report $report): View

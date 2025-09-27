@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Exports\ActivityLogsExport;
-use Spatie\Activitylog\Models\Activity;
+use App\Http\Controllers\Controller;
+use App\Support\Lang;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
-use Carbon\Carbon;
+use Spatie\Activitylog\Models\Activity;
 
 class ActivityLogController extends Controller
 {
@@ -28,7 +29,7 @@ class ActivityLogController extends Controller
             ->paginate(25);
 
         return view('admin.activity_logs.index')->with([
-            'pageName' => 'سجلات النشاط',
+            'pageName' => Lang::t('admin.pages.activity_logs.index', 'سجلات النشاط'),
             'data' => $data,
             'lang' => $lang,
             'filters' => [

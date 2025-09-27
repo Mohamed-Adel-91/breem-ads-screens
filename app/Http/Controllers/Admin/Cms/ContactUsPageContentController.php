@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Cms;
 
+use App\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -147,7 +148,7 @@ class ContactUsPageContentController extends BasePageContentController
 
         return redirect()
             ->route('admin.cms.contact.edit', ['lang' => $lang])
-            ->with('success', 'تم تحديث محتوى صفحة تواصل معنا بنجاح.');
+            ->with('success', Lang::t('admin.flash.cms.contact_updated', 'تم تحديث محتوى صفحة تواصل معنا بنجاح.'));
     }
 
     protected function updateImageOnlySection(Request $request, $section, string $field, string $folder): void

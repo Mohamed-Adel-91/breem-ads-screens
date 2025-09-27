@@ -87,8 +87,140 @@ return [
         'title' => 'Dashboard',
         'logged_in_message' => "You're logged in!",
     ],
+    'pages' => [
+        'dashboard' => [
+            'title' => 'لوحة التحكم',
+        ],
+        'admins' => [
+            'index' => 'قائمة المسؤولين',
+            'create' => 'إنشاء مسؤول جديد',
+            'edit' => 'تعديل مسؤول',
+        ],
+        'screens' => [
+            'index' => 'الشاشات',
+            'create' => 'إضافة شاشة جديدة',
+            'show' => 'تفاصيل الشاشة',
+            'edit' => 'تعديل الشاشة',
+        ],
+        'places' => [
+            'index' => 'الأماكن',
+            'create' => 'إضافة مكان جديد',
+            'show' => 'تفاصيل المكان',
+            'edit' => 'تعديل المكان',
+        ],
+        'roles' => [
+            'index' => 'قائمة الأدوار',
+            'create' => 'إنشاء دور',
+            'edit' => 'تعديل دور',
+        ],
+        'permissions' => [
+            'index' => 'قائمة الصلاحيات',
+            'create' => 'إنشاء صلاحية',
+            'edit' => 'تعديل صلاحية',
+        ],
+        'profile' => [
+            'edit' => 'ملفي الشخصي',
+        ],
+        'seo_metas' => [
+            'index' => 'إدارة ميتا سيو',
+            'create' => 'إنشاء ميتا سيو',
+            'edit' => 'تعديل ميتا سيو',
+        ],
+        'logs' => [
+            'index' => 'سجلات النظام',
+        ],
+        'activity_logs' => [
+            'index' => 'سجلات النشاط',
+        ],
+        'reports' => [
+            'index' => 'التقارير',
+        ],
+        'monitoring' => [
+            'index' => 'مراقبة الشاشات',
+            'show' => 'حالة الشاشة',
+        ],
+        'schedules' => [
+            'index' => 'جداول عرض الإعلان',
+        ],
+        'ads' => [
+            'index' => 'قائمة الإعلانات',
+            'create' => 'إنشاء إعلان جديد',
+            'show' => 'تفاصيل الإعلان',
+            'edit' => 'تعديل الإعلان',
+        ],
+        'users' => [
+            'index' => 'قائمة المستخدمين',
+        ],
+    ],
     'footer' => [
         'copyright' => '© Copyright ' . date('Y') . '. All right reserved. Developed by Frame&Code.',
+    ],
+    'flash' => [
+        'admins' => [
+            'created' => 'تم إنشاء المسؤول بنجاح.',
+            'updated' => 'تم تحديث المسؤول بنجاح.',
+            'deleted' => 'تم حذف المسؤول بنجاح.',
+            'cannot_delete_super_admin' => 'لا يمكن حذف المسؤول الرئيسي.',
+        ],
+        'screens' => [
+            'created' => 'Screen created successfully.',
+            'updated' => 'Screen updated successfully.',
+            'deleted' => 'Screen deleted successfully.',
+        ],
+        'places' => [
+            'created' => 'Place created successfully.',
+            'updated' => 'Place updated successfully.',
+            'deleted' => 'Place deleted successfully.',
+            'cannot_delete_with_screens' => 'Cannot delete a place while it still has screens attached.',
+        ],
+        'roles' => [
+            'created' => 'تم إنشاء الدور بنجاح.',
+            'updated' => 'تم تحديث الدور بنجاح.',
+            'deleted' => 'تم حذف الدور بنجاح.',
+        ],
+        'permissions' => [
+            'created' => 'تم إنشاء الصلاحية بنجاح.',
+            'updated' => 'تم تحديث الصلاحية بنجاح.',
+            'deleted' => 'تم حذف الصلاحية بنجاح.',
+        ],
+        'auth' => [
+            'invalid_otp' => 'رمز التحقق غير صحيح.',
+            'invalid_credentials' => 'بيانات المدخلة غير صحيحة.',
+        ],
+        'profile' => [
+            'updated' => 'تم تحديث الملف الشخصي بنجاح.',
+            'invalid_current_password' => 'كلمة المرور الحالية غير صحيحة.',
+            'password_updated' => 'تم تحديث كلمة المرور بنجاح.',
+        ],
+        'seo_metas' => [
+            'created' => 'تم إنشاء بيانات تحسين محركات البحث بنجاح.',
+            'updated' => 'تم تحديث بيانات تحسين محركات البحث بنجاح.',
+            'deleted' => 'تم حذف بيانات تحسين محركات البحث بنجاح.',
+        ],
+        'logs' => [
+            'system_file_missing' => 'System log file not found.',
+        ],
+        'reports' => [
+            'generated' => 'Report generated successfully.',
+        ],
+        'monitoring' => [
+            'alert_acknowledged' => 'Monitoring alert acknowledged.',
+        ],
+        'schedules' => [
+            'created' => 'Schedule created successfully.',
+            'updated' => 'Schedule updated successfully.',
+            'deleted' => 'Schedule deleted successfully.',
+        ],
+        'ads' => [
+            'created' => 'Ad created successfully.',
+            'updated' => 'Ad updated successfully.',
+            'deleted' => 'Ad deleted successfully.',
+        ],
+        'cms' => [
+            'home_updated' => 'تم تحديث محتوى صفحة الرئيسية بنجاح.',
+            'who_we_are_updated' => 'تم تحديث محتوى صفحة من نحن بنجاح.',
+            'contact_updated' => 'تم تحديث محتوى صفحة تواصل معنا بنجاح.',
+        ],
     ],
     'table' => [
         'first_name' => 'First Name',
@@ -133,6 +265,20 @@ return [
         'records' => 'records',
         'available' => 'available',
         'filtered' => '(Filtered)',
+    ],
+    'seo_metas' => [
+        'table' => [
+            'title_en' => 'العنوان (EN)',
+            'title_ar' => 'العنوان (AR)',
+        ],
+        'messages' => [
+            'empty' => 'لا توجد سجلات لبيانات تحسين محركات البحث مطابقة للمعايير.',
+        ],
+        'actions' => [
+            'edit' => 'Edit SEO Meta',
+            'delete' => 'Delete Row',
+        ],
+        'results_label' => 'record(s)',
     ],
     'activity_logs' => [
         'filters' => [

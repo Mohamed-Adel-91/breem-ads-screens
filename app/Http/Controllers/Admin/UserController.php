@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Lang;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -23,7 +24,7 @@ class UserController extends Controller
         $data = $query->orderByDesc('created_at')->paginate(25)->appends(['lang' => $lang]);
 
         return view('admin.users.index')->with([
-            'pageName' => 'قائمة المستخدمين',
+            'pageName' => Lang::t('admin.pages.users.index', 'قائمة المستخدمين'),
             'data' => $data,
             'filters' => $request->only(['from_date', 'to_date', 'today']),
             'lang' => $lang,

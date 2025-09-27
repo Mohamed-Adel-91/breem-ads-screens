@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Cms;
 
 use App\Models\SectionItem;
+use App\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -77,7 +78,7 @@ class WhoWeArePageContentController extends BasePageContentController
 
         return redirect()
             ->route('admin.cms.whoweare.edit', ['lang' => $lang])
-            ->with('success', 'تم تحديث محتوى صفحة من نحن بنجاح.');
+            ->with('success', Lang::t('admin.flash.cms.who_we_are_updated', 'تم تحديث محتوى صفحة من نحن بنجاح.'));
     }
 
     protected function updateBanner(Request $request, $section): void

@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\ProfileRequest;
 use App\Http\Requests\Auth\ChangeAdminPasswordRequest;
 use App\Models\Admin;
 use App\Models\AdminOtp;
+use App\Support\Lang;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
@@ -30,7 +31,7 @@ class ProfileController extends Controller
         $admin = Auth::guard('admin')->user();
 
         return view('admin.profile.edit')->with([
-            'pageName' => 'ملفي الشخصي',
+            'pageName' => Lang::t('admin.pages.profile.edit', 'ملفي الشخصي'),
             'admin' => $admin,
         ]);
     }
@@ -51,7 +52,8 @@ class ProfileController extends Controller
             ->causedBy(Auth::guard('admin')->user())
             ->withProperties($validatedData)
             ->log('Updated Profile');
-        return redirect()->route('admin.profile.edit', ['lang' => $lang])->with('success', 'تم تحديث الملف الشخصي بنجاح.');
+        return redirect()->route('admin.profile.edit', ['lang' => $lang])
+            ->with('success', Lang::t('admin.flash.profile.updated', 'تم تحديث الملف الشخصي بنجاح.'));
     }
 
     public function updatePassword(string $lang, ChangeAdminPasswordRequest $request)
@@ -61,7 +63,8 @@ class ProfileController extends Controller
         $data  = $request->validated();
 
         if (! Hash::check($data['current_password'], $admin->password)) {
-            return redirect()->route('admin.profile.edit', ['lang' => $lang])->with('error', 'كلمة المرور الحالية غير صحيحة.');
+            return redirect()->route('admin.profile.edit', ['lang' => $lang])
+                ->with('error', Lang::t('admin.flash.profile.invalid_current_password', 'كلمة المرور الحالية غير صحيحة.'));
         }
 
         $otp = random_int(100000, 999999);
@@ -112,9 +115,10 @@ class ProfileController extends Controller
                 ->withProperties('Updated Password')
                 ->log('Updated Password');
 
-            return redirect()->route('admin.profile.edit', ['lang' => $lang])->with('success', 'تم تحديث كلمة المرور بنجاح.');
+            return redirect()->route('admin.profile.edit', ['lang' => $lang])
+                ->with('success', Lang::t('admin.flash.profile.password_updated', 'تم تحديث كلمة المرور بنجاح.'));
         }
 
-        return back()->with('error', 'رمز التحقق غير صحيح.');
+        return back()->with('error', Lang::t('admin.flash.auth.invalid_otp', 'رمز التحقق غير صحيح.'));
     }
 }

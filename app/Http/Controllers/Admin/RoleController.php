@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
@@ -15,7 +16,7 @@ class RoleController extends Controller
         $roles = Role::where('guard_name', 'admin')->paginate(25);
 
         return view('admin.roles.index')->with([
-            'pageName' => 'قائمة الأدوار',
+            'pageName' => Lang::t('admin.pages.roles.index', 'قائمة الأدوار'),
             'data' => $roles,
         ]);
     }
@@ -25,7 +26,7 @@ class RoleController extends Controller
         $permissions = Permission::where('guard_name', 'admin')->pluck('name', 'id');
 
         return view('admin.roles.form')->with([
-            'pageName' => 'إنشاء دور',
+            'pageName' => Lang::t('admin.pages.roles.create', 'إنشاء دور'),
             'permissions' => $permissions,
         ]);
     }
@@ -48,7 +49,8 @@ class RoleController extends Controller
         $permNames = Permission::whereIn('id', $request->input('permissions', []))->pluck('name')->toArray();
         $role->syncPermissions($permNames);
 
-        return redirect()->route('admin.roles.index')->with('success', 'تم إنشاء الدور بنجاح.');
+        return redirect()->route('admin.roles.index')
+            ->with('success', Lang::t('admin.flash.roles.created', 'تم إنشاء الدور بنجاح.'));
     }
 
     public function edit(string $lang, Role $role)
@@ -58,7 +60,7 @@ class RoleController extends Controller
         $permissions = Permission::where('guard_name', 'admin')->pluck('name', 'id');
 
         return view('admin.roles.form')->with([
-            'pageName' => 'تعديل دور',
+            'pageName' => Lang::t('admin.pages.roles.edit', 'تعديل دور'),
             'data' => $role,
             'permissions' => $permissions,
         ]);
@@ -85,7 +87,8 @@ class RoleController extends Controller
         $permNames = Permission::whereIn('id', $request->input('permissions', []))->pluck('name')->toArray();
         $role->syncPermissions($permNames);
 
-        return redirect()->route('admin.roles.index')->with('success', 'تم تحديث الدور بنجاح.');
+        return redirect()->route('admin.roles.index')
+            ->with('success', Lang::t('admin.flash.roles.updated', 'تم تحديث الدور بنجاح.'));
     }
 
     public function destroy(string $lang, Role $role)
@@ -94,6 +97,7 @@ class RoleController extends Controller
 
         $role->delete();
 
-        return redirect()->route('admin.roles.index')->with('success', 'تم حذف الدور بنجاح.');
+        return redirect()->route('admin.roles.index')
+            ->with('success', Lang::t('admin.flash.roles.deleted', 'تم حذف الدور بنجاح.'));
     }
 }

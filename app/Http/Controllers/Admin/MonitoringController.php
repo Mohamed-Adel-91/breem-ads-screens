@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Monitoring\AcknowledgeAlertRequest;
 use App\Models\Place;
 use App\Models\Screen;
+use App\Support\Lang;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -62,7 +63,7 @@ class MonitoringController extends Controller
         ];
 
         return view('admin.monitoring.index', [
-            'pageName' => 'مراقبة الشاشات',
+            'pageName' => Lang::t('admin.pages.monitoring.index', 'مراقبة الشاشات'),
             'lang' => $lang,
             'screens' => $screens,
             'summary' => $summary,
@@ -95,7 +96,7 @@ class MonitoringController extends Controller
         $recentPlaybacks = $screen->playbacks()->with('ad')->latest('played_at')->paginate(20, ['*'], 'playbacks_page');
 
         return view('admin.monitoring.show', [
-            'pageName' => 'حالة الشاشة',
+            'pageName' => Lang::t('admin.pages.monitoring.show', 'حالة الشاشة'),
             'lang' => $lang,
             'screen' => $screen,
             'uptime' => $uptime,
@@ -129,7 +130,7 @@ class MonitoringController extends Controller
 
         return redirect()
             ->route('admin.monitoring.screens.show', ['lang' => $lang, 'screen' => $screen->id])
-            ->with('success', __('Monitoring alert acknowledged.'));
+            ->with('success', Lang::t('admin.flash.monitoring.alert_acknowledged', 'Monitoring alert acknowledged.'));
     }
 
     private function availableStatuses(): array
