@@ -1,0 +1,13 @@
+/*
+ |--------------------------------------------------------------------------
+ | RTL Overrides
+ |--------------------------------------------------------------------------
+ | These styles provide shared adjustments for right-to-left layouts. They
+ | rely on the `dir="rtl"` attribute that is now bound on the <html> element
+ | via app('isRtl'). Extend this file with component-specific fixes as needed.
+ */
+
+[dir='rtl'] body {
+    direction: rtl;
+    text-align: right;
+}

@@ -8,6 +8,9 @@
 @else
     <link rel="stylesheet" href="{{ asset('/assets/css/en/main.css') }}">
 @endif
+@if (app('isRtl'))
+    <link rel="stylesheet" href="{{ asset('/assets/css/rtl.css') }}">
+@endif
 
 <!-- Vendor CSS -->
 <link rel="stylesheet" href="{{ asset('/assets/vendor/daterange/daterange.css') }}">
