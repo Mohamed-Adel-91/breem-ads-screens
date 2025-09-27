@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\SetLocaleFromRequest::class,
         ]);
         $middleware->alias([
             'auth'               => \App\Http\Middleware\Authenticate::class,
@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'screen.auth'        => \App\Http\Middleware\EnsureScreenAuthentication::class,
+            'setLocale'          => \App\Http\Middleware\SetLocaleFromRequest::class,
         ]);
     })->withProviders([
         \App\Providers\RateLimitServiceProvider::class,

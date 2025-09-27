@@ -12,6 +12,7 @@ Route::group([
     'prefix'     => '{lang?}',
     'as'         => 'web.',
     'where'      => ['lang' => 'en|ar'],
+    'middleware' => ['setLocale'],
 ], function () {
     Route::controller(PagesController::class)->group(function () {
         Route::get('/', 'index')->name('home');

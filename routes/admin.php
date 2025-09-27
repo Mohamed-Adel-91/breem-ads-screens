@@ -38,6 +38,7 @@ Route::group([
     'prefix' => '{lang?}/admin-panel',
     'as' => 'admin.',
     'where' => ['lang' => 'en|ar'],
+    'middleware' => ['setLocale'],
 ], function () {
     Route::middleware(['guest:admin', 'throttle:10,1'])->group(function () {
         Route::get('/login', [AuthController::class, 'index'])->name('login');
@@ -126,7 +127,7 @@ Route::group([
     'prefix' => '{lang?}/admin-panel',
     'as' => 'admin.',
     'where' => ['lang' => 'en|ar'],
-    'middleware' => ['auth:admin'],
+    'middleware' => ['setLocale', 'auth:admin'],
 ], function () {
     Route::prefix('cms')->as('cms.')->group(function () {
         Route::get('/home/edit', [HomePageContentController::class, 'edit'])->name('home.edit');
