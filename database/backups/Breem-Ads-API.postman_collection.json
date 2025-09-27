@@ -1,0 +1,213 @@
+{
+  "info": {
+    "name": "Breem Ads Screens — Device API v1",
+    "description": "Postman collection for Android screen player integration with the Breem Ads Screens backend (v1). Includes handshake, heartbeat, playlist (with ETag), playbacks, and config.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "device_uid",
+      "value": "KM3-ABC-123"
+    },
+    {
+      "key": "screen_code",
+      "value": "SCR-001"
+    },
+    {
+      "key": "screen_id",
+      "value": "1"
+    },
+    {
+      "key": "ad_id",
+      "value": "1"
+    },
+    {
+      "key": "etag",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Android v1",
+      "item": [
+        {
+          "name": "Handshake",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/screens/handshake",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "screens",
+                "handshake"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_uid\": \"{{device_uid}}\",\n  \"code\": \"{{screen_code}}\",\n  \"version\": \"1.0.0\",\n  \"capabilities\": {\n    \"video\": true,\n    \"image\": true\n  }\n}"
+            },
+            "description": "Bind device UID to a known screen code and receive operational parameters."
+          },
+          "response": []
+        },
+        {
+          "name": "Heartbeat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Device-UID",
+                "value": "{{device_uid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/screens/heartbeat",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "screens",
+                "heartbeat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"screen_id\": \"{{screen_id}}\",\n  \"current_ad_code\": \"AD-15\",\n  \"ts\": \"2025-09-22T10:20:00Z\"\n}"
+            },
+            "description": "Send a heartbeat to mark the device online and optionally report the current ad code."
+          },
+          "response": []
+        },
+        {
+          "name": "Playlist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const etag = pm.response.headers.get('ETag');",
+                  "if (etag) { pm.collectionVariables.set('etag', etag); }",
+                  "pm.test('Status is 200 or 304', function () {",
+                  "  pm.expect([200,304]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-UID",
+                "value": "{{device_uid}}"
+              },
+              {
+                "key": "If-None-Match",
+                "value": "{{etag}}",
+                "disabled": false
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/screens/{{screen_id}}/playlist",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "screens",
+                "{{screen_id}}",
+                "playlist"
+              ]
+            },
+            "description": "Fetch the per-screen playlist. Uses ETag for caching. The response test stores the new ETag in the collection variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Playbacks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Device-UID",
+                "value": "{{device_uid}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/playbacks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "playbacks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"screen_id\": \"{{screen_id}}\",\n  \"ad_id\": \"{{ad_id}}\",\n  \"played_at\": \"2025-09-22T10:26:21Z\",\n  \"duration\": 20,\n  \"extra\": {\n    \"bufferedMs\": 120,\n    \"droppedFrames\": 2\n  }\n}"
+            },
+            "description": "Report proof-of-play for analytics and billing."
+          },
+          "response": []
+        },
+        {
+          "name": "Config",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Device-UID",
+                "value": "{{device_uid}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/config",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "config"
+              ]
+            },
+            "description": "Fetch global device configuration like min app version and retry policy."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
