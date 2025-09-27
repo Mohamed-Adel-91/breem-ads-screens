@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\Ads\UpdateAdRequest;
 use App\Models\Ad;
 use App\Models\Screen;
 use App\Models\User;
+use App\Services\Screen\AdSchedulerService;
 use App\Support\VideoProbe;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +21,10 @@ use Illuminate\View\View;
 
 class AdController extends Controller
 {
-    public function __construct(private readonly FileServiceInterface $fileService)
+    public function __construct(
+        private readonly FileServiceInterface $fileService,
+        private readonly AdSchedulerService $scheduler
+    )
     {
     }
 
@@ -270,6 +274,8 @@ class AdController extends Controller
     {
         $filePath = $ad->file_path;
 
+        $screenIds = $ad->screens()->pluck('screens.id')->all();
+
         activity()
             ->performedOn($ad)
             ->causedBy(Auth::guard('admin')->user())
@@ -278,6 +284,16 @@ class AdController extends Controller
 
         $ad->screens()->detach();
         $ad->delete();
+
+        $screenIds = collect($screenIds)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (!empty($screenIds)) {
+            $this->scheduler->forgetMany($screenIds);
+        }
 
         if ($filePath) {
             $this->fileService->deleteFile(basename($filePath), Ad::UPLOAD_FOLDER);
