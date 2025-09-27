@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\Ads\UpdateAdRequest;
 use App\Models\Ad;
 use App\Models\Screen;
 use App\Models\User;
+use App\Support\VideoProbe;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -109,15 +110,25 @@ class AdController extends Controller
         $fileType = $this->determineFileType($request->file('creative'), $filePath);
 
         $hasDurationValue = array_key_exists('duration_seconds', $data) && $data['duration_seconds'] !== null;
-        $requestedDuration = $hasDurationValue ? (int) $data['duration_seconds'] : null;
-        $durationSeconds = $this->resolveDurationSeconds(
-            $request,
-            $fileType,
-            $filePath,
-            true,
-            $hasDurationValue,
-            $requestedDuration
-        );
+        $durationSeconds = $hasDurationValue ? (int) $data['duration_seconds'] : 0;
+
+        if (
+            $fileType === 'video'
+            && config('ads.try_ffprobe', true)
+            && (!$hasDurationValue || $durationSeconds === 0)
+        ) {
+            $probedDuration = VideoProbe::durationSeconds($filePath);
+
+            if ($probedDuration === null) {
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'duration_seconds' => 'duration_seconds required (ffprobe unavailable or failed)',
+                    ]);
+            }
+
+            $durationSeconds = $probedDuration;
+        }
 
         $ad = new Ad();
         $ad->title = $this->prepareTranslations($data['title'] ?? []);
@@ -207,16 +218,28 @@ class AdController extends Controller
         }
 
         $hasDurationValue = array_key_exists('duration_seconds', $data) && $data['duration_seconds'] !== null;
-        $requestedDuration = $hasDurationValue ? (int) $data['duration_seconds'] : null;
-        $durationSeconds = $this->resolveDurationSeconds(
-            $request,
-            $fileType,
-            $filePath,
-            $fileChanged,
-            $hasDurationValue,
-            $requestedDuration,
-            $ad->duration_seconds !== null ? (int) $ad->duration_seconds : null
-        );
+        $durationSeconds = $hasDurationValue
+            ? (int) $data['duration_seconds']
+            : ($fileChanged ? 0 : ($ad->duration_seconds !== null ? (int) $ad->duration_seconds : 0));
+
+        if (
+            $fileChanged
+            && $fileType === 'video'
+            && config('ads.try_ffprobe', true)
+            && (!$hasDurationValue || $durationSeconds === 0)
+        ) {
+            $probedDuration = VideoProbe::durationSeconds($filePath);
+
+            if ($probedDuration === null) {
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'duration_seconds' => 'duration_seconds required (ffprobe unavailable or failed)',
+                    ]);
+            }
+
+            $durationSeconds = $probedDuration;
+        }
 
         $ad->title = $this->prepareTranslations($data['title'] ?? []);
         $ad->description = $this->prepareTranslations($data['description'] ?? []);
