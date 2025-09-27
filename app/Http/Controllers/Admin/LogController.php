@@ -17,6 +17,8 @@ use Illuminate\View\View;
 
 class LogController extends Controller
 {
+    private const STREAM_CHUNK_SIZE = 500;
+
     public function index(string $lang, Request $request): View
     {
         $screenLogs = $this->screenLogsQuery($request)->paginate(20, ['*'], 'screen_page')->withQueryString();
@@ -60,7 +62,7 @@ class LogController extends Controller
         }
 
         if ($type === 'screen') {
-            $logs = $this->screenLogsQuery($request)->get();
+            $query = $this->screenLogsQuery($request);
             $filename = 'screen-logs-' . now()->format('Ymd_His') . '.csv';
 
             activity()
@@ -68,23 +70,42 @@ class LogController extends Controller
                 ->withProperties(['type' => 'screen'])
                 ->log('Exported screen logs');
 
-            return response()->streamDownload(function () use ($logs) {
+            return response()->streamDownload(function () use ($query) {
                 $handle = fopen('php://output', 'w');
-                fputcsv($handle, ['Screen', 'Place', 'Status', 'Reported At']);
-                foreach ($logs as $log) {
-                    fputcsv($handle, [
-                        $log->screen?->code ?? '-',
-                        $log->screen?->place?->getTranslation('name', app()->getLocale()) ?? '-',
-                        $log->status->value ?? '-',
-                        optional($log->reported_at)->toDateTimeString(),
-                    ]);
+
+                if ($handle === false) {
+                    return;
                 }
-                fclose($handle);
+
+                try {
+                    fputcsv($handle, ['Screen', 'Place', 'Status', 'Reported At']);
+
+                    (clone $query)
+                        ->reorder()
+                        ->chunkByIdDesc(self::STREAM_CHUNK_SIZE, function ($logs) use ($handle) {
+                            foreach ($logs as $log) {
+                                fputcsv($handle, [
+                                    $log->screen?->code ?? '-',
+                                    $log->screen?->place?->getTranslation('name', app()->getLocale()) ?? '-',
+                                    $log->status->value ?? '-',
+                                    optional($log->reported_at)->toDateTimeString(),
+                                ]);
+                            }
+
+                            fflush($handle);
+
+                            if (function_exists('flush')) {
+                                flush();
+                            }
+                        });
+                } finally {
+                    fclose($handle);
+                }
             }, $filename, ['Content-Type' => 'text/csv']);
         }
 
         if ($type === 'playback') {
-            $logs = $this->playbackLogsQuery($request)->get();
+            $query = $this->playbackLogsQuery($request);
             $filename = 'playback-logs-' . now()->format('Ymd_His') . '.csv';
 
             activity()
@@ -92,18 +113,37 @@ class LogController extends Controller
                 ->withProperties(['type' => 'playback'])
                 ->log('Exported playback logs');
 
-            return response()->streamDownload(function () use ($logs) {
+            return response()->streamDownload(function () use ($query) {
                 $handle = fopen('php://output', 'w');
-                fputcsv($handle, ['Screen', 'Ad', 'Played At', 'Duration']);
-                foreach ($logs as $log) {
-                    fputcsv($handle, [
-                        $log->screen?->code ?? '-',
-                        $log->ad?->getTranslation('title', app()->getLocale()) ?? '-',
-                        optional($log->played_at)->toDateTimeString(),
-                        $log->duration,
-                    ]);
+
+                if ($handle === false) {
+                    return;
                 }
-                fclose($handle);
+
+                try {
+                    fputcsv($handle, ['Screen', 'Ad', 'Played At', 'Duration']);
+
+                    (clone $query)
+                        ->reorder()
+                        ->chunkByIdDesc(self::STREAM_CHUNK_SIZE, function ($logs) use ($handle) {
+                            foreach ($logs as $log) {
+                                fputcsv($handle, [
+                                    $log->screen?->code ?? '-',
+                                    $log->ad?->getTranslation('title', app()->getLocale()) ?? '-',
+                                    optional($log->played_at)->toDateTimeString(),
+                                    $log->duration,
+                                ]);
+                            }
+
+                            fflush($handle);
+
+                            if (function_exists('flush')) {
+                                flush();
+                            }
+                        });
+                } finally {
+                    fclose($handle);
+                }
             }, $filename, ['Content-Type' => 'text/csv']);
         }
 
