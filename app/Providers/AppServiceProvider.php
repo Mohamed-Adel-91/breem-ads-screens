@@ -24,6 +24,7 @@ use App\Observers\PageSectionObserver;
 use App\Observers\SectionItemObserver;
 use App\Observers\SettingObserver;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -49,6 +50,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Paginator::useBootstrap();
+        Blade::directive('t', function ($expression) {
+            return "<?php echo e(\\App\\Support\\Lang::t($expression)); ?>";
+        });
         View::share(ComponentHelper::generalComponents());
         View::composer('*', function ($view) {
             $routeName = Route::currentRouteName();

@@ -110,6 +110,60 @@ Supporting services include database-backed queues (`QUEUE_CONNECTION=database`)
 
 Refer to `config/ads.php` and `config/admin.php` for full context and defaults.
 
+## Production Runbook
+
+Keep the following operational configuration in place for production environments. These examples assume a typical Ubuntu host; adjust paths and service names to match your infrastructure.
+
+- **Supervisor configuration** – Manage long-running queue workers with Supervisor. Ensure the worker runs under the correct user, restarts automatically, and writes logs to a rotated location such as `/var/log/breem/queue.log`.
+
+  ```ini
+  [program:breem-queue]
+  command=/usr/bin/php /var/www/breem/artisan queue:work --queue=default,media --sleep=3 --tries=3
+  directory=/var/www/breem
+  autostart=true
+  autorestart=true
+  user=www-data
+  stdout_logfile=/var/log/breem/queue.log
+  stderr_logfile=/var/log/breem/queue-error.log
+  stopwaitsecs=600
+  ```
+
+  Reload Supervisor after changes with `sudo supervisorctl reread` and `sudo supervisorctl update`. Horizon users can substitute their own program block; see `docs/qa-checklist.md` for additional launch verification steps.
+
+- **Scheduler cron entry** – Trigger Laravel's scheduler every minute so heartbeat checks and playlist refresh jobs execute on time.
+
+  ```cron
+  * * * * * www-data /usr/bin/php /var/www/breem/artisan schedule:run >> /var/log/breem/scheduler.log 2>&1
+  ```
+
+- **Log rotation** – Configure logrotate (or your platform equivalent) to rotate `storage/logs/laravel.log`, Supervisor output logs, and Nginx/Apache access logs daily. Retain at least 14 days locally and ship logs to centralized storage if available. A sample `/etc/logrotate.d/breem` entry:
+
+  ```
+  /var/log/breem/*.log {
+      daily
+      rotate 14
+      compress
+      missingok
+      notifempty
+      copytruncate
+  }
+  ```
+
+- **Backups** – Schedule database and media storage backups. Verify both snapshot creation and restore steps during each release cycle.
+
+  - Nightly database dump to an offsite bucket (e.g., `pg_dump` or `mysqldump` piped to S3).
+  - Weekly verification restore into a staging environment.
+  - Monthly checksum audit of the `public`/media disk; see `docs/media-pipeline.md` for retention and purge guidance.
+
+  Track completion with a simple rotation checklist:
+
+  ```markdown
+  - [ ] Database snapshot uploaded
+  - [ ] Restore test completed
+  - [ ] Media disk integrity verified
+  - [ ] Offsite retention policy reviewed
+  ```
+
 # Media Storage guidance
 
 - Create the public storage symlink after deployment: `php artisan storage:link`.
@@ -138,8 +192,8 @@ Override seeded admin details by providing `ADMIN_EMAIL` and `ADMIN_PASSWORD` be
 
 # Jobs & Scheduler expectations
 
-- **Queues**: Start a worker in the background (`php artisan queue:work --queue=default,media`) or configure Horizon/Supervisor. Queue jobs process playlist regeneration, asset downloads, and heartbeat notifications.
-- **Scheduler**: Run `php artisan schedule:run` every minute via cron. Scheduled tasks prune expired playlists, escalate offline alerts, and sync Slack notifications when enabled.
+- **Queues**: Start a worker in the background (`php artisan queue:work --queue=default,media`) or configure Horizon/Supervisor. Queue jobs process playlist regeneration, asset downloads, and heartbeat notifications. See the [Production Runbook](#production-runbook) for a sample Supervisor program block.
+- **Scheduler**: Run `php artisan schedule:run` every minute via cron. Scheduled tasks prune expired playlists, escalate offline alerts, and sync Slack notifications when enabled. The [Production Runbook](#production-runbook) includes a ready-to-copy cron entry.
 - **Monitoring**: Capture logs from both queue workers and scheduler runs for debugging player sync issues.
 
 # Slack optionality
