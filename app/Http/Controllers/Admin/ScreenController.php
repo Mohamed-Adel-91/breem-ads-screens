@@ -117,9 +117,20 @@ class ScreenController extends Controller
         $recentLogs = $screen->logs()->latest('reported_at')->paginate(20, ['*'], 'logs_page');
         $recentPlaybacks = $screen->playbacks()->with('ad')->latest('played_at')->paginate(20, ['*'], 'playbacks_page');
 
+        $logsLastWeek = $screen->logs()
+            ->where('reported_at', '>=', Carbon::now()->subDays(7))
+            ->get();
+
+        $onlineCount = $logsLastWeek->where('status', ScreenStatus::Online->value)->count();
+        $offlineCount = $logsLastWeek->where('status', ScreenStatus::Offline->value)->count();
+        $totalLogs = $logsLastWeek->count();
+        $uptime = $totalLogs > 0
+            ? round(($onlineCount / $totalLogs) * 100, 2)
+            : null;
+
         $logSummary = [
-            ScreenStatus::Online->value => $screen->logs()->where('status', ScreenStatus::Online->value)->count(),
-            ScreenStatus::Offline->value => $screen->logs()->where('status', ScreenStatus::Offline->value)->count(),
+            ScreenStatus::Online->value => $onlineCount,
+            ScreenStatus::Offline->value => $offlineCount,
         ];
 
         return view('admin.screens.show', [
@@ -128,6 +139,7 @@ class ScreenController extends Controller
             'screen' => $screen,
             'recentLogs' => $recentLogs,
             'recentPlaybacks' => $recentPlaybacks,
+            'uptime' => $uptime,
             'logSummary' => $logSummary,
         ]);
     }
@@ -192,3 +204,4 @@ class ScreenController extends Controller
             ->toArray();
     }
 }
+
