@@ -9,6 +9,7 @@ use App\Models\Screen;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class AdSchedulerService
 {
@@ -270,16 +271,20 @@ class AdSchedulerService
             return null;
         }
 
-        $url = $fallback['url'] ?? null;
+        $image = $fallback['image'] ?? null;
 
-        if (!$url) {
+        if (!$image) {
             return null;
         }
+
+        $isRemote = Str::startsWith($image, ['http://', 'https://']);
+        $path = $isRemote ? null : ltrim((string) $image, '/');
+        $url = $isRemote ? (string) $image : asset($path);
 
         return $this->normalizeItem([
             'id' => null,
             'ad_id' => null,
-            'file_path' => null,
+            'file_path' => $path,
             'file_url' => $url,
             'file_type' => $fallback['type'] ?? null,
             'duration_seconds' => (int) ($fallback['duration'] ?? 0),

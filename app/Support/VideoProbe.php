@@ -20,9 +20,9 @@ class VideoProbe
             return null;
         }
 
-        $commandTemplate = config('ads.ffprobe.command');
+        $binary = config('ads.ffprobe_bin');
 
-        if (!is_string($commandTemplate) || trim($commandTemplate) === '') {
+        if (!is_string($binary) || trim($binary) === '') {
             return null;
         }
 
@@ -32,13 +32,11 @@ class VideoProbe
 
         $escapedPath = escapeshellarg($absolutePath);
 
-        if (str_contains($commandTemplate, '{path}')) {
-            $command = str_replace('{path}', $escapedPath, $commandTemplate);
-        } elseif (str_contains($commandTemplate, '%s')) {
-            $command = sprintf($commandTemplate, $escapedPath);
-        } else {
-            $command = $commandTemplate . ' ' . $escapedPath;
-        }
+        $command = sprintf(
+            '%s -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 %s',
+            escapeshellcmd(trim($binary)),
+            $escapedPath
+        );
 
         $output = @shell_exec($command);
 

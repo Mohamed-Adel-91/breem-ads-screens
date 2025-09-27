@@ -345,7 +345,7 @@ class AdController extends Controller
             return $duration;
         }
 
-        $probedDuration = $this->probeVideoDuration($filePath);
+        $probedDuration = VideoProbe::durationSeconds($filePath);
 
         if ($probedDuration === null) {
             $request->failDurationProbe();
@@ -354,65 +354,6 @@ class AdController extends Controller
         return $probedDuration;
     }
 
-    private function probeVideoDuration(?string $filePath): ?int
-    {
-        if (!$filePath) {
-            return null;
-        }
-
-        $absolutePath = $this->absoluteCreativePath($filePath);
-
-        if (!$absolutePath || !is_file($absolutePath)) {
-            return null;
-        }
-
-        $commandTemplate = config('ads.ffprobe.command');
-
-        if (!is_string($commandTemplate) || trim($commandTemplate) === '') {
-            return null;
-        }
-
-        if (!function_exists('shell_exec')) {
-            return null;
-        }
-
-        $escapedPath = escapeshellarg($absolutePath);
-
-        if (str_contains($commandTemplate, '{path}')) {
-            $command = str_replace('{path}', $escapedPath, $commandTemplate);
-        } elseif (str_contains($commandTemplate, '%s')) {
-            $command = sprintf($commandTemplate, $escapedPath);
-        } else {
-            $command = $commandTemplate . ' ' . $escapedPath;
-        }
-
-        $output = @shell_exec($command);
-
-        if (!is_string($output)) {
-            return null;
-        }
-
-        $output = trim($output);
-
-        if ($output === '' || !is_numeric($output)) {
-            return null;
-        }
-
-        return (int) round((float) $output);
-    }
-
-    private function absoluteCreativePath(?string $filePath): ?string
-    {
-        if (!$filePath) {
-            return null;
-        }
-
-        if (str_starts_with($filePath, 'http://') || str_starts_with($filePath, 'https://')) {
-            return null;
-        }
-
-        return public_path(ltrim($filePath, '/'));
-    }
     private function determineFileType(?UploadedFile $file, ?string $path = null): string
     {
         $extension = null;

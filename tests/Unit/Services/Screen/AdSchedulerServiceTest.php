@@ -157,7 +157,7 @@ class AdSchedulerServiceTest extends TestCase
 
         config(['ads.fallback' => [
             'type' => 'image',
-            'url' => 'https://cdn.example.test/fallback.png',
+            'image' => 'https://cdn.example.test/fallback.png',
             'duration' => 10,
         ]]);
 
