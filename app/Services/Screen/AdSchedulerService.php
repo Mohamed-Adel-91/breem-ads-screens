@@ -6,6 +6,7 @@ use App\Enums\AdStatus;
 use App\Models\Ad;
 use App\Models\AdSchedule;
 use App\Models\Screen;
+use App\Support\MediaUrl;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
@@ -279,13 +280,12 @@ class AdSchedulerService
 
         $isRemote = Str::startsWith($image, ['http://', 'https://']);
         $path = $isRemote ? null : ltrim((string) $image, '/');
-        $url = $isRemote ? (string) $image : asset($path);
 
         return $this->normalizeItem([
             'id' => null,
             'ad_id' => null,
             'file_path' => $path,
-            'file_url' => $url,
+            'file_url' => $image,
             'file_type' => $fallback['type'] ?? null,
             'duration_seconds' => (int) ($fallback['duration'] ?? 0),
             'play_order' => 0,
@@ -325,7 +325,8 @@ class AdSchedulerService
             $url = $path;
         }
 
-        $item['file_url'] = Ad::resolveFileUrl($url);
+        $resolvedUrl = MediaUrl::resolve($url);
+        $item['file_url'] = $resolvedUrl;
 
         if (!$path) {
             $item['file_path'] = $url;

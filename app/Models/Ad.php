@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AdStatus;
 use App\Services\Screen\AdSchedulerService;
+use App\Support\MediaUrl;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,8 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
 
 class Ad extends Model
@@ -77,7 +76,7 @@ class Ad extends Model
      */
     public function getFileUrlAttribute(): ?string
     {
-        return static::resolveFileUrl($this->file_path);
+        return MediaUrl::resolve($this->file_path);
     }
 
     /**
@@ -85,25 +84,7 @@ class Ad extends Model
      */
     public static function resolveFileUrl(?string $path): ?string
     {
-        if (!$path) {
-            return null;
-        }
-
-        if (Str::startsWith($path, ['http://', 'https://'])) {
-            return $path;
-        }
-
-        $disk = config('filesystems.default', env('FILESYSTEM_DISK'));
-
-        if ($disk === 's3') {
-            if (Storage::disk('s3')->exists($path)) {
-                return Storage::disk('s3')->url($path);
-            }
-            // Fallback: generate a full S3 URL manually if needed
-            return config('filesystems.disks.s3.url') . '/' . ltrim($path, '/');
-        }
-
-        return asset(ltrim($path, '/'));
+        return MediaUrl::resolve($path);
     }
 
     /**
