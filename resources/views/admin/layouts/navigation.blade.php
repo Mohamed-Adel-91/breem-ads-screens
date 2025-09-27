@@ -1,6 +1,7 @@
 @php
     $locale = request()->route('lang') ?? app()->getLocale();
     $admin = auth('admin')->user();
+    $menuItems = app(\App\Services\Admin\MenuBuilder::class)->build('topnav');
 @endphp
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     <!-- Primary Navigation Menu -->
@@ -15,10 +16,8 @@
                 </div>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('admin.dashboard', ['lang' => $locale])" :active="request()->routeIs('admin.dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+                <div class="hidden sm:-my-px sm:ms-10 sm:flex">
+                    <x-admin.menu :items="$menuItems" variant="topnav" />
                 </div>
             </div>
 
@@ -70,10 +69,8 @@
 
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('admin.dashboard', ['lang' => $locale])" :active="request()->routeIs('admin.dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
+        <div class="pt-2 pb-3">
+            <x-admin.menu :items="$menuItems" variant="topnav-responsive" />
         </div>
 
         <!-- Responsive Settings Options -->
@@ -102,3 +99,6 @@
         </div>
     </div>
 </nav>
+
+
+
