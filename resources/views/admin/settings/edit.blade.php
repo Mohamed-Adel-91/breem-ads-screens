@@ -34,7 +34,7 @@
                                             </div>
                                         @empty
                                             <div class="col-12">
-                                                <p class="text-muted">No settings found.</p>
+                                                <p class="text-muted">{{ __('admin.settings.no_settings') }}</p>
                                             </div>
                                         @endforelse
                                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
@@ -52,4 +52,3 @@
         </div>
     </div>
 @endsection
-

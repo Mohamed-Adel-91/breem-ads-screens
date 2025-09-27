@@ -293,6 +293,7 @@ return [
             'user' => 'User:',
             'email' => 'Email:',
         ],
+        'results_label' => 'log(s)',
         'messages' => [
             'empty' => 'No activity log records match the criteria.',
         ],
@@ -458,6 +459,14 @@ return [
         'preview_alt' => ':label Preview',
     ],
 
+    'layouts' => [
+        'browser_upgrade' => 'You are using an <strong>outdated</strong> browser. Please upgrade your browser to improve your experience.',
+    ],
+
+    'settings' => [
+        'no_settings' => 'No settings found.',
+    ],
+
     'cms' => [
         'page_details' => 'Page: :name (:slug)',
         'type' => 'Type',
@@ -489,6 +498,88 @@ return [
         'delete_section_confirm' => 'Delete section?',
         'delete_item_confirm' => 'Delete item?',
         'new_order' => 'New Order',
+        'shared' => [
+            'title_locale' => 'Title (:locale)',
+            'subtitle_locale' => 'Subtitle (:locale)',
+            'description_locale' => 'Description (:locale)',
+            'read_more_text_locale' => 'Read more text (:locale)',
+            'read_more_link_locale' => 'Read more link (:locale)',
+            'number_locale' => 'Number (:locale)',
+            'label_locale' => 'Label (:locale)',
+            'alt_locale' => 'Alt (:locale)',
+            'overlay_text_locale' => 'Overlay text (:locale)',
+            'text_locale' => 'Text (:locale)',
+            'link_text_locale' => 'Link Text (:locale)',
+            'link_url_locale' => 'Link URL (:locale)',
+            'card_text_locale' => 'Card Text (:locale)',
+            'modal_title_locale' => 'Modal Title (:locale)',
+            'submit_text_locale' => 'Submit Text (:locale)',
+            'address_locale' => 'Address (:locale)',
+            'phone_label_locale' => 'Phone label (:locale)',
+            'whatsapp_label_locale' => 'WhatsApp label (:locale)',
+            'brochure_text_locale' => 'Brochure text (:locale)',
+            'bullets_locale' => 'Bullets (:locale)',
+            'label_locale_value' => 'Label :locale - :value',
+            'radio_locale_value' => 'Radio :locale - :value',
+            'options_locale_value' => 'Options :locale - :value',
+            'options_help_text' => 'Enter each option on a separate line.',
+            'bullets_help_text' => 'Enter each bullet on a separate line.',
+        ],
+        'contact' => [
+            'sections' => [
+                'top_banner' => 'Top Banner',
+                'contact_heading' => 'Contact Heading',
+                'map_location' => 'Map & Location',
+                'bottom_banner' => 'Bottom Banner',
+            ],
+            'labels' => [
+                'banner_image' => 'Banner Image',
+                'background_image' => 'Background Image',
+                'card_image1' => 'Card Image 1',
+                'card_image2' => 'Card Image 2',
+            ],
+            'forms' => [
+                'ads' => 'Ads Subscription Form',
+                'screens' => 'Screens Subscription Form',
+                'create' => 'Ad Creation Request',
+                'faq' => 'FAQs Form',
+            ],
+        ],
+        'home' => [
+            'sections' => [
+                'banner' => 'Banner',
+                'partners_slider' => 'Partners Slider',
+                'about' => 'About Section',
+                'impact_metrics' => 'Impact Metrics',
+                'locations' => 'Where To Find Us',
+                'cta' => 'CTA Section',
+            ],
+            'labels' => [
+                'slide_image' => 'Slide Image',
+                'brochure_external_link' => 'Brochure external link',
+                'brochure_icon' => 'Brochure Icon',
+                'brochure_file' => 'Brochure File (PDF)',
+                'main_image' => 'Main Image',
+                'overlay_image' => 'Overlay Image',
+            ],
+            'flags' => [
+                'autoplay' => 'Autoplay',
+                'loop' => 'Loop',
+                'muted' => 'Muted',
+                'controls' => 'Controls',
+                'playsinline' => 'Plays inline',
+            ],
+        ],
+        'who_we_are' => [
+            'sections' => [
+                'second_banner' => 'Second Banner',
+                'who_we_section' => 'Who We Section',
+            ],
+            'labels' => [
+                'banner_image' => 'Banner Image',
+                'portfolio_image' => 'Portfolio Image',
+            ],
+        ],
 
     ],
     'sweet_alert' => [

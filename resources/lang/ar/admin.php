@@ -216,6 +216,14 @@ return [
             'updated' => 'تم تحديث الإعلان بنجاح.',
             'deleted' => 'تم حذف الإعلان بنجاح.',
         ],
+
+        'layouts' => [
+            'browser_upgrade' => 'أنت تستخدم متصفحًا <strong>قديمًا</strong>. يرجى تحديث متصفحك لتحسين تجربتك.',
+        ],
+
+        'settings' => [
+            'no_settings' => 'لا توجد إعدادات.',
+        ],
         'cms' => [
             'home_updated' => 'تم تحديث محتوى الصفحة الرئيسية بنجاح.',
             'who_we_are_updated' => 'تم تحديث محتوى صفحة من نحن بنجاح.',
@@ -289,6 +297,7 @@ return [
             'causer' => 'الفاعل',
             'properties' => 'الخصائص',
         ],
+        'results_label' => 'سجل(ات)',
         'labels' => [
             'user' => 'المستخدم:',
             'email' => 'البريد الإلكتروني:',
@@ -491,7 +500,88 @@ return [
         'delete_section_confirm' => 'هل تريد حذف القسم؟',
         'delete_item_confirm' => 'هل تريد حذف العنصر؟',
         'new_order' => 'ترتيب جديد',
-
+        'shared' => [
+            'title_locale' => 'العنوان (:locale)',
+            'subtitle_locale' => 'العنوان الفرعي (:locale)',
+            'description_locale' => 'الوصف (:locale)',
+            'read_more_text_locale' => 'نص اقرأ المزيد (:locale)',
+            'read_more_link_locale' => 'رابط اقرأ المزيد (:locale)',
+            'number_locale' => 'الرقم (:locale)',
+            'label_locale' => 'التسمية (:locale)',
+            'alt_locale' => 'النص البديل (:locale)',
+            'overlay_text_locale' => 'نص التراكب (:locale)',
+            'text_locale' => 'النص (:locale)',
+            'link_text_locale' => 'نص الرابط (:locale)',
+            'link_url_locale' => 'عنوان الرابط (:locale)',
+            'card_text_locale' => 'نص البطاقة (:locale)',
+            'modal_title_locale' => 'عنوان النافذة المنبثقة (:locale)',
+            'submit_text_locale' => 'نص زر الإرسال (:locale)',
+            'address_locale' => 'العنوان (:locale)',
+            'phone_label_locale' => 'تسمية الهاتف (:locale)',
+            'whatsapp_label_locale' => 'تسمية واتساب (:locale)',
+            'brochure_text_locale' => 'نص الكتيب (:locale)',
+            'bullets_locale' => 'النقاط (:locale)',
+            'label_locale_value' => 'التسمية :locale - :value',
+            'radio_locale_value' => 'خيار الراديو :locale - :value',
+            'options_locale_value' => 'الخيارات :locale - :value',
+            'options_help_text' => 'أدخل كل خيار في سطر منفصل.',
+            'bullets_help_text' => 'أدخل كل نقطة في سطر منفصل.',
+        ],
+        'contact' => [
+            'sections' => [
+                'top_banner' => 'الشريط العلوي',
+                'contact_heading' => 'عنوان قسم الاتصال',
+                'map_location' => 'الخريطة والموقع',
+                'bottom_banner' => 'الشريط السفلي',
+            ],
+            'labels' => [
+                'banner_image' => 'صورة الشريط',
+                'background_image' => 'صورة الخلفية',
+                'card_image1' => 'صورة البطاقة 1',
+                'card_image2' => 'صورة البطاقة 2',
+            ],
+            'forms' => [
+                'ads' => 'نموذج الاشتراك في الإعلانات',
+                'screens' => 'نموذج الاشتراك في الشاشات',
+                'create' => 'طلب إنشاء إعلان',
+                'faq' => 'نموذج الأسئلة الشائعة',
+            ],
+        ],
+        'home' => [
+            'sections' => [
+                'banner' => 'الشريط',
+                'partners_slider' => 'شريط الشركاء',
+                'about' => 'قسم من نحن',
+                'impact_metrics' => 'مؤشرات التأثير',
+                'locations' => 'أين تجدنا',
+                'cta' => 'قسم الدعوة للإجراء',
+            ],
+            'labels' => [
+                'slide_image' => 'صورة الشريحة',
+                'brochure_external_link' => 'رابط الكتيب الخارجي',
+                'brochure_icon' => 'أيقونة الكتيب',
+                'brochure_file' => 'ملف الكتيب (PDF)',
+                'main_image' => 'الصورة الرئيسية',
+                'overlay_image' => 'صورة التراكب',
+            ],
+            'flags' => [
+                'autoplay' => 'تشغيل تلقائي',
+                'loop' => 'تكرار',
+                'muted' => 'صامت',
+                'controls' => 'عناصر التحكم',
+                'playsinline' => 'تشغيل ضمن الإطار',
+            ],
+        ],
+        'who_we_are' => [
+            'sections' => [
+                'second_banner' => 'الشريط الثاني',
+                'who_we_section' => 'قسم من نحن',
+            ],
+            'labels' => [
+                'banner_image' => 'صورة الشريط',
+                'portfolio_image' => 'صورة المعرض',
+            ],
+        ],
     ],
     'sweet_alert' => [
         'delete_title' => 'هل أنت متأكد من حذف هذا العنصر؟',

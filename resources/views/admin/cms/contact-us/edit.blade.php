@@ -17,11 +17,11 @@
 
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">Top Banner</h5>
+                            <h5 class="mb-0">@t('admin.cms.contact.sections.top_banner', 'Top Banner')</h5>
                         </div>
                         <div class="card-body">
                             @include('admin.layouts.components.media-upload', [
-                                'label' => 'Banner Image',
+                                'label' => \App\Support\Lang::t('admin.cms.contact.labels.banner_image', 'Banner Image'),
                                 'name' => 'banner[image]',
                                 'inputId' => 'contact_banner_image',
                                 'previewPath' => media_path($bannerData[$primaryLocale]['image_path'] ?? ''),
@@ -31,7 +31,7 @@
 
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">Contact Heading</h5>
+                            <h5 class="mb-0">@t('admin.cms.contact.sections.contact_heading', 'Contact Heading')</h5>
                         </div>
                         <div class="card-body">
                             @php
@@ -40,26 +40,26 @@
                             @endphp
                             <div class="row g-3 flex-md-row-reverse">
                                 <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">Title ({{ strtoupper($arLocale) }})</label>
+                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($arLocale)]) }}</label>
                                     <input type="text" class="form-control" dir="rtl"
                                         name="contact[{{ $arLocale }}][title]"
                                         value="{{ old("contact.$arLocale.title", $contactAr['title'] ?? '') }}">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Title ({{ strtoupper($enLocale) }})</label>
+                                    <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($enLocale)]) }}</label>
                                     <input type="text" class="form-control" name="contact[{{ $enLocale }}][title]"
                                         value="{{ old("contact.$enLocale.title", $contactEn['title'] ?? '') }}">
                                 </div>
                             </div>
                             <div class="row g-3 flex-md-row-reverse">
                                 <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">Subtitle ({{ strtoupper($arLocale) }})</label>
+                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.subtitle_locale', ['locale' => strtoupper($arLocale)]) }}</label>
                                     <input type="text" class="form-control" dir="rtl"
                                         name="contact[{{ $arLocale }}][subtitle]"
                                         value="{{ old("contact.$arLocale.subtitle", $contactAr['subtitle'] ?? '') }}">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Subtitle ({{ strtoupper($enLocale) }})</label>
+                                    <label class="form-label">{{ __('admin.cms.shared.subtitle_locale', ['locale' => strtoupper($enLocale)]) }}</label>
                                     <input type="text" class="form-control" name="contact[{{ $enLocale }}][subtitle]"
                                         value="{{ old("contact.$enLocale.subtitle", $contactEn['subtitle'] ?? '') }}">
                                 </div>
@@ -69,13 +69,13 @@
 
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">Map & Location</h5>
+                            <h5 class="mb-0">@t('admin.cms.contact.sections.map_location', 'Map & Location')</h5>
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     @include('admin.layouts.components.media-upload', [
-                                        'label' => 'Background Image',
+                                        'label' => \App\Support\Lang::t('admin.cms.contact.labels.background_image', 'Background Image'),
                                         'name' => 'map[background_image]',
                                         'inputId' => 'contact_map_background',
                                         'previewPath' => media_path($mapData[$primaryLocale]['background_image_path'] ?? ''),
@@ -88,48 +88,48 @@
                             @endphp
                             <div class="row g-3 flex-md-row-reverse">
                                 <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">Title ({{ strtoupper($arLocale) }})</label>
+                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($arLocale)]) }}</label>
                                     <input type="text" class="form-control" dir="rtl" name="map[{{ $arLocale }}][title]"
                                         value="{{ old("map.$arLocale.title", $mapAr['title'] ?? '') }}">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Title ({{ strtoupper($enLocale) }})</label>
+                                    <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($enLocale)]) }}</label>
                                     <input type="text" class="form-control" name="map[{{ $enLocale }}][title]"
                                         value="{{ old("map.$enLocale.title", $mapEn['title'] ?? '') }}">
                                 </div>
                             </div>
                             <div class="row g-3 flex-md-row-reverse">
                                 <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">Address ({{ strtoupper($arLocale) }})</label>
+                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.address_locale', ['locale' => strtoupper($arLocale)]) }}</label>
                                     <textarea class="form-control" rows="3" dir="rtl" name="map[{{ $arLocale }}][address]">{{ old("map.$arLocale.address", $mapAr['address'] ?? '') }}</textarea>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Address ({{ strtoupper($enLocale) }})</label>
+                                    <label class="form-label">{{ __('admin.cms.shared.address_locale', ['locale' => strtoupper($enLocale)]) }}</label>
                                     <textarea class="form-control" rows="3" name="map[{{ $enLocale }}][address]">{{ old("map.$enLocale.address", $mapEn['address'] ?? '') }}</textarea>
                                 </div>
                             </div>
                             <div class="row g-3 flex-md-row-reverse">
                                 <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">Phone label ({{ strtoupper($arLocale) }})</label>
+                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.phone_label_locale', ['locale' => strtoupper($arLocale)]) }}</label>
                                     <input type="text" class="form-control" dir="rtl"
                                         name="map[{{ $arLocale }}][phone_label]"
                                         value="{{ old("map.$arLocale.phone_label", $mapAr['phone_label'] ?? '') }}">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Phone label ({{ strtoupper($enLocale) }})</label>
+                                    <label class="form-label">{{ __('admin.cms.shared.phone_label_locale', ['locale' => strtoupper($enLocale)]) }}</label>
                                     <input type="text" class="form-control" name="map[{{ $enLocale }}][phone_label]"
                                         value="{{ old("map.$enLocale.phone_label", $mapEn['phone_label'] ?? '') }}">
                                 </div>
                             </div>
                             <div class="row g-3 flex-md-row-reverse">
                                 <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">WhatsApp label ({{ strtoupper($arLocale) }})</label>
+                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.whatsapp_label_locale', ['locale' => strtoupper($arLocale)]) }}</label>
                                     <input type="text" class="form-control" dir="rtl"
                                         name="map[{{ $arLocale }}][whatsapp_label]"
                                         value="{{ old("map.$arLocale.whatsapp_label", $mapAr['whatsapp_label'] ?? '') }}">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">WhatsApp label ({{ strtoupper($enLocale) }})</label>
+                                    <label class="form-label">{{ __('admin.cms.shared.whatsapp_label_locale', ['locale' => strtoupper($enLocale)]) }}</label>
                                     <input type="text" class="form-control" name="map[{{ $enLocale }}][whatsapp_label]"
                                         value="{{ old("map.$enLocale.whatsapp_label", $mapEn['whatsapp_label'] ?? '') }}">
                                 </div>
@@ -139,11 +139,11 @@
 
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">Bottom Banner</h5>
+                            <h5 class="mb-0">@t('admin.cms.contact.sections.bottom_banner', 'Bottom Banner')</h5>
                         </div>
                         <div class="card-body">
                             @include('admin.layouts.components.media-upload', [
-                                'label' => 'Banner Image',
+                                'label' => \App\Support\Lang::t('admin.cms.contact.labels.banner_image', 'Banner Image'),
                                 'name' => 'bottom[image]',
                                 'inputId' => 'contact_bottom_image',
                                 'previewPath' => media_path($bottomData[$primaryLocale]['image_path'] ?? ''),
@@ -153,10 +153,10 @@
 
                     @php
                         $forms = [
-                            'ads' => ['title' => 'Ads Subscription Form', 'data' => $adsData, 'form' => $adsForm],
-                            'screens' => ['title' => 'Screens Subscription Form', 'data' => $screensData, 'form' => $screensForm],
-                            'create' => ['title' => 'Ad Creation Request', 'data' => $createData, 'form' => $createForm],
-                            'faq' => ['title' => 'FAQs Form', 'data' => $faqData, 'form' => $faqForm],
+                            'ads' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.ads', 'Ads Subscription Form'), 'data' => $adsData, 'form' => $adsForm],
+                            'screens' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.screens', 'Screens Subscription Form'), 'data' => $screensData, 'form' => $screensForm],
+                            'create' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.create', 'Ad Creation Request'), 'data' => $createData, 'form' => $createForm],
+                            'faq' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.faq', 'FAQs Form'), 'data' => $faqData, 'form' => $faqForm],
                         ];
                     @endphp
 
@@ -170,7 +170,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         @include('admin.layouts.components.media-upload', [
-                                            'label' => 'Card Image 1',
+                                            'label' => \App\Support\Lang::t('admin.cms.contact.labels.card_image1', 'Card Image 1'),
                                             'name' => "contact_forms[$key][card_image1]",
                                             'inputId' => "contact_{$key}_image1",
                                             'previewPath' => media_path($sectionData[$primaryLocale]['card_image1'] ?? ''),
@@ -178,7 +178,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         @include('admin.layouts.components.media-upload', [
-                                            'label' => 'Card Image 2',
+                                            'label' => \App\Support\Lang::t('admin.cms.contact.labels.card_image2', 'Card Image 2'),
                                             'name' => "contact_forms[$key][card_image2]",
                                             'inputId' => "contact_{$key}_image2",
                                             'previewPath' => media_path($sectionData[$primaryLocale]['card_image2'] ?? ''),
@@ -261,23 +261,23 @@
 
                                 <div class="row g-3 flex-md-row-reverse mt-3">
                                     <div class="col-md-6 text-md-end">
-                                        <label class="form-label text-md-end d-block">Card Text ({{ strtoupper($arLocale) }})</label>
+                                        <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.card_text_locale', ['locale' => strtoupper($arLocale)]) }}</label>
                                         <textarea class="form-control" rows="3" dir="rtl" name="contact_forms[{{ $key }}][{{ $arLocale }}][card_text]">{{ old("contact_forms.$key.$arLocale.card_text", $sectionAr['card_text'] ?? '') }}</textarea>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Card Text ({{ strtoupper($enLocale) }})</label>
+                                        <label class="form-label">{{ __('admin.cms.shared.card_text_locale', ['locale' => strtoupper($enLocale)]) }}</label>
                                         <textarea class="form-control" rows="3" name="contact_forms[{{ $key }}][{{ $enLocale }}][card_text]">{{ old("contact_forms.$key.$enLocale.card_text", $sectionEn['card_text'] ?? '') }}</textarea>
                                     </div>
                                 </div>
                                 <div class="row g-3 flex-md-row-reverse">
                                     <div class="col-md-6 text-md-end">
-                                        <label class="form-label text-md-end d-block">Modal Title ({{ strtoupper($arLocale) }})</label>
+                                        <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.modal_title_locale', ['locale' => strtoupper($arLocale)]) }}</label>
                                         <input type="text" class="form-control" dir="rtl"
                                             name="contact_forms[{{ $key }}][{{ $arLocale }}][modal_title]"
                                             value="{{ old("contact_forms.$key.$arLocale.modal_title", $sectionAr['modal_title'] ?? '') }}">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Modal Title ({{ strtoupper($enLocale) }})</label>
+                                        <label class="form-label">{{ __('admin.cms.shared.modal_title_locale', ['locale' => strtoupper($enLocale)]) }}</label>
                                         <input type="text" class="form-control"
                                             name="contact_forms[{{ $key }}][{{ $enLocale }}][modal_title]"
                                             value="{{ old("contact_forms.$key.$enLocale.modal_title", $sectionEn['modal_title'] ?? '') }}">
@@ -285,13 +285,13 @@
                                 </div>
                                 <div class="row g-3 flex-md-row-reverse">
                                     <div class="col-md-6 text-md-end">
-                                        <label class="form-label text-md-end d-block">Submit Text ({{ strtoupper($arLocale) }})</label>
+                                        <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.submit_text_locale', ['locale' => strtoupper($arLocale)]) }}</label>
                                         <input type="text" class="form-control" dir="rtl"
                                             name="contact_forms[{{ $key }}][{{ $arLocale }}][submit_text]"
                                             value="{{ old("contact_forms.$key.$arLocale.submit_text", $sectionAr['submit_text'] ?? '') }}">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Submit Text ({{ strtoupper($enLocale) }})</label>
+                                        <label class="form-label">{{ __('admin.cms.shared.submit_text_locale', ['locale' => strtoupper($enLocale)]) }}</label>
                                         <input type="text" class="form-control"
                                             name="contact_forms[{{ $key }}][{{ $enLocale }}][submit_text]"
                                             value="{{ old("contact_forms.$key.$enLocale.submit_text", $sectionEn['submit_text'] ?? '') }}">
@@ -302,13 +302,13 @@
                                     @foreach ($labelKeys as $labelKey)
                                         <div class="row g-3 flex-md-row-reverse">
                                             <div class="col-md-6 text-md-end">
-                                                <label class="form-label text-md-end d-block">Label {{ strtoupper($arLocale) }} - {{ \Illuminate\Support\Str::headline($labelKey) }}</label>
+                                                <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.label_locale_value', ['locale' => strtoupper($arLocale), 'value' => \Illuminate\Support\Str::headline($labelKey)]) }}</label>
                                                 <input type="text" class="form-control" dir="rtl"
                                                     name="contact_forms[{{ $key }}][{{ $arLocale }}][labels][{{ $labelKey }}]"
                                                     value="{{ old("contact_forms.$key.$arLocale.labels.$labelKey", $sectionAr['labels'][$labelKey] ?? '') }}">
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label">Label {{ strtoupper($enLocale) }} - {{ \Illuminate\Support\Str::headline($labelKey) }}</label>
+                                                <label class="form-label">{{ __('admin.cms.shared.label_locale_value', ['locale' => strtoupper($enLocale), 'value' => \Illuminate\Support\Str::headline($labelKey)]) }}</label>
                                                 <input type="text" class="form-control"
                                                     name="contact_forms[{{ $key }}][{{ $enLocale }}][labels][{{ $labelKey }}]"
                                                     value="{{ old("contact_forms.$key.$enLocale.labels.$labelKey", $sectionEn['labels'][$labelKey] ?? '') }}">
@@ -321,13 +321,13 @@
                                     @foreach ($radioKeys as $radioKey)
                                         <div class="row g-3 flex-md-row-reverse">
                                             <div class="col-md-6 text-md-end">
-                                                <label class="form-label text-md-end d-block">Radio {{ strtoupper($arLocale) }} - {{ \Illuminate\Support\Str::headline($radioKey) }}</label>
+                                                <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.radio_locale_value', ['locale' => strtoupper($arLocale), 'value' => \Illuminate\Support\Str::headline($radioKey)]) }}</label>
                                                 <input type="text" class="form-control" dir="rtl"
                                                     name="contact_forms[{{ $key }}][{{ $arLocale }}][radio][{{ $radioKey }}]"
                                                     value="{{ old("contact_forms.$key.$arLocale.radio.$radioKey", $sectionAr['radio'][$radioKey] ?? '') }}">
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label">Radio {{ strtoupper($enLocale) }} - {{ \Illuminate\Support\Str::headline($radioKey) }}</label>
+                                                <label class="form-label">{{ __('admin.cms.shared.radio_locale_value', ['locale' => strtoupper($enLocale), 'value' => \Illuminate\Support\Str::headline($radioKey)]) }}</label>
                                                 <input type="text" class="form-control"
                                                     name="contact_forms[{{ $key }}][{{ $enLocale }}][radio][{{ $radioKey }}]"
                                                     value="{{ old("contact_forms.$key.$enLocale.radio.$radioKey", $sectionEn['radio'][$radioKey] ?? '') }}">
@@ -340,14 +340,14 @@
                                     @foreach ($optionKeys as $optionKey)
                                         <div class="row g-3 flex-md-row-reverse">
                                             <div class="col-md-6 text-md-end">
-                                                <label class="form-label text-md-end d-block">Options {{ strtoupper($arLocale) }} - {{ \Illuminate\Support\Str::headline($optionKey) }}</label>
+                                                <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.options_locale_value', ['locale' => strtoupper($arLocale), 'value' => \Illuminate\Support\Str::headline($optionKey)]) }}</label>
                                                 <textarea class="form-control" rows="3" dir="rtl" name="contact_forms[{{ $key }}][{{ $arLocale }}][options][{{ $optionKey }}]">{{ old("contact_forms.$key.$arLocale.options.$optionKey", is_array($sectionAr['options'][$optionKey] ?? null) ? implode("\n", $sectionAr['options'][$optionKey]) : ($sectionAr['options'][$optionKey] ?? '')) }}</textarea>
-                                                <small class="text-muted">Enter each option on a separate line.</small>
+                                                <small class="text-muted">{{ __('admin.cms.shared.options_help_text') }}</small>
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label">Options {{ strtoupper($enLocale) }} - {{ \Illuminate\Support\Str::headline($optionKey) }}</label>
+                                                <label class="form-label">{{ __('admin.cms.shared.options_locale_value', ['locale' => strtoupper($enLocale), 'value' => \Illuminate\Support\Str::headline($optionKey)]) }}</label>
                                                 <textarea class="form-control" rows="3" name="contact_forms[{{ $key }}][{{ $enLocale }}][options][{{ $optionKey }}]">{{ old("contact_forms.$key.$enLocale.options.$optionKey", is_array($sectionEn['options'][$optionKey] ?? null) ? implode("\n", $sectionEn['options'][$optionKey]) : ($sectionEn['options'][$optionKey] ?? '')) }}</textarea>
-                                                <small class="text-muted">Enter each option on a separate line.</small>
+                                                <small class="text-muted">{{ __('admin.cms.shared.options_help_text') }}</small>
                                             </div>
                                         </div>
                                     @endforeach

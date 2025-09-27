@@ -16,7 +16,7 @@
                                 'checkboxes' => ['today' => __('admin.activity_logs.filters.today_only')],
                                 'filters' => $filters,
                             ])
-                            @include('admin.partials.results-summary', ['data' => $data, 'label' => 'log(s)'])
+                            @include('admin.partials.results-summary', ['data' => $data, 'label' => \App\Support\Lang::t('admin.activity_logs.results_label', 'log(s)')])
                             <div class="table-responsive">
                                 <table class="table custom-table m-0">
                                     <thead>

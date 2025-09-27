@@ -17,11 +17,11 @@
 
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">{{ __('admin.sidebar.home_page') }} - Banner</h5>
+                            <h5 class="mb-0">{{ __('admin.sidebar.home_page') }} - @t('admin.cms.home.sections.banner', 'Banner')</h5>
                         </div>
                         <div class="card-body">
                             @include('admin.layouts.components.media-upload', [
-                                'label' => 'Video',
+                                'label' => __('admin.forms.video'),
                                 'name' => 'banner[video]',
                                 'inputId' => 'home_banner_video',
                                 'acceptedTypes' => 'video/mp4',
@@ -35,7 +35,7 @@
                                             <input type="checkbox" class="form-check-input" id="banner_{{ $flag }}"
                                                 name="banner[{{ $flag }}]"
                                                 value="1" @checked(old("banner.$flag", $bannerData[$primaryLocale][$flag] ?? false))>
-                                            <label class="form-check-label" for="banner_{{ $flag }}">{{ ucfirst($flag) }}</label>
+                                            <label class="form-check-label" for="banner_{{ $flag }}">{{ \App\Support\Lang::t('admin.cms.home.flags.' . $flag, ucfirst($flag)) }}</label>
                                         </div>
                                     </div>
                                 @endforeach
@@ -45,7 +45,7 @@
 
                     <div class="card mb-4" id="partners-section">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Partners Slider</h5>
+                            <h5 class="mb-0">@t('admin.cms.home.sections.partners_slider', 'Partners Slider')</h5>
                             <button type="button" class="btn btn-sm btn-primary" id="add-partner-item">{{ __('admin.buttons.new') }}</button>
                         </div>
                         <div class="card-body" id="partner-items-container">
@@ -67,13 +67,13 @@
                                         <input type="hidden" name="partners[items][{{ $partnerIndex }}][existing_image]" value="{{ $currentPath }}">
                                         <div class="row g-3">
                                             <div class="col-md-3">
-                                                <label class="form-label">Order</label>
+                                                <label class="form-label">{{ __('admin.forms.order') }}</label>
                                                 <input type="number" name="partners[items][{{ $partnerIndex }}][order]" class="form-control"
                                                     value="{{ old("partners.items.$partnerIndex.order", $item->order) }}">
                                             </div>
                                             <div class="col-md-9">
                                                 @include('admin.layouts.components.media-upload', [
-                                                    'label' => 'Slide Image',
+                                                    'label' => \App\Support\Lang::t('admin.cms.home.labels.slide_image', 'Slide Image'),
                                                     'name' => "partners[items][$partnerIndex][image]",
                                                     'inputId' => "partners_item_{$partnerIndex}_image",
                                                     'previewPath' => media_path($currentPath),
@@ -82,13 +82,13 @@
                                             <div class="col-12">
                                                 <div class="row g-3 flex-md-row-reverse">
                                                     <div class="col-12 col-md-6">
-                                                        <label class="form-label">Alt ({{ strtoupper($arabicLocale) }})</label>
+                                                        <label class="form-label">{{ __('admin.cms.shared.alt_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                                         <input type="text" class="form-control" dir="rtl"
                                                             name="partners[items][{{ $partnerIndex }}][alt][{{ $arabicLocale }}]"
                                                             value="{{ old("partners.items.$partnerIndex.alt.$arabicLocale", $itemData[$arabicLocale]['alt'] ?? '') }}">
                                                     </div>
                                                     <div class="col-12 col-md-6">
-                                                        <label class="form-label">Alt ({{ strtoupper($englishLocale) }})</label>
+                                                        <label class="form-label">{{ __('admin.cms.shared.alt_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                                         <input type="text" class="form-control"
                                                             name="partners[items][{{ $partnerIndex }}][alt][{{ $englishLocale }}]"
                                                             value="{{ old("partners.items.$partnerIndex.alt.$englishLocale", $itemData[$englishLocale]['alt'] ?? '') }}">
@@ -105,20 +105,20 @@
 
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">About Section</h5>
+                            <h5 class="mb-0">@t('admin.cms.home.sections.about', 'About Section')</h5>
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-12">
                                     <div class="row g-3 flex-md-row-reverse">
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Title ({{ strtoupper($arabicLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                             <input type="text" class="form-control" dir="rtl"
                                                 name="about[{{ $arabicLocale }}][title]"
                                                 value="{{ old("about.$arabicLocale.title", $aboutData[$arabicLocale]['title'] ?? '') }}">
                                         </div>
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Title ({{ strtoupper($englishLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                             <input type="text" class="form-control" name="about[{{ $englishLocale }}][title]"
                                                 value="{{ old("about.$englishLocale.title", $aboutData[$englishLocale]['title'] ?? '') }}">
                                         </div>
@@ -127,12 +127,12 @@
                                 <div class="col-12">
                                     <div class="row g-3 flex-md-row-reverse">
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Description ({{ strtoupper($arabicLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.description_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                             <textarea class="form-control" rows="3" dir="rtl"
                                                 name="about[{{ $arabicLocale }}][desc]">{{ old("about.$arabicLocale.desc", $aboutData[$arabicLocale]['desc'] ?? '') }}</textarea>
                                         </div>
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Description ({{ strtoupper($englishLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.description_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                             <textarea class="form-control" rows="3" name="about[{{ $englishLocale }}][desc]">{{ old("about.$englishLocale.desc", $aboutData[$englishLocale]['desc'] ?? '') }}</textarea>
                                         </div>
                                     </div>
@@ -140,13 +140,13 @@
                                 <div class="col-12">
                                     <div class="row g-3 flex-md-row-reverse">
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Read more text ({{ strtoupper($arabicLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.read_more_text_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                             <input type="text" class="form-control" dir="rtl"
                                                 name="about[{{ $arabicLocale }}][readmore_text]"
                                                 value="{{ old("about.$arabicLocale.readmore_text", $aboutData[$arabicLocale]['readmore_text'] ?? '') }}">
                                         </div>
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Read more text ({{ strtoupper($englishLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.read_more_text_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                             <input type="text" class="form-control"
                                                 name="about[{{ $englishLocale }}][readmore_text]"
                                                 value="{{ old("about.$englishLocale.readmore_text", $aboutData[$englishLocale]['readmore_text'] ?? '') }}">
@@ -156,13 +156,13 @@
                                 <div class="col-12">
                                     <div class="row g-3 flex-md-row-reverse">
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Read more link ({{ strtoupper($arabicLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.read_more_link_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                             <input type="text" class="form-control" dir="rtl"
                                                 name="about[{{ $arabicLocale }}][readmore_link]"
                                                 value="{{ old("about.$arabicLocale.readmore_link", $aboutData[$arabicLocale]['readmore_link'] ?? '') }}">
                                         </div>
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Read more link ({{ strtoupper($englishLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.read_more_link_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                             <input type="text" class="form-control"
                                                 name="about[{{ $englishLocale }}][readmore_link]"
                                                 value="{{ old("about.$englishLocale.readmore_link", $aboutData[$englishLocale]['readmore_link'] ?? '') }}">
@@ -175,7 +175,7 @@
 
                     <div class="card mb-4" id="stats-section">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Impact Metrics</h5>
+                            <h5 class="mb-0">@t('admin.cms.home.sections.impact_metrics', 'Impact Metrics')</h5>
                             <button type="button" class="btn btn-sm btn-primary" id="add-stat-item">{{ __('admin.buttons.new') }}</button>
                         </div>
                         <div class="card-body" id="stats-items-container">
@@ -195,13 +195,13 @@
                                         <input type="hidden" name="stats[items][{{ $statsIndex }}][existing_icon]" value="{{ $currentIcon }}">
                                         <div class="row g-3">
                                             <div class="col-md-3">
-                                                <label class="form-label">Order</label>
+                                                <label class="form-label">{{ __('admin.forms.order') }}</label>
                                                 <input type="number" name="stats[items][{{ $statsIndex }}][order]" class="form-control"
                                                     value="{{ old("stats.items.$statsIndex.order", $item->order) }}">
                                             </div>
                                             <div class="col-md-9">
                                                 @include('admin.layouts.components.media-upload', [
-                                                    'label' => 'Icon',
+                                                    'label' => __('admin.forms.icon'),
                                                     'name' => "stats[items][$statsIndex][icon]",
                                                     'inputId' => "stats_item_{$statsIndex}_icon",
                                                     'previewPath' => media_path($currentIcon),
@@ -210,13 +210,13 @@
                                             <div class="col-12">
                                                 <div class="row g-3 flex-md-row-reverse">
                                                     <div class="col-12 col-md-6">
-                                                        <label class="form-label">Number ({{ strtoupper($arabicLocale) }})</label>
+                                                        <label class="form-label">{{ __('admin.cms.shared.number_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                                         <input type="text" class="form-control" dir="rtl"
                                                             name="stats[items][{{ $statsIndex }}][number][{{ $arabicLocale }}]"
                                                             value="{{ old("stats.items.$statsIndex.number.$arabicLocale", $itemData[$arabicLocale]['number'] ?? '') }}">
                                                     </div>
                                                     <div class="col-12 col-md-6">
-                                                        <label class="form-label">Number ({{ strtoupper($englishLocale) }})</label>
+                                                        <label class="form-label">{{ __('admin.cms.shared.number_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                                         <input type="text" class="form-control"
                                                             name="stats[items][{{ $statsIndex }}][number][{{ $englishLocale }}]"
                                                             value="{{ old("stats.items.$statsIndex.number.$englishLocale", $itemData[$englishLocale]['number'] ?? '') }}">
@@ -226,13 +226,13 @@
                                             <div class="col-12">
                                                 <div class="row g-3 flex-md-row-reverse">
                                                     <div class="col-12 col-md-6">
-                                                        <label class="form-label">Label ({{ strtoupper($arabicLocale) }})</label>
+                                                        <label class="form-label">{{ __('admin.cms.shared.label_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                                         <input type="text" class="form-control" dir="rtl"
                                                             name="stats[items][{{ $statsIndex }}][label][{{ $arabicLocale }}]"
                                                             value="{{ old("stats.items.$statsIndex.label.$arabicLocale", $itemData[$arabicLocale]['label'] ?? '') }}">
                                                     </div>
                                                     <div class="col-12 col-md-6">
-                                                        <label class="form-label">Label ({{ strtoupper($englishLocale) }})</label>
+                                                        <label class="form-label">{{ __('admin.cms.shared.label_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                                         <input type="text" class="form-control"
                                                             name="stats[items][{{ $statsIndex }}][label][{{ $englishLocale }}]"
                                                             value="{{ old("stats.items.$statsIndex.label.$englishLocale", $itemData[$englishLocale]['label'] ?? '') }}">
@@ -249,7 +249,7 @@
 
                     <div class="card mb-4" id="where-section">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Where To Find Us</h5>
+                            <h5 class="mb-0">@t('admin.cms.home.sections.locations', 'Where To Find Us')</h5>
                             <button type="button" class="btn btn-sm btn-primary" id="add-where-item">{{ __('admin.buttons.new') }}</button>
                         </div>
                         <div class="card-body">
@@ -257,13 +257,13 @@
                                 <div class="col-12">
                                     <div class="row g-3 flex-md-row-reverse">
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Title ({{ strtoupper($arabicLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                             <input type="text" class="form-control" dir="rtl"
                                                 name="where_us[title][{{ $arabicLocale }}]"
                                                 value="{{ old("where_us.title.$arabicLocale", $whereData[$arabicLocale]['title'] ?? '') }}">
                                         </div>
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Title ({{ strtoupper($englishLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                             <input type="text" class="form-control" name="where_us[title][{{ $englishLocale }}]"
                                                 value="{{ old("where_us.title.$englishLocale", $whereData[$englishLocale]['title'] ?? '') }}">
                                         </div>
@@ -272,13 +272,13 @@
                                 <div class="col-12">
                                     <div class="row g-3 flex-md-row-reverse">
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Brochure text ({{ strtoupper($arabicLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.brochure_text_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                             <input type="text" class="form-control" dir="rtl"
                                                 name="where_us[brochure_text][{{ $arabicLocale }}]"
                                                 value="{{ old("where_us.brochure_text.$arabicLocale", $whereData[$arabicLocale]['brochure']['text'] ?? '') }}">
                                         </div>
                                         <div class="col-12 col-md-6">
-                                            <label class="form-label">Brochure text ({{ strtoupper($englishLocale) }})</label>
+                                            <label class="form-label">{{ __('admin.cms.shared.brochure_text_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                             <input type="text" class="form-control"
                                                 name="where_us[brochure_text][{{ $englishLocale }}]"
                                                 value="{{ old("where_us.brochure_text.$englishLocale", $whereData[$englishLocale]['brochure']['text'] ?? '') }}">
@@ -287,7 +287,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     @include('admin.layouts.components.media-upload', [
-                                        'label' => 'Brochure Icon',
+                                        'label' => \App\Support\Lang::t('admin.cms.home.labels.brochure_icon', 'Brochure Icon'),
                                         'name' => 'where_us[brochure_icon]',
                                         'inputId' => 'where_brochure_icon',
                                         'previewPath' => media_path($whereData[$primaryLocale]['brochure']['icon_path'] ?? ''),
@@ -295,13 +295,13 @@
                                 </div>
                                 <div class="col-md-6">
                                     @include('admin.layouts.components.media-upload', [
-                                        'label' => 'Brochure File (PDF)',
+                                        'label' => \App\Support\Lang::t('admin.cms.home.labels.brochure_file', 'Brochure File (PDF)'),
                                         'name' => 'where_us[brochure_file]',
                                         'inputId' => 'where_brochure_file',
                                         'acceptedTypes' => 'application/pdf',
                                         'previewPath' => media_path($whereData[$primaryLocale]['brochure']['brochure_path'] ?? ''),
                                     ])
-                                    <label class="form-label mt-2">Brochure external link</label>
+                                    <label class="form-label mt-2">@t('admin.cms.home.labels.brochure_external_link', 'Brochure external link')</label>
                                     <input type="text" class="form-control" name="where_us[brochure_link]"
                                         value="{{ old('where_us.brochure_link', $whereData[$primaryLocale]['brochure']['brochure_path'] ?? '') }}">
                                 </div>
@@ -324,13 +324,13 @@
                                             <input type="hidden" name="where_us[items][{{ $whereIndex }}][existing_image]" value="{{ $currentImage }}">
                                             <div class="row g-3">
                                                 <div class="col-md-3">
-                                                    <label class="form-label">Order</label>
+                                                    <label class="form-label">{{ __('admin.forms.order') }}</label>
                                                     <input type="number" class="form-control" name="where_us[items][{{ $whereIndex }}][order]"
                                                         value="{{ old("where_us.items.$whereIndex.order", $item->order) }}">
                                                 </div>
                                                 <div class="col-md-9">
                                                     @include('admin.layouts.components.media-upload', [
-                                                        'label' => 'Image',
+                                                        'label' => __('admin.forms.image'),
                                                         'name' => "where_us[items][$whereIndex][image]",
                                                         'inputId' => "where_item_{$whereIndex}_image",
                                                         'previewPath' => media_path($currentImage),
@@ -339,13 +339,13 @@
                                                 <div class="col-12">
                                                     <div class="row g-3 flex-md-row-reverse">
                                                         <div class="col-12 col-md-6">
-                                                            <label class="form-label">Overlay text ({{ strtoupper($arabicLocale) }})</label>
+                                                            <label class="form-label">{{ __('admin.cms.shared.overlay_text_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                                             <input type="text" class="form-control" dir="rtl"
                                                                 name="where_us[items][{{ $whereIndex }}][overlay][{{ $arabicLocale }}]"
                                                                 value="{{ old("where_us.items.$whereIndex.overlay.$arabicLocale", $itemData[$arabicLocale]['overlay_text'] ?? '') }}">
                                                         </div>
                                                         <div class="col-12 col-md-6">
-                                                            <label class="form-label">Overlay text ({{ strtoupper($englishLocale) }})</label>
+                                                            <label class="form-label">{{ __('admin.cms.shared.overlay_text_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                                             <input type="text" class="form-control"
                                                                 name="where_us[items][{{ $whereIndex }}][overlay][{{ $englishLocale }}]"
                                                                 value="{{ old("where_us.items.$whereIndex.overlay.$englishLocale", $itemData[$englishLocale]['overlay_text'] ?? '') }}">
@@ -363,13 +363,13 @@
 
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">CTA Section</h5>
+                            <h5 class="mb-0">@t('admin.cms.home.sections.cta', 'CTA Section')</h5>
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     @include('admin.layouts.components.media-upload', [
-                                        'label' => 'Main Image',
+                                        'label' => \App\Support\Lang::t('admin.cms.home.labels.main_image', 'Main Image'),
                                         'name' => 'cta[image]',
                                         'inputId' => 'cta_image',
                                         'previewPath' => media_path($ctaData[$primaryLocale]['image_path'] ?? ''),
@@ -377,7 +377,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     @include('admin.layouts.components.media-upload', [
-                                        'label' => 'Overlay Image',
+                                        'label' => \App\Support\Lang::t('admin.cms.home.labels.overlay_image', 'Overlay Image'),
                                         'name' => 'cta[overlay_image]',
                                         'inputId' => 'cta_overlay_image',
                                         'previewPath' => media_path($ctaData[$primaryLocale]['overlay_image_path'] ?? ''),
@@ -385,21 +385,21 @@
                                 </div>
                                 @foreach ($locales as $locale)
                                     <div class="col-md-6">
-                                        <label class="form-label">Title ({{ strtoupper($locale) }})</label>
+                                        <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($locale)]) }}</label>
                                         <input type="text" class="form-control" name="cta[{{ $locale }}][title]"
                                             value="{{ old("cta.$locale.title", $ctaData[$locale]['title'] ?? '') }}">
                                     </div>
                                     <div class="col-12">
-                                        <label class="form-label">Text ({{ strtoupper($locale) }})</label>
+                                        <label class="form-label">{{ __('admin.cms.shared.text_locale', ['locale' => strtoupper($locale)]) }}</label>
                                         <textarea class="form-control" rows="3" name="cta[{{ $locale }}][text]">{{ old("cta.$locale.text", $ctaData[$locale]['text'] ?? '') }}</textarea>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Link Text ({{ strtoupper($locale) }})</label>
+                                        <label class="form-label">Link {{ __('admin.cms.shared.text_locale', ['locale' => strtoupper($locale)]) }}</label>
                                         <input type="text" class="form-control" name="cta[{{ $locale }}][link_text]"
                                             value="{{ old("cta.$locale.link_text", $ctaData[$locale]['link_text'] ?? '') }}">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Link URL ({{ strtoupper($locale) }})</label>
+                                        <label class="form-label">{{ __('admin.cms.shared.link_url_locale', ['locale' => strtoupper($locale)]) }}</label>
                                         <input type="text" class="form-control" name="cta[{{ $locale }}][link_url]"
                                             value="{{ old("cta.$locale.link_url", $ctaData[$locale]['link_url'] ?? '') }}">
                                     </div>
@@ -421,19 +421,19 @@
     <template id="partner-item-template">
         <div class="card mb-3 partner-item" data-index="__INDEX__">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>New</strong>
+                <strong>{{ __('admin.buttons.new') }}</strong>
                 <button type="button" class="btn btn-sm btn-outline-danger remove-partner-item">&times;</button>
             </div>
             <div class="card-body">
                 <input type="hidden" name="partners[items][__INDEX__][existing_image]">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label">Order</label>
+                        <label class="form-label">{{ __('admin.forms.order') }}</label>
                         <input type="number" name="partners[items][__INDEX__][order]" class="form-control">
                     </div>
                     <div class="col-md-9">
                         @include('admin.layouts.components.media-upload', [
-                            'label' => 'Slide Image',
+                            'label' => \App\Support\Lang::t('admin.cms.home.labels.slide_image', 'Slide Image'),
                             'name' => 'partners[items][__INDEX__][image]',
                             'inputId' => 'partners_item___INDEX___image',
                         ])
@@ -441,12 +441,12 @@
                     <div class="col-12">
                         <div class="row g-3 flex-md-row-reverse">
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Alt ({{ strtoupper($arabicLocale) }})</label>
+                                <label class="form-label">{{ __('admin.cms.shared.alt_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                 <input type="text" class="form-control" dir="rtl"
                                     name="partners[items][__INDEX__][alt][{{ $arabicLocale }}]">
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Alt ({{ strtoupper($englishLocale) }})</label>
+                                <label class="form-label">{{ __('admin.cms.shared.alt_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                 <input type="text" class="form-control"
                                     name="partners[items][__INDEX__][alt][{{ $englishLocale }}]">
                             </div>
@@ -459,19 +459,19 @@
     <template id="stat-item-template">
         <div class="card mb-3 stat-item" data-index="__INDEX__">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>New</strong>
+                <strong>{{ __('admin.buttons.new') }}</strong>
                 <button type="button" class="btn btn-sm btn-outline-danger remove-stat-item">&times;</button>
             </div>
             <div class="card-body">
                 <input type="hidden" name="stats[items][__INDEX__][existing_icon]">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label">Order</label>
+                        <label class="form-label">{{ __('admin.forms.order') }}</label>
                         <input type="number" name="stats[items][__INDEX__][order]" class="form-control">
                     </div>
                     <div class="col-md-9">
                         @include('admin.layouts.components.media-upload', [
-                            'label' => 'Icon',
+                            'label' => __('admin.forms.icon'),
                             'name' => 'stats[items][__INDEX__][icon]',
                             'inputId' => 'stats_item___INDEX___icon',
                         ])
@@ -479,12 +479,12 @@
                     <div class="col-12">
                         <div class="row g-3 flex-md-row-reverse">
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Number ({{ strtoupper($arabicLocale) }})</label>
+                                <label class="form-label">{{ __('admin.cms.shared.number_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                 <input type="text" class="form-control" dir="rtl"
                                     name="stats[items][__INDEX__][number][{{ $arabicLocale }}]">
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Number ({{ strtoupper($englishLocale) }})</label>
+                                <label class="form-label">{{ __('admin.cms.shared.number_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                 <input type="text" class="form-control"
                                     name="stats[items][__INDEX__][number][{{ $englishLocale }}]">
                             </div>
@@ -493,12 +493,12 @@
                     <div class="col-12">
                         <div class="row g-3 flex-md-row-reverse">
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Label ({{ strtoupper($arabicLocale) }})</label>
+                                <label class="form-label">{{ __('admin.cms.shared.label_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                 <input type="text" class="form-control" dir="rtl"
                                     name="stats[items][__INDEX__][label][{{ $arabicLocale }}]">
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Label ({{ strtoupper($englishLocale) }})</label>
+                                <label class="form-label">{{ __('admin.cms.shared.label_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                 <input type="text" class="form-control"
                                     name="stats[items][__INDEX__][label][{{ $englishLocale }}]">
                             </div>
@@ -511,18 +511,18 @@
     <template id="where-item-template">
         <div class="card mb-3 where-item" data-index="__INDEX__">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>New</strong>
+                <strong>{{ __('admin.buttons.new') }}</strong>
                 <button type="button" class="btn btn-sm btn-outline-danger remove-where-item">&times;</button>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label">Order</label>
+                        <label class="form-label">{{ __('admin.forms.order') }}</label>
                         <input type="number" name="where_us[items][__INDEX__][order]" class="form-control">
                     </div>
                     <div class="col-md-9">
                         @include('admin.layouts.components.media-upload', [
-                            'label' => 'Image',
+                            'label' => __('admin.forms.image'),
                             'name' => 'where_us[items][__INDEX__][image]',
                             'inputId' => 'where_item___INDEX___image',
                         ])
@@ -530,12 +530,12 @@
                     <div class="col-12">
                         <div class="row g-3 flex-md-row-reverse">
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Overlay text ({{ strtoupper($arabicLocale) }})</label>
+                                <label class="form-label">{{ __('admin.cms.shared.overlay_text_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
                                 <input type="text" class="form-control" dir="rtl"
                                     name="where_us[items][__INDEX__][overlay][{{ $arabicLocale }}]">
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Overlay text ({{ strtoupper($englishLocale) }})</label>
+                                <label class="form-label">{{ __('admin.cms.shared.overlay_text_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
                                 <input type="text" class="form-control"
                                     name="where_us[items][__INDEX__][overlay][{{ $englishLocale }}]">
                             </div>

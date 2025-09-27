@@ -1,0 +1,2646 @@
+{
+    "info": {
+        "_postman_id": "0a12abd5-eaa0-465e-9c06-779dc3b586dd",
+        "name": "Breem Ads Screens - Full (Admin + Device API v1)",
+        "description": "Full Postman collection covering the Android device API v1 and Laravel admin panel routes discovered via artisan route:list.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Android v1 (Device)",
+            "description": "Device API v1 endpoints consumed by the Android TV player. All requests send the X-Device-UID header.",
+            "item": [
+                {
+                    "name": "Handshake",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Device-UID",
+                                "value": "{{device_uid}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/screens/handshake",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "screens",
+                                "handshake"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"device_uid\": \"{{device_uid}}\",\n    \"code\": \"{{screen_code}}\",\n    \"version\": \"1.0.0\",\n    \"capabilities\": {\n        \"video\": true,\n        \"image\": true\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Initiate the screen handshake and register the player. Returns screen metadata, config and current playlist."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status 200', function () {",
+                                    "  pm.response.to.have.status(200);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Heartbeat",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Device-UID",
+                                "value": "{{device_uid}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/screens/heartbeat",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "screens",
+                                "heartbeat"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"screen_id\": \"{{screen_id}}\",\n    \"current_ad_code\": \"AD-15\",\n    \"ts\": \"2025-09-22T10:20:00Z\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Post periodic heartbeat data so the backend can monitor screen liveness."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status 200', function () {",
+                                    "  pm.response.to.have.status(200);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Playlist",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Device-UID",
+                                "value": "{{device_uid}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "If-None-Match",
+                                "value": "{{etag}}",
+                                "description": "Send the cached playlist ETag to receive 304 when unchanged.",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/screens/{{screen_id}}/playlist",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "screens",
+                                "{{screen_id}}",
+                                "playlist"
+                            ]
+                        },
+                        "description": "Fetch the current playlist for a screen. Pass If-None-Match with the cached ETag to leverage 304 responses."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const etag = pm.response.headers.get('ETag');",
+                                    "if (etag) {",
+                                    "  pm.collectionVariables.set('etag', etag);",
+                                    "}",
+                                    "pm.test('Status 200 or 304', function () {",
+                                    "  pm.expect([200, 304]).to.include(pm.response.code);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Playbacks",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Device-UID",
+                                "value": "{{device_uid}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/playbacks",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "playbacks"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"screen_id\": \"{{screen_id}}\",\n    \"ad_id\": \"{{ad_id}}\",\n    \"played_at\": \"2025-09-22T10:26:21Z\",\n    \"duration\": 20,\n    \"extra\": {\n        \"bufferedMs\": 120,\n        \"droppedFrames\": 2\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Report completed ad playback for analytics."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Accepted', () => pm.expect([200, 202]).to.include(pm.response.code));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Config",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-Device-UID",
+                                "value": "{{device_uid}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/config",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "config"
+                            ]
+                        },
+                        "description": "Retrieve global configuration tweaks for the player (polling intervals, feature flags, etc.)."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Admin",
+            "description": "Admin panel (HTML + AJAX) endpoints grouped by feature area. Requires logged-in session with XSRF token.",
+            "item": [
+                {
+                    "name": "Auth",
+                    "item": [
+                        {
+                            "name": "Get CSRF cookie",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/sanctum/csrf-cookie",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "sanctum",
+                                        "csrf-cookie"
+                                    ]
+                                },
+                                "description": "Fetch the Sanctum CSRF cookie so that session-authenticated requests can include the XSRF token."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('CSRF cookie present', function () {",
+                                            "  const xsrf = pm.cookies.get('XSRF-TOKEN');",
+                                            "  if (xsrf) {",
+                                            "    pm.collectionVariables.set('xsrf', xsrf);",
+                                            "  }",
+                                            "  pm.expect(xsrf, 'XSRF-TOKEN cookie').to.exist;",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Load login page",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/login",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "login"
+                                    ]
+                                },
+                                "description": "Loads the HTML login form. Useful to confirm localization and middleware."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Login",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/login",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "login"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "email",
+                                            "value": "{{admin_email}}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "password",
+                                            "value": "{{admin_password}}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Submit admin credentials via form POST. Expects 302 redirect to the dashboard on success."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Login response status', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Verify OTP",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json,text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/login/verify-otp",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "login",
+                                        "verify-otp"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "email",
+                                            "value": "{{admin_email}}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "otp",
+                                            "value": "123456",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Confirm the one-time password challenge for admins with MFA enabled."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('OTP verification accepted', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Logout",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/logout",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "logout"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Destroy the current admin session and return to the login screen."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Logout redirects', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "description": "Session authentication helpers (HTML forms + Sanctum CSRF cookie)."
+                },
+                {
+                    "name": "Ads",
+                    "item": [
+                        {
+                            "name": "List ads",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads"
+                                    ]
+                                },
+                                "description": "Render the ads index table (HTML view)."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Status 200', function () {",
+                                            "  pm.response.to.have.status(200);",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Create ad form",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads/create",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads",
+                                        "create"
+                                    ]
+                                },
+                                "description": "Display the ad creation form (HTML)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Store ad",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "title[en]",
+                                            "value": "Summer Campaign",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "title[ar]",
+                                            "value": "Summer Campaign (AR)",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "description[en]",
+                                            "value": "Outdoor signage loop",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "description[ar]",
+                                            "value": "Arabic copy placeholder",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "file",
+                                            "type": "file",
+                                            "src": ""
+                                        },
+                                        {
+                                            "key": "file_type",
+                                            "value": "video",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "duration_seconds",
+                                            "value": "30",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "start_date",
+                                            "value": "2025-09-22",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "end_date",
+                                            "value": "2025-10-22",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Submit a new advertisement with translated metadata and primary asset upload."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Ad created redirect', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Show ad",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads/{{ad_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads",
+                                        "{{ad_id}}"
+                                    ]
+                                },
+                                "description": "Show the ad detail page (HTML)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Edit ad form",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads/{{ad_id}}/edit",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads",
+                                        "{{ad_id}}",
+                                        "edit"
+                                    ]
+                                },
+                                "description": "Load the edit form for an existing ad (HTML)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update ad",
+                            "request": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads/{{ad_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads",
+                                        "{{ad_id}}"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "title[en]",
+                                            "value": "Summer Campaign Updated",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "title[ar]",
+                                            "value": "Summer Campaign Updated (AR)",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "description[en]",
+                                            "value": "Updated copy for QA",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "description[ar]",
+                                            "value": "Updated Arabic copy placeholder",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "file",
+                                            "type": "file",
+                                            "src": "",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "file_type",
+                                            "value": "video",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "duration_seconds",
+                                            "value": "25",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "start_date",
+                                            "value": "2025-09-22",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "end_date",
+                                            "value": "2025-11-01",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_method",
+                                            "value": "PUT",
+                                            "type": "text",
+                                            "disabled": true
+                                        }
+                                    ]
+                                },
+                                "description": "Update ad metadata. Attach a new asset if needed (optional file field provided)."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Ad updated redirect', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Delete ad",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads/{{ad_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads",
+                                        "{{ad_id}}"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Remove an ad permanently. Ensure dependent schedules are cleaned up."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Ad deleted redirect', function () {",
+                                            "  pm.expect([200, 302, 204]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "description": "CRUD actions for advertisements and their assets."
+                },
+                {
+                    "name": "Schedules",
+                    "item": [
+                        {
+                            "name": "List schedules",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads/{{ad_id}}/schedules",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads",
+                                        "{{ad_id}}",
+                                        "schedules"
+                                    ]
+                                },
+                                "description": "List schedules attached to an ad (HTML view with filters)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create schedule",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads/{{ad_id}}/schedules",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads",
+                                        "{{ad_id}}",
+                                        "schedules"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "screen_id",
+                                            "value": "{{screen_id}}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "start_time",
+                                            "value": "2025-09-22 08:00:00",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "end_time",
+                                            "value": "2025-09-22 18:00:00",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "is_active",
+                                            "value": "1",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Create a new schedule slot for an ad and attach to a screen."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Schedule created redirect', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Update schedule",
+                            "request": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads/{{ad_id}}/schedules/1",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads",
+                                        "{{ad_id}}",
+                                        "schedules",
+                                        "1"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "screen_id",
+                                            "value": "{{screen_id}}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "start_time",
+                                            "value": "2025-09-23 08:00:00",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "end_time",
+                                            "value": "2025-09-23 20:00:00",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "is_active",
+                                            "value": "1",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Update timings or toggle active status for an existing schedule."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Schedule updated redirect', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Delete schedule",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/ads/{{ad_id}}/schedules/1",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "ads",
+                                        "{{ad_id}}",
+                                        "schedules",
+                                        "1"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Delete a schedule entry from the ad."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Schedule deleted redirect', function () {",
+                                            "  pm.expect([200, 302, 204]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "description": "Per-ad schedule management (HTML flows controlled by ScheduleController)."
+                },
+                {
+                    "name": "Screens",
+                    "item": [
+                        {
+                            "name": "List screens",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/screens",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "screens"
+                                    ]
+                                },
+                                "description": "Screens dashboard showing device status and counts."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create screen form",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/screens/create",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "screens",
+                                        "create"
+                                    ]
+                                },
+                                "description": "HTML form to create a new playback screen."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Store screen",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/screens",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "screens"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "place_id",
+                                            "value": "1",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "code",
+                                            "value": "SCR-QA-01",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "device_uid",
+                                            "value": "{{device_uid}}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "status",
+                                            "value": "online",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "last_heartbeat",
+                                            "value": "2025-09-22 09:00:00",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Create a new screen and optionally attach a device UID."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Screen created redirect', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Show screen",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/screens/{{screen_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "screens",
+                                        "{{screen_id}}"
+                                    ]
+                                },
+                                "description": "Detailed screen view with logs, schedule and attached ads."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Edit screen form",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/screens/{{screen_id}}/edit",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "screens",
+                                        "{{screen_id}}",
+                                        "edit"
+                                    ]
+                                },
+                                "description": "Load the edit UI for a screen."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update screen",
+                            "request": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/screens/{{screen_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "screens",
+                                        "{{screen_id}}"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "place_id",
+                                            "value": "1",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "code",
+                                            "value": "SCR-QA-01",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "device_uid",
+                                            "value": "{{device_uid}}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "status",
+                                            "value": "maintenance",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "last_heartbeat",
+                                            "value": "2025-09-22 11:00:00",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Update screen metadata or mark maintenance/offline."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Screen updated redirect', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Delete screen",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/screens/{{screen_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "screens",
+                                        "{{screen_id}}"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Delete a screen (will detach related ads)."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Screen deleted redirect', function () {",
+                                            "  pm.expect([200, 302, 204]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "description": "Manage playback screens, device assignment, and statuses."
+                },
+                {
+                    "name": "Places",
+                    "item": [
+                        {
+                            "name": "List places",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/places",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "places"
+                                    ]
+                                },
+                                "description": "List venues/places hosting screens."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create place form",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/places/create",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "places",
+                                        "create"
+                                    ]
+                                },
+                                "description": "HTML creation form for a place."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Store place",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/places",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "places"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "name[en]",
+                                            "value": "Downtown Mall",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "name[ar]",
+                                            "value": "Downtown Mall AR",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "address[en]",
+                                            "value": "Main street 101",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "address[ar]",
+                                            "value": "Main street 101 AR",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "type",
+                                            "value": "mall",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Create a new place with translated name/address."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Place created redirect', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Show place",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/places/1",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "places",
+                                        "1"
+                                    ]
+                                },
+                                "description": "View place details with associated screens."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Edit place form",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/places/1/edit",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "places",
+                                        "1",
+                                        "edit"
+                                    ]
+                                },
+                                "description": "HTML edit UI for a place."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update place",
+                            "request": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/places/1",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "places",
+                                        "1"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "name[en]",
+                                            "value": "Downtown Mall Updated",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "name[ar]",
+                                            "value": "Downtown Mall Updated AR",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "address[en]",
+                                            "value": "Main street 102",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "address[ar]",
+                                            "value": "Main street 102 AR",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "type",
+                                            "value": "mall",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Update translated place metadata."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Place updated redirect', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Delete place",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/places/1",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "places",
+                                        "1"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Delete an empty place (fails if screens are still attached)."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Place delete response', function () {",
+                                            "  pm.expect([200, 302, 204]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "description": "Manage locations that host screens."
+                },
+                {
+                    "name": "Monitoring",
+                    "item": [
+                        {
+                            "name": "Monitoring dashboard",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/monitoring",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "monitoring"
+                                    ]
+                                },
+                                "description": "Monitoring overview dashboard showing screen health metrics."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Monitoring screen detail",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/monitoring/screens/{{screen_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "monitoring",
+                                        "screens",
+                                        "{{screen_id}}"
+                                    ]
+                                },
+                                "description": "Detailed monitoring page for a specific screen (HTML)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Acknowledge alert",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/monitoring/screens/{{screen_id}}/acknowledge",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "monitoring",
+                                        "screens",
+                                        "{{screen_id}}",
+                                        "acknowledge"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "status",
+                                            "value": "online",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "note",
+                                            "value": "Cleared after manual check",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Acknowledge monitoring alert and set a new status (JSON payload expected)."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Alert acknowledged redirect', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "description": "Screen monitoring dashboards and alert acknowledgement."
+                },
+                {
+                    "name": "Logs",
+                    "item": [
+                        {
+                            "name": "Logs dashboard",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/logs",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "logs"
+                                    ]
+                                },
+                                "description": "View application logs inside the admin UI (HTML)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Download log archive",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/zip,text/csv",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/logs/download",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "logs",
+                                        "download"
+                                    ]
+                                },
+                                "description": "Download the latest log export (ZIP or CSV depending on configuration). Use Postman \u201cSave Response\u201d to persist the file."
+                            },
+                            "response": []
+                        }
+                    ],
+                    "description": "Operational logs for diagnostics."
+                },
+                {
+                    "name": "Reports",
+                    "item": [
+                        {
+                            "name": "Reports index",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/reports",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "reports"
+                                    ]
+                                },
+                                "description": "List generated reports with filters for type/date."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Generate report",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html,application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/reports/generate",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "reports",
+                                        "generate"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "name",
+                                            "value": "Ad performance September",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "type",
+                                            "value": "playback",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "from_date",
+                                            "value": "2025-09-01",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "to_date",
+                                            "value": "2025-09-30",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "screen_id",
+                                            "value": "{{screen_id}}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "ad_id",
+                                            "value": "{{ad_id}}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "_token",
+                                            "value": "{{xsrf}}",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "description": "Generate a new playback or uptime report. Responds with redirect to the generated report view."
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Report generation redirect', function () {",
+                                            "  pm.expect([200, 302]).to.include(pm.response.code);",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "if (!pm.collectionVariables.get('xsrf')) {",
+                                            "",
+                                            "  throw new Error('Missing xsrf token. Run \"Auth > Get CSRF cookie\" first.');",
+                                            "",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Show report",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/html",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/reports/1",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "reports",
+                                        "1"
+                                    ]
+                                },
+                                "description": "View a generated report (HTML table)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Download report CSV",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "text/csv",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{xsrf}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/{{lang}}/admin-panel/reports/1/download",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "{{lang}}",
+                                        "admin-panel",
+                                        "reports",
+                                        "1",
+                                        "download"
+                                    ]
+                                },
+                                "description": "Download the report as CSV. Use Postman \u201cSave Response\u201d to store the file."
+                            },
+                            "response": []
+                        }
+                    ],
+                    "description": "Playback and uptime reporting workflows."
+                }
+            ],
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "const skip = ['Get CSRF cookie'];",
+                            "",
+                            "if (!pm.collectionVariables.get('xsrf') && !skip.includes(pm.info.requestName)) {",
+                            "",
+                            "  console.warn('XSRF token is empty. Run \"Auth > Get CSRF cookie\" first.');",
+                            "",
+                            "}"
+                        ]
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "default"
+        },
+        {
+            "key": "lang",
+            "value": "en",
+            "type": "default"
+        },
+        {
+            "key": "device_uid",
+            "value": "KM3-ABC-123",
+            "type": "default"
+        },
+        {
+            "key": "screen_code",
+            "value": "SCR-001",
+            "type": "default"
+        },
+        {
+            "key": "screen_id",
+            "value": "1",
+            "type": "default"
+        },
+        {
+            "key": "ad_id",
+            "value": "1",
+            "type": "default"
+        },
+        {
+            "key": "etag",
+            "value": "",
+            "type": "default"
+        },
+        {
+            "key": "admin_email",
+            "value": "admin@example.com",
+            "type": "default"
+        },
+        {
+            "key": "admin_password",
+            "value": "password",
+            "type": "default"
+        },
+        {
+            "key": "xsrf",
+            "value": "",
+            "type": "default"
+        }
+    ]
+}

@@ -58,7 +58,7 @@
                                                             @if (Auth::guard('admin')->user()->hasRole('super-admin') || Auth::guard('admin')->user()->can('admins.edit'))
                                                                 <a href="{{ route('admin.admins.edit', ['lang' => app()->getLocale(), 'admin' => $item->id]) }}"
                                                                     class="icon bg-info" data-toggle="tooltip"
-                                                                    data-placement="top" title="Edit Row">
+                                                                    data-placement="top" title="{{ \App\Support\Lang::t('admin.tooltips.edit_row', 'Edit Row') }}">
                                                                     <i class="icon-edit"></i>
                                                                 </a>
                                                             @endif
@@ -72,7 +72,7 @@
                                                                         @method('DELETE')
                                                                         <button type="submit" class="icon red"
                                                                             data-toggle="tooltip" data-placement="top"
-                                                                            title="Delete Row"
+                                                                            title="{{ \App\Support\Lang::t('admin.tooltips.delete_row', 'Delete Row') }}"
                                                                             onclick="checker(event, {{ $item->id }})">
                                                                             <i class="icon-cancel"></i>
                                                                         </button>
