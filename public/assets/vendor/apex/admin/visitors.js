@@ -45,10 +45,11 @@ var options = {
     }
   },
 }
-var chart = new ApexCharts(
-  document.querySelector("#visitors"),
-  options
-);
-chart.render();
-
+var visitorsEl = document.querySelector("#visitors");
+if (visitorsEl) {
+  var chart = new ApexCharts(visitorsEl, options);
+  chart.render();
+} else {
+  console.warn("ApexCharts: #visitors container not found, skipping chart render.");
+}
 

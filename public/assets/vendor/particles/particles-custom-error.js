@@ -13,7 +13,9 @@ particlesJS.load('particles-js', 'particles.json', function() {
 
 
 // ParticlesJS
-particlesJS('particles-js',{
+var particlesTarget = document.getElementById('particles-js');
+if (particlesTarget) {
+  particlesJS('particles-js',{
     "particles": {
       "number": {
         "value": 200,
@@ -122,12 +124,24 @@ particlesJS('particles-js',{
       }
     },
     "retina_detect": true
-});
-
-
+  });
+} else {
+  console.info('ParticlesJS: #particles-js container not found, skipping background effect.');
+}
 
 // Bootstrap Carousel
-$('.carousel').carousel({
-	interval: 4000,
-	pause: "hover",
-})
+(function () {
+  var $ = window.jQuery;
+  if (!$ || typeof $.fn.carousel !== 'function') {
+    console.info('Bootstrap carousel plugin not available, skipping initialization.');
+    return;
+  }
+
+  var $carousels = $('.carousel');
+  if (!$carousels.length) return;
+
+  $carousels.carousel({
+    interval: 4000,
+    pause: "hover",
+  });
+})();

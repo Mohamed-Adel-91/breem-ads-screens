@@ -35,13 +35,13 @@ $(function() {
 		if (len >= max) {
 			$('#characterLeft').text('You have reached the limit');
 			$('#characterLeft').addClass('red');
-			$('#btnSubmit').addClass('disabled');            
-		} 
+			$('#btnSubmit').addClass('disabled');
+		}
 		else {
 			var ch = max - len;
 			$('#characterLeft').text(ch + ' characters left');
 			$('#btnSubmit').removeClass('disabled');
-			$('#characterLeft').removeClass('red');            
+			$('#characterLeft').removeClass('red');
 		}
 	});
 });
@@ -103,33 +103,33 @@ $(document).ready(function(){
     ms = then.diff(now, 'milliseconds', true);
     // get the duration as months and round down
     // months = Math.floor(moment.duration(ms).asMonths());
- 
+
     // // subtract months from the original moment (not sure why I had to offset by 1 day)
     // then = then.subtract('months', months).subtract('days', 1);
     // update the duration in ms
     ms = then.diff(now, 'milliseconds', true);
     days = Math.floor(moment.duration(ms).asDays());
- 
+
     then = then.subtract(days, 'days');
     // update the duration in ms
     ms = then.diff(now, 'milliseconds', true);
     hours = Math.floor(moment.duration(ms).asHours());
- 
+
     then = then.subtract(hours, 'hours');
     // update the duration in ms
     ms = then.diff(now, 'milliseconds', true);
     minutes = Math.floor(moment.duration(ms).asMinutes());
- 
+
     then = then.subtract(minutes, 'minutes');
     // update the duration in ms
     ms = then.diff(now, 'milliseconds', true);
     seconds = Math.floor(moment.duration(ms).asSeconds());
-    
+
     // concatonate the variables
     diff = '<div class="num">' + days + ' <span class="text"> Days Left</span></div>';
     $('#daysLeft').html(diff);
   }
- 
+
 });
 
 
@@ -229,16 +229,16 @@ jQuery(function ($) {
 
 
 
-	// Added by Srinu 
+	// Added by Srinu
 	$(function(){
-		// When the window is resized, 
+		// When the window is resized,
 		$(window).resize(function(){
 			// When the width and height meet your specific requirements or lower
 			if ($(window).width() <= 768){
 				$(".page-wrapper").removeClass("pinned");
 			}
 		});
-		// When the window is resized, 
+		// When the window is resized,
 		$(window).resize(function(){
 			// When the width and height meet your specific requirements or lower
 			if ($(window).width() >= 768){

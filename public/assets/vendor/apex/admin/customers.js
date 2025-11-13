@@ -13,8 +13,10 @@ var options = {
   },
   colors: ['#225de4', '#999999'],
 }
-var chart = new ApexCharts(
-  document.querySelector("#customers"),
-  options
-);
-chart.render();
+var customersEl = document.querySelector("#customers");
+if (customersEl) {
+  var chart = new ApexCharts(customersEl, options);
+  chart.render();
+} else {
+  console.warn("ApexCharts: #customers container not found, skipping chart render.");
+}

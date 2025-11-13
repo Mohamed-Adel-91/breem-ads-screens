@@ -39,9 +39,10 @@ var options = {
   },
 }
 
-var chart = new ApexCharts(
-  document.querySelector("#income"),
-  options
-);
-
-chart.render();
+var incomeEl = document.querySelector("#income");
+if (incomeEl) {
+  var chart = new ApexCharts(incomeEl, options);
+  chart.render();
+} else {
+  console.warn("ApexCharts: #income container not found, skipping chart render.");
+}

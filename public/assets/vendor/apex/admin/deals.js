@@ -53,9 +53,10 @@ var options = {
   }
 }
 
-var chart = new ApexCharts(
-  document.querySelector("#deals"),
-  options
-);
-
-chart.render();
+var dealsEl = document.querySelector("#deals");
+if (dealsEl) {
+  var chart = new ApexCharts(dealsEl, options);
+  chart.render();
+} else {
+  console.warn("ApexCharts: #deals container not found, skipping chart render.");
+}
