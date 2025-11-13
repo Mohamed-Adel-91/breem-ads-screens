@@ -18,5 +18,7 @@
 			<a href="{{ route('web.home') }}" class="btn btn-primary">الرجوع للصفحة الرئيسيه</a>
 		</div>
         @include('admin.layouts.scripts.js')
+        <script src="{{ asset('/assets/vendor/particles/particles.min.js') }}"></script>
+        <script src="{{ asset('/assets/vendor/particles/particles-custom-error.js') }}"></script>
 	</body>
 </html>

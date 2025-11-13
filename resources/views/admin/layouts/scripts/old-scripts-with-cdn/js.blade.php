@@ -2,14 +2,14 @@
 <script src="{{ asset('/assets/js/jquery.min.js') }}"></script>
 
 <!-- Axios + CSRF -->
-<script src="{{ asset('/assets/vendor/axios/axios.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     axios.defaults.headers.common['X-CSRF-TOKEN'] =
         document.querySelector('meta[name="csrf-token"]').content;
 </script>
 
 <!-- Bootstrap 5 Bundle (مرة واحدة فقط) -->
-<script src="{{ asset('/assets/vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- بقية الـ Vendors بترتيب سليم -->
 <script src="{{ asset('/assets/js/moment.js') }}"></script>
@@ -21,15 +21,25 @@
 
 <script src="{{ asset('/assets/vendor/polyfill/polyfill.min.js') }}"></script>
 
+<script src="{{ asset('/assets/vendor/apex/apexcharts.min.js') }}"></script>
+<script src="{{ asset('/assets/vendor/apex/admin/visitors.js') }}"></script>
+<script src="{{ asset('/assets/vendor/apex/admin/deals.js') }}"></script>
+<script src="{{ asset('/assets/vendor/apex/admin/income.js') }}"></script>
+<script src="{{ asset('/assets/vendor/apex/admin/customers.js') }}"></script>
+
 <script src="{{ asset('/assets/js/main.js') }}"></script>
 
+<script src="{{ asset('/assets/vendor/particles/particles.min.js') }}"></script>
+<script src="{{ asset('/assets/vendor/particles/particles-custom-error.js') }}"></script>
 
-<script src="{{ asset('/assets/vendor/lightbox/js/lightbox.min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"
+    integrity="sha512-Ixzuzfxv1EqafeQlTCufWfaC6ful6WFqIz4G+dWvK0beHw0NVJwvCKSgafpy5gwNqKmgUfIBraVwkKI+Cz0SEQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-<script src="{{ asset('/assets/vendor/tempus-dominus/tempus-dominus.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6/dist/js/tempus-dominus.min.js"></script>
 
 <!-- SweetAlert2 -->
-<script src="{{ asset('/assets/vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     const jsTranslations = {
         formNotFound: @json(__('js.form_not_found')),
@@ -72,10 +82,11 @@
 </script>
 
 <!-- Bootstrap Multiselect (نسخة واحدة فقط) -->
-<script src="{{ asset('/assets/vendor/bootstrap-multiselect/bootstrap-multiselect.min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.min.js">
+</script>
 
 <!-- Summernote -->
-<script src="{{ asset('/assets/vendor/summernote/summernote-bs4.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
 
 <!-- تهيئة Summernote + Multiselect (متوافقة مع BS5) -->
 <script>
