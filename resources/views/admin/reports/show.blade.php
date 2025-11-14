@@ -51,10 +51,25 @@
                         @if (!empty($report->filters))
                             <div class="mt-6">
                                 <h2 class="text-sm font-semibold text-gray-700">{{ __('Applied filters') }}</h2>
+                                @php
+                                    $formatFilterValue = function ($value) use (&$formatFilterValue) {
+                                        if (is_array($value)) {
+                                            return collect($value)
+                                                ->map(function ($item, $key) use (&$formatFilterValue) {
+                                                    $label = is_string($key) ? ucfirst(str_replace('_', ' ', $key)) . ': ' : '';
+
+                                                    return $label . $formatFilterValue($item);
+                                                })
+                                                ->implode(', ');
+                                        }
+
+                                        return (string) $value;
+                                    };
+                                @endphp
                                 <div class="mt-2 flex flex-wrap gap-2">
                                     @foreach ($report->filters as $key => $value)
                                         <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                                            {{ ucfirst(str_replace('_', ' ', $key)) }}: {{ $value }}
+                                            {{ ucfirst(str_replace('_', ' ', $key)) }}: {{ $formatFilterValue($value) }}
                                         </span>
                                     @endforeach
                                 </div>
