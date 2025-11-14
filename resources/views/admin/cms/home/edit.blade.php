@@ -4,6 +4,8 @@
         $primaryLocale = config('app.locale');
         $arabicLocale = 'ar';
         $englishLocale = 'en';
+        $isArabicInterface = app()->getLocale() === 'ar';
+        $checkboxWrapperClass = 'form-check mt-3' . ($isArabicInterface ? ' d-flex align-items-center justify-content-end gap-2 flex-row-reverse text-end' : '');
     @endphp
     <div class="page-wrapper">
         @include('admin.layouts.sidebar')
@@ -30,7 +32,7 @@
                             <div class="row g-3 mt-0">
                                 @foreach (['autoplay', 'loop', 'muted', 'controls', 'playsinline'] as $flag)
                                     <div class="col-md-4">
-                                        <div class="form-check mt-3">
+                                        <div class="{{ $checkboxWrapperClass }}">
                                             <input type="hidden" name="banner[{{ $flag }}]" value="0">
                                             <input type="checkbox" class="form-check-input" id="banner_{{ $flag }}"
                                                 name="banner[{{ $flag }}]"
