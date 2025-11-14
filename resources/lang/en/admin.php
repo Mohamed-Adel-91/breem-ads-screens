@@ -153,7 +153,7 @@ return [
         ],
     ],
     'footer' => [
-        'copyright' => '© Copyright ' . date('Y') . '. All right reserved. Developed by Frame&Code.',
+        'copyright' => '© Copyright ' . date('Y') . '. All right reserved. Developed by NextSolve.',
     ],
     'flash' => [
         'admins' => [

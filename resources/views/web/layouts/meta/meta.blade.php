@@ -7,7 +7,7 @@
 <!-- IE Browser Support -->
 <meta http-equiv="X-UA-Compatible" content="ie=edge" />
 <!-- author -->
-<meta name="author" content="Frame&Code" />
+<meta name="author" content="NextSolve" />
 <!-- upper bar color for mobile -->
 <meta content="#627E90" name="theme-color" />
 <!-- Favicon -->
