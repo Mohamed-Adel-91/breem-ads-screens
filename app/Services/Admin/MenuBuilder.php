@@ -29,11 +29,13 @@ class MenuBuilder
 
         $cacheKey = sprintf('admin_menu:%s:%s:%s:%s', $variant, $locale, $userKey, $signature);
 
-        return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($admin, $variant) {
+        $items = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($admin, $variant) {
             $items = config('admin_menu', []);
 
             return $this->filterItems($items, $admin, $variant);
         });
+
+        return $this->markActiveItems($items);
     }
 
     protected function filterItems(array $items, Authenticatable $admin, string $variant, int $depth = 0): array
@@ -63,8 +65,8 @@ class MenuBuilder
             }
 
             $item['url'] = $this->resolveUrl($item);
-            $item['is_active'] = $this->isItemActive($item);
-            $item['is_open'] = $item['is_active'] || $this->hasActiveChild($item);
+            $item['is_active'] = false;
+            $item['is_open'] = false;
 
             $result[] = $item;
         }
@@ -173,6 +175,22 @@ class MenuBuilder
         }
 
         return false;
+    }
+
+    protected function markActiveItems(array $items): array
+    {
+        foreach ($items as &$item) {
+            if (!empty($item['children'])) {
+                $item['children'] = $this->markActiveItems($item['children']);
+            }
+
+            $item['is_active'] = $this->isItemActive($item);
+            $item['is_open'] = $item['is_active'] || $this->hasActiveChild($item);
+        }
+
+        unset($item);
+
+        return $items;
     }
 
     protected function hasActiveChild(array $item): bool
