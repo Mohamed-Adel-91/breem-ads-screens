@@ -338,6 +338,7 @@ return [
         'mobile' => 'Mobile Number',
         'password' => 'Password',
         'confirm_password' => 'Confirm Password',
+        'password_confirmation' => 'Confirm Password',
         'current_password' => 'Current Password',
         'new_password' => 'New Password',
         'confirm_new_password' => 'Confirm New Password',

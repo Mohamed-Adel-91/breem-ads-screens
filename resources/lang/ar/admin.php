@@ -344,6 +344,7 @@ return [
         'mobile' => 'رقم الهاتف',
         'password' => 'كلمة المرور',
         'confirm_password' => 'تأكيد كلمة المرور',
+        'password_confirmation' => 'تأكيد كلمة المرور',
         'current_password' => 'كلمة المرور الحالية',
         'new_password' => 'كلمة المرور الجديدة',
         'confirm_new_password' => 'تأكيد كلمة المرور الجديدة',

@@ -208,7 +208,20 @@ return [
                 'route' => 'admin.users.index',
                 'permission' => 'users.view',
                 'active' => [
-                    'admin.users.*',
+                    'admin.users.index',
+                ],
+            ],
+            [
+                'key' => 'users_management_create_user',
+                'title' => [
+                    'en' => 'Create User',
+                    'ar' => 'إنشاء مستخدم',
+                ],
+                'route' => 'admin.users.create',
+                'permission' => 'users.view',
+                'active' => [
+                    'admin.users.create',
+                    'admin.users.store',
                 ],
             ],
         ],

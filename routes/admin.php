@@ -65,7 +65,11 @@ Route::group([
         Route::resource('roles', RoleController::class)->middleware('role:super-admin');
         Route::get('/settings/edit', [SettingController::class, 'edit'])->name('settings.edit');
         Route::put('/settings/update', [SettingController::class, 'update'])->name('settings.update');
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::prefix('users')->as('users.')->middleware('permission:users.view')->group(function () {
+            Route::get('/', [UserController::class, 'index'])->name('index');
+            Route::get('/create', [UserController::class, 'create'])->name('create');
+            Route::post('/', [UserController::class, 'store'])->name('store');
+        });
         Route::prefix('ads')->as('ads.')->group(function () {
             Route::get('/', [AdController::class, 'index'])->name('index')->middleware('permission:ads.view');
             Route::get('/create', [AdController::class, 'create'])->name('create')->middleware('permission:ads.create');

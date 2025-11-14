@@ -24,10 +24,42 @@ class UserController extends Controller
         $data = $query->orderByDesc('created_at')->paginate(25)->appends(['lang' => $lang]);
 
         return view('admin.users.index')->with([
-            'pageName' => Lang::t('admin.pages.users.index', 'قائمة المستخدمين'),
+            'pageName' => Lang::t('admin.pages.users.index', 'U,OO�U.Oc OU,U.O3O�OrO_U.USU+'),
             'data' => $data,
             'filters' => $request->only(['from_date', 'to_date', 'today']),
             'lang' => $lang,
         ]);
     }
+
+    public function create(string $lang)
+    {
+        return view('admin.users.create')->with([
+            'pageName' => Lang::t('admin.pages.users.create', 'Create User'),
+            'lang' => $lang,
+        ]);
+    }
+
+    public function store(Request $request, string $lang)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'nickname' => ['nullable', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'mobile' => ['required', 'string', 'max:255', 'unique:users,mobile'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        User::create([
+            'name' => $validated['full_name'],
+            'nickname' => $validated['nickname'] ?? null,
+            'email' => $validated['email'],
+            'mobile' => $validated['mobile'],
+            'password' => $validated['password'],
+        ]);
+
+        return redirect()
+            ->route('admin.users.index', ['lang' => $lang])
+            ->with('success', Lang::t('admin.flash.users.created', 'User created successfully.'));
+    }
 }
+
