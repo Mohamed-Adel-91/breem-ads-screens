@@ -86,13 +86,13 @@
                                             </div>
                                         @endforeach
                                         <!-- Canonical URL -->
-                                        <div class="col-md-12">
+                                        {{-- <div class="col-md-12">
                                             <div class="form-group">
                                                 <label for="canonical">{{ __('admin.forms.canonical') }}</label>
                                                 <input type="text" class="form-control" id="canonical" name="canonical"
                                                     value="{{ isset($seoMeta) ? $seoMeta->canonical : old('canonical') }}">
                                             </div>
-                                        </div>
+                                        </div> --}}
                                         <div class="card-footer">
                                             <button type="submit" class="btn btn-primary">{{ __('admin.forms.save_button') }}</button>
                                         </div>

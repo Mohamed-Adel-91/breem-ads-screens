@@ -27,7 +27,7 @@ class SeoMetaController extends Controller
             ->with('pageName', Lang::t('admin.pages.seo_metas.create', 'إنشاء ميتا سيو'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, string $lang)
     {
         $data = $request->validate([
             'page'           => 'required|unique:seo_metas,page',
@@ -45,7 +45,7 @@ class SeoMetaController extends Controller
             ->causedBy(Auth::guard('admin')->user())
             ->withProperties($data)
             ->log('Created SEO Meta');
-        return redirect()->route('admin.seo_metas.index')
+        return redirect()->route('admin.seo_metas.index', ['lang' => $lang])
             ->with('success', Lang::t('admin.flash.seo_metas.created', 'تم إنشاء بيانات تحسين محركات البحث بنجاح.'));
     }
 
