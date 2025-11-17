@@ -1,4 +1,4 @@
-name: Deploy - Main
+name: Deploy Main
 
 on:
   push:
@@ -7,14 +7,16 @@ on:
 
 jobs:
   web-deploy:
-    name: 🎉 Deploy
+    name: Deploy to Hostinger
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🚚 Get latest code
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: 📂 Sync files via FTP
+      - name: Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -22,22 +24,45 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           port: 21
+          state-name: ftp-deploy-main
           local-dir: ./
           server-dir: /public_html
           dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.github/**
+            node_modules/**
+            vendor/**
+            storage/logs/**
+            storage/framework/**
+            public/storage/**
+            public/build/**
+            build/**
+            .env
+            .env.*
 
-      - name: 🔐 Deploy over SSH to Hostinger
+      - name: Run Laravel deployment commands over SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.HOSTINGER_HOST }}
           username: ${{ secrets.HOSTINGER_USER }}
           password: ${{ secrets.HOSTINGER_PASSWORD }}
           port: ${{ secrets.HOSTINGER_PORT }}
+          script_stop: true
           script: |
             cd /home/u365930992/domains/breem.site/public_html
-            git pull origin main
-            composer install --no-dev --optimize-autoloader
+            if [ -d .git ]; then
+              git fetch origin main
+              git reset --hard origin/main
+            else
+              echo "Skipping git pull because no .git directory was found"
+            fi
+            php artisan down || true
+            export COMPOSER_ALLOW_SUPERUSER=1
+            composer install --no-dev --optimize-autoloader --no-interaction
+            php artisan optimize:clear
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
+            php artisan up
