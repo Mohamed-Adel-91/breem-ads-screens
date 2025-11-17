@@ -1,4 +1,4 @@
-name: Deploy to Hostinger
+name: Deploy - Main
 
 on:
   push:
@@ -6,11 +6,15 @@ on:
       - main
 
 jobs:
-  deploy:
+  web-deploy:
+    name: 🎉 Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy over SSH to Hostinger
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Deploy over SSH to Hostinger
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.HOSTINGER_HOST }}
