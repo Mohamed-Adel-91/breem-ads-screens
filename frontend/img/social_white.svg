@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Transparent background (no <rect> with fill) -->
+  <!-- Connector rounded square -->
+  <rect x="132" y="132" width="248" height="248" rx="84" ry="84" stroke="#FFFFFF" stroke-width="16" />
+
+  <!-- Corner circles -->
+  <circle cx="112" cy="112" r="64" stroke="#FFFFFF" stroke-width="16" />
+  <circle cx="400" cy="112" r="64" stroke="#FFFFFF" stroke-width="16" />
+  <circle cx="112" cy="400" r="64" stroke="#FFFFFF" stroke-width="16" />
+  <circle cx="400" cy="400" r="64" stroke="#FFFFFF" stroke-width="16" />
+
+  <!-- Small connector gaps to mimic the original breaks -->
+  <path d="M176 112a64 64 0 0 0 36 36" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+  <path d="M336 112a64 64 0 0 1-36 36" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+  <path d="M176 400a64 64 0 0 1 36-36" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+  <path d="M336 400a64 64 0 0 0-36-36" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+
+  <!-- Center megaphone -->
+  <path d="M230 304v-96h26l66-26v148l-66-26h-26z" stroke="#FFFFFF" stroke-width="16" stroke-linejoin="round" />
+  <rect x="214" y="220" width="16" height="72" stroke="#FFFFFF" stroke-width="16" />
+
+  <!-- Top-left: X logo -->
+  <g stroke="#FFFFFF" stroke-width="16" stroke-linecap="round">
+    <line x1="82" y1="82" x2="142" y2="142" />
+    <line x1="142" y1="82" x2="82" y2="142" />
+  </g>
+
+  <!-- Top-right: TikTok (stylized outline) -->
+  <g stroke="#FFFFFF" stroke-width="12" stroke-linejoin="round" transform="translate(332,52)">
+    <path d="M44 16v42a26 26 0 1 1-21-12" />
+    <path d="M44 16c8 14 22 22 36 24" />
+  </g>
+
+  <!-- Bottom-left: YouTube outline -->
+  <g stroke="#FFFFFF" stroke-width="12" stroke-linejoin="round" transform="translate(56,332)">
+    <rect x="16" y="16" rx="16" ry="16" width="80" height="56" />
+    <path d="M64 40l24 14-24 14V40z" />
+  </g>
+
+  <!-- Bottom-right: Instagram outline -->
+  <g stroke="#FFFFFF" stroke-width="12" stroke-linejoin="round" transform="translate(332,332)">
+    <rect x="16" y="16" width="80" height="80" rx="24" ry="24"/>
+    <circle cx="56" cy="56" r="18"/>
+    <circle cx="86" cy="30" r="6"/>
+  </g>
+</svg>
