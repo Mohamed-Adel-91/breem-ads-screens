@@ -11,7 +11,7 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = Admin::updateOrCreate(
+        $superAdmin = Admin::updateOrCreate(
             ['email' => config('admin.email')],
             [
                 'first_name' => config('admin.first_name'),
@@ -24,7 +24,26 @@ class AdminUserSeeder extends Seeder
         if (!$role) {
             $role = Role::create(['name' => 'super-admin', 'guard_name' => 'admin']);
         }
-        $admin->assignRole('super-admin');
-        $admin->syncPermissions(Permission::all());
+        $superAdmin->assignRole('super-admin');
+        $superAdmin->syncPermissions(Permission::where('guard_name', 'admin')->get());
+
+        $cmsOnlyAdmin = Admin::updateOrCreate(
+            ['email' => 'website.cms@breem.com'],
+            [
+                'first_name' => config('admin.cms_first_name'),
+                'last_name'  => config('admin.cms_last_name'),
+                'email'      => config('admin.cms_email'),
+                'password'   => config('admin.cms_password'),
+            ]
+        );
+
+        $cmsPermissions = Permission::where('guard_name', 'admin')
+            ->whereIn('name', [
+                'cms.manage',
+                'contact_submissions.view',
+                'contact_submissions.delete',
+            ])->get();
+
+        $cmsOnlyAdmin->syncPermissions($cmsPermissions);
     }
 }
