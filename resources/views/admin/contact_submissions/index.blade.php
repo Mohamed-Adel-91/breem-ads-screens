@@ -32,11 +32,11 @@
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <button class="btn btn-outline-info" onclick="showPayload({{ $item->id }})">{{ __('admin.contact_submissions.actions.view') }}</button>
-                                        <form id="delete_form_{{ $item->id }}" action="{{ route('admin.contact_submissions.destroy', ['lang'=>app()->getLocale(),'submission'=>$item->id]) }}" method="POST">
+                                        {{-- <form id="delete_form_{{ $item->id }}" action="{{ route('admin.contact_submissions.destroy', ['lang'=>app()->getLocale(),'submission'=>$item->id]) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-outline-danger" onclick="checker(event, '{{ $item->id }}')">{{ __('admin.contact_submissions.actions.delete') }}</button>
-                                        </form>
+                                        </form> --}}
                                     </div>
                                     <script type="application/json" id="payload_{{ $item->id }}">@json($item->payload)</script>
                                 </td>
