@@ -22,6 +22,8 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           port: 21
+          local-dir: ./
+          server-dir: /public_html
           dangerous-clean-slate: false
 
       - name: 🔐 Deploy over SSH to Hostinger
