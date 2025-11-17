@@ -31,6 +31,7 @@
                                     <thead>
                                         <tr>
                                             <th>#</th>
+                                            <th>@t('admin.seo_metas.table.page')</th>
                                             <th>@t('admin.seo_metas.table.title_en')</th>
                                             <th>@t('admin.seo_metas.table.title_ar')</th>
                                             <th>@t('admin.table.created_at')</th>
@@ -43,6 +44,7 @@
                                             @foreach ($data as $seoMeta)
                                                 <tr>
                                                     <td>{{ $loop->iteration }}</td>
+                                                    <td>{{ $seoMeta->page }}</td>
                                                     <td>{{ $seoMeta->getTranslation('title', 'en') }}</td>
                                                     <td>{{ $seoMeta->getTranslation('title', 'ar') }}</td>
                                                     <td>{{ $seoMeta->created_at }}</td>

@@ -268,6 +268,7 @@ return [
     ],
     'seo_metas' => [
         'table' => [
+            'page' => 'Page',
             'title_en' => 'Title (EN)',
             'title_ar' => 'Title (AR)',
         ],

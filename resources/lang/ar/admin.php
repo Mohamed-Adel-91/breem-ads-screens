@@ -276,6 +276,7 @@ return [
     ],
     'seo_metas' => [
         'table' => [
+            'page' => 'الصفحه',
             'title_en' => 'العنوان (EN)',
             'title_ar' => 'العنوان (AR)',
         ],
