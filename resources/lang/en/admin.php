@@ -152,9 +152,7 @@ return [
             'index' => 'Users List',
         ],
     ],
-    'footer' => [
-        'copyright' => '© Copyright ' . date('Y') . '. All right reserved. Developed by NextSolve.',
-    ],
+    
     'flash' => [
         'admins' => [
             'created' => 'Admin created successfully.',
