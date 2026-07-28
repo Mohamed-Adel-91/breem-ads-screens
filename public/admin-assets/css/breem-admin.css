@@ -259,6 +259,44 @@ body.breem-admin .nav-pills .nav-link.active {
     font-weight: 700;
 }
 
+.breem-admin .admin-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.breem-admin .admin-page-actions,
+.breem-admin .admin-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.breem-admin .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+}
+
+.breem-admin .admin-breadcrumb {
+    margin-bottom: 0.45rem;
+    padding: 0;
+    background: transparent;
+    font-size: 0.78rem;
+}
+
+.breem-admin .admin-breadcrumb .breadcrumb-item.active {
+    color: var(--breem-muted);
+}
+
+.breem-admin .admin-breadcrumb a {
+    color: var(--breem-primary-hover);
+}
+
 .breem-admin .page-kicker {
     color: var(--breem-primary);
     font-size: 0.75rem;
@@ -270,6 +308,109 @@ body.breem-admin .nav-pills .nav-link.active {
 .breem-admin .card {
     border-color: var(--breem-border);
     box-shadow: 0 6px 22px rgba(18, 38, 63, 0.05);
+}
+
+.breem-admin .card-header,
+.breem-admin .card-footer {
+    border-color: var(--breem-border);
+}
+
+.breem-admin .card-title {
+    color: var(--breem-heading);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.breem-admin .admin-table {
+    color: #526176;
+}
+
+.breem-admin .admin-table thead th {
+    border-top: 0;
+    border-bottom: 1px solid var(--breem-border);
+    background: #f8fafb;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.breem-admin .admin-table td,
+.breem-admin .admin-table th {
+    padding: 0.9rem 1rem;
+    vertical-align: middle;
+}
+
+.breem-admin .admin-table tbody th {
+    color: var(--breem-muted);
+    font-weight: 600;
+}
+
+.breem-admin .admin-table code {
+    color: var(--breem-primary-hover);
+    white-space: nowrap;
+}
+
+.breem-admin .admin-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-height: 150px;
+    padding: 1.5rem;
+    color: var(--breem-muted);
+    text-align: center;
+}
+
+.breem-admin .admin-empty-state i {
+    color: var(--breem-primary);
+    font-size: 1.65rem;
+}
+
+.breem-admin .admin-filter-card {
+    box-shadow: none;
+}
+
+.breem-admin .admin-filter-card .form-group {
+    margin-bottom: 1rem;
+}
+
+.breem-admin .admin-results-summary .alert {
+    margin-bottom: 0;
+    background: var(--breem-primary-soft);
+    color: #387b7a;
+}
+
+.breem-admin .admin-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.breem-admin .admin-pagination-summary {
+    color: var(--breem-muted);
+    font-size: 0.82rem;
+}
+
+.breem-admin .admin-pagination .pagination {
+    margin-bottom: 0;
+}
+
+.breem-admin .admin-pagination .page-link {
+    border-color: var(--breem-border);
+    color: var(--breem-primary-hover);
+}
+
+.breem-admin .admin-pagination .page-link:focus {
+    box-shadow: 0 0 0 0.2rem var(--breem-focus-ring);
+}
+
+.breem-admin .invalid-feedback {
+    display: block;
 }
 
 .breem-admin .dashboard-welcome {
@@ -397,6 +538,73 @@ body.breem-admin .nav-pills .nav-link.active {
     display: none;
 }
 
+.breem-auth {
+    background:
+        radial-gradient(circle at 10% 10%, var(--breem-primary-soft), transparent 34%),
+        var(--breem-page-bg);
+}
+
+.breem-auth .auth-shell {
+    min-height: 100vh;
+}
+
+.breem-auth .auth-toolbar {
+    position: fixed;
+    z-index: 10;
+    top: 1rem;
+    inset-inline-end: 1rem;
+}
+
+.breem-auth .auth-language {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--breem-border);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--breem-primary-hover);
+    font-size: 0.82rem;
+    font-weight: 700;
+    box-shadow: 0 5px 18px rgba(18, 38, 63, 0.07);
+}
+
+.breem-auth .auth-card {
+    border: 0;
+    border-top: 4px solid var(--breem-primary);
+    box-shadow: 0 18px 48px rgba(18, 38, 63, 0.12);
+}
+
+.breem-auth .auth-card .card-body {
+    padding: 2rem;
+}
+
+.breem-auth .auth-logo {
+    display: block;
+    width: fit-content;
+    margin: 0 auto 1.75rem;
+}
+
+.breem-auth .auth-logo img {
+    width: auto;
+    max-width: 145px;
+    height: 45px;
+    object-fit: contain;
+}
+
+.breem-admin .auth-inline-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    margin: 0 auto 1.5rem;
+    border-radius: 14px;
+    background: var(--breem-primary-soft);
+    color: var(--breem-primary);
+    font-size: 1.35rem;
+}
+
 .breem-admin .sr-only-focusable:focus {
     position: fixed;
     z-index: 2000;
@@ -426,6 +634,10 @@ body.breem-admin .nav-pills .nav-link.active {
 }
 
 [dir="rtl"] .breem-admin .quick-link-arrow {
+    transform: scaleX(-1);
+}
+
+[dir="rtl"] .breem-admin .fe-arrow-left {
     transform: scaleX(-1);
 }
 
@@ -479,6 +691,11 @@ body.breem-admin .nav-pills .nav-link.active {
     .breem-admin .header-user-name {
         display: none;
     }
+
+    .breem-admin .admin-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
 
 @media (max-width: 575.98px) {
@@ -492,6 +709,31 @@ body.breem-admin .nav-pills .nav-link.active {
 
     .breem-admin .page-title {
         font-size: 1.25rem;
+    }
+
+    .breem-admin .admin-page-actions,
+    .breem-admin .admin-actions {
+        width: 100%;
+    }
+
+    .breem-admin .admin-page-actions .btn,
+    .breem-admin .admin-actions .btn,
+    .breem-admin .admin-actions form {
+        flex: 1 1 auto;
+    }
+
+    .breem-admin .admin-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .breem-admin .admin-pagination-links {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .breem-auth .auth-card .card-body {
+        padding: 1.5rem;
     }
 }
 

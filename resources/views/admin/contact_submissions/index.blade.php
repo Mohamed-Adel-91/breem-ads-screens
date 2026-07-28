@@ -1,11 +1,11 @@
-﻿@extends('admin.layouts.master')
+@extends('admin.layouts.legacy.master')
 @section('content')
 <div class="page-wrapper">
-    @include('admin.layouts.sidebar')
+    @include('admin.layouts.legacy.sidebar')
     <div class="page-content">
-        @include('admin.layouts.page-header', ['pageName' => __('admin.contact_submissions.title')])
+        @include('admin.layouts.legacy.page-header', ['pageName' => __('admin.contact_submissions.title')])
         <div class="main-container">
-            @include('admin.layouts.alerts')
+            @include('admin.layouts.legacy.alerts')
             <div class="card">
                 <div class="card-body table-responsive">
                     <table class="table align-middle">

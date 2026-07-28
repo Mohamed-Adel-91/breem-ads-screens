@@ -1,4 +1,4 @@
-@extends('admin.layouts.master')
+@extends('admin.layouts.legacy.master')
 @section('content')
     @php
         $primaryLocale = config('app.locale');
@@ -6,11 +6,11 @@
         $enLocale = 'en';
     @endphp
     <div class="page-wrapper">
-        @include('admin.layouts.sidebar')
+        @include('admin.layouts.legacy.sidebar')
         <div class="page-content">
-            @include('admin.layouts.page-header', ['pageName' => $page->name])
+            @include('admin.layouts.legacy.page-header', ['pageName' => $page->name])
             <div class="main-container">
-                @include('admin.layouts.alerts')
+                @include('admin.layouts.legacy.alerts')
                 <form method="POST" action="{{ route('admin.cms.contact.update', ['lang' => app()->getLocale()]) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')

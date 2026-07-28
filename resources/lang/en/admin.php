@@ -150,6 +150,7 @@ return [
         ],
         'users' => [
             'index' => 'Users List',
+            'create' => 'Create User',
         ],
     ],
     
@@ -226,6 +227,7 @@ return [
         'mobile' => 'Mobile',
         'email' => 'Email',
         'role' => 'Role',
+        'guard' => 'Guard',
         'created_at' => 'Created At',
         'updated_at' => 'Updated At',
         'options' => 'Options',

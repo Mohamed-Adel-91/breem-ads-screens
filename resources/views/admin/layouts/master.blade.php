@@ -1,38 +1,40 @@
 <!doctype html>
-<html lang="{{ app()->getLocale() }}" dir="{{ app('isRtl') ? 'rtl' : 'ltr' }}">
-
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+      dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title> بريم | {{ __('admin.header.panel_title') }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="{{ asset('logo.ico') }}">
+    <meta name="robots" content="noindex, nofollow">
+    <title>@yield('title', $pageName ?? __('admin.pages.dashboard.title')) | Breem</title>
+
     @include('admin.layouts.scripts.css')
-    @stack('custom-css-scripts')
+    @stack('styles')
 </head>
+<body class="vertical light breem-admin {{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+    <a class="sr-only sr-only-focusable" href="#main-content">
+        {{ __('admin.pages.dashboard.title') }}
+    </a>
 
-<body>
-    <!--[if lt IE 8]>
-        <p class="browserupgrade">{!! \App\Support\Lang::t('admin.layouts.browser_upgrade', 'You are using an <strong>outdated</strong> browser. Please upgrade your browser to improve your experience.') !!}</p>
-        <![endif]-->
-    <!-- Loading starts -->
-    <div id="loading-wrapper">
-        <div class="spinner-border" role="status">
-            <span class="sr-only">{{ __('admin.messages.loading') }}</span>
-        </div>
+    <div class="wrapper">
+        @include('admin.layouts.header')
+        @include('admin.layouts.sidebar')
+
+        <button type="button"
+                class="sidebar-backdrop collapseSidebar"
+                aria-label="{{ __('admin.pages.dashboard.title') }}"></button>
+
+        <main id="main-content" role="main" class="main-content">
+            @include('admin.layouts.alerts', ['containerClass' => 'container-fluid'])
+
+            @yield('content')
+        </main>
+
+        @include('admin.layouts.footer')
     </div>
-    <!-- Loading ends -->
-    <!-- page container area start -->
-    <div class="main-content">
-        @yield('content')
-    </div>
-    <!-- offset area end -->
-    <!-- page footer start -->
-    @include('admin.layouts.footer')
-    @stack('custom-js-scripts')
-    <!-- footer area end -->
+
+    @include('admin.layouts.scripts.js')
+    @stack('scripts')
 </body>
-
 </html>

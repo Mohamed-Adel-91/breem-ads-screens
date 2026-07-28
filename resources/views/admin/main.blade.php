@@ -1,4 +1,4 @@
-@extends('admin.layouts.next.master')
+@extends('admin.layouts.master')
 
 @section('title', $pageName)
 
@@ -7,7 +7,7 @@
         $admin = Auth::guard('admin')->user();
         $adminName = trim(($admin->first_name ?? '') . ' ' . ($admin->last_name ?? ''));
         $roles = $admin?->getRoleNames() ?? collect();
-        $dashboardMenuItems = app(\App\Services\Admin\MenuBuilder::class)->build('next-sidebar');
+        $dashboardMenuItems = app(\App\Services\Admin\MenuBuilder::class)->build('static-sidebar');
         $dashboardIconMap = [
             'dashboard' => 'home',
             'ads_system' => 'monitor',

@@ -25,7 +25,7 @@
     <div class="py-8">
         <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div class="space-y-8">
-                @include('admin.layouts.alerts')
+                @include('admin.layouts.legacy.alerts')
 
                 <div class="overflow-hidden rounded-lg bg-white shadow">
                     <div class="px-6 py-6">

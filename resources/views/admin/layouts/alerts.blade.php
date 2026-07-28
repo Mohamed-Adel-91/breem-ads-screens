@@ -1,28 +1,46 @@
-@if (session('error'))
-    <div class="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        {{ session('error') }}
-    </div>
-@endif
+@php
+    $flashTypes = [
+        'success' => 'success',
+        'error' => 'danger',
+        'status' => 'info',
+    ];
+    $containerClass = $containerClass ?? '';
+@endphp
 
-@if (session('success'))
-    <div class="rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-        {{ session('success') }}
-    </div>
-@endif
+@if (session()->has('success') || session()->has('error') || session()->has('status') || $errors->any())
+    <div class="{{ $containerClass }} breem-alerts" aria-live="polite">
+        @foreach ($flashTypes as $flashKey => $alertType)
+            @if (session()->has($flashKey))
+                @foreach ((array) session($flashKey) as $message)
+                    <div class="alert alert-{{ $alertType }} alert-dismissible fade show rounded p-3"
+                         role="alert"
+                         data-auto-dismiss="{{ $flashKey === 'success' ? 'true' : 'false' }}">
+                        {{ $message }}
+                        <button type="button"
+                                class="close"
+                                data-dismiss="alert"
+                                aria-label="{{ __('admin.sweet_alert.cancel_button') }}">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                @endforeach
+            @endif
+        @endforeach
 
-@if (session('status'))
-    <div class="rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        {{ session('status') }}
-    </div>
-@endif
-
-@if ($errors->any())
-    <div class="rounded-md border border-red-200 bg-red-50 p-4">
-        <h3 class="text-sm font-semibold text-red-800">{{ __('There were some problems with your input:') }}</h3>
-        <ul class="mt-2 list-disc space-y-1 ps-5 text-sm text-red-700">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show rounded p-3" role="alert">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button"
+                        class="close"
+                        data-dismiss="alert"
+                        aria-label="{{ __('admin.sweet_alert.cancel_button') }}">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        @endif
     </div>
 @endif

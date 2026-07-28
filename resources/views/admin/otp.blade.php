@@ -1,4 +1,4 @@
-@extends('admin.layouts.master')
+@extends('admin.layouts.legacy.master')
 @section('content')
     <div class="page-wrapper">
         <div class="container">
@@ -9,7 +9,7 @@
                         <div class="login-screen">
                             <div class="login-box">
                                 <h5>{{ __('admin.forms.otp_prompt') }}</h5>
-                                @include('admin.layouts.alerts')
+                                @include('admin.layouts.legacy.alerts')
                                 <div class="form-group">
                                     <input type="text" name="otp" class="form-control" placeholder="{{ __('admin.forms.otp_placeholder') }}" />
                                 </div>

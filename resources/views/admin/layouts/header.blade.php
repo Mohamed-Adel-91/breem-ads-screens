@@ -65,12 +65,12 @@
 
                 <a class="dropdown-item"
                    href="#"
-                   onclick="event.preventDefault(); document.getElementById('next-logout-form').submit();">
+                   onclick="event.preventDefault(); document.getElementById('admin-logout-form').submit();">
                     <i class="fe fe-log-out" aria-hidden="true"></i>
                     <span>{{ __('admin.header.sign_out') }}</span>
                 </a>
 
-                <form id="next-logout-form"
+                <form id="admin-logout-form"
                       action="{{ route('admin.logout', ['lang' => app()->getLocale()]) }}"
                       method="POST"
                       class="d-none">

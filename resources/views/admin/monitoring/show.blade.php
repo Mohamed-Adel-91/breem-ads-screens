@@ -17,7 +17,7 @@
     <div class="py-8">
         <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div class="space-y-8">
-                @include('admin.layouts.alerts')
+                @include('admin.layouts.legacy.alerts')
 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">

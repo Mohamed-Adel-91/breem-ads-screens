@@ -1,11 +1,11 @@
-@extends('admin.layouts.master')
+@extends('admin.layouts.legacy.master')
 @section('content')
     <div class="page-wrapper">
-        @include('admin.layouts.sidebar')
+        @include('admin.layouts.legacy.sidebar')
         <div class="page-content">
-            @include('admin.layouts.page-header')
+            @include('admin.layouts.legacy.page-header')
             <div class="main-container">
-                @include('admin.layouts.alerts')
+                @include('admin.layouts.legacy.alerts')
                 <div class="row gutters">
                     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
                         <div class="table-container">

@@ -14,8 +14,8 @@
         'flex flex-col gap-1 py-1' => $variant === 'topnav-dropdown',
         'space-y-1' => $variant === 'topnav-responsive',
         'list-unstyled ms-3' => $variant === 'sidebar' && $level > 0,
-        'navbar-nav flex-fill w-100 mb-2 breem-menu' => $variant === 'next-sidebar' && $level === 0,
-        'navbar-nav flex-fill w-100 mb-0 breem-menu breem-submenu' => $variant === 'next-sidebar' && $level > 0,
+        'navbar-nav flex-fill w-100 mb-2 breem-menu' => $variant === 'static-sidebar' && $level === 0,
+        'navbar-nav flex-fill w-100 mb-0 breem-menu breem-submenu' => $variant === 'static-sidebar' && $level > 0,
     ])>
         @foreach($items as $item)
             @php
@@ -52,10 +52,10 @@
                     'contact_submissions_all' => 'mail',
                 ];
                 $nextIcon = $nextIconMap[$itemKey] ?? ($level === 0 ? 'grid' : 'circle');
-                $collapseId = 'next-menu-' . substr(md5($itemKey . '-' . $level), 0, 10);
+                $collapseId = 'admin-menu-' . substr(md5($itemKey . '-' . $level), 0, 10);
             @endphp
 
-            @if($variant === 'next-sidebar')
+            @if($variant === 'static-sidebar')
                 <li @class([
                     'nav-item',
                     'dropdown' => $hasChildren,

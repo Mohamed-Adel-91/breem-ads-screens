@@ -8,9 +8,18 @@
         return desktopQuery.matches;
     }
 
+    function syncSidebarToggleState($body) {
+        var isOpen = isDesktop()
+            ? !$body.hasClass("collapsed")
+            : $body.hasClass("collapsed");
+
+        $(".collapseSidebar[aria-expanded]").attr("aria-expanded", isOpen ? "true" : "false");
+    }
+
     function closeMobileSidebar() {
         if (!isDesktop()) {
             document.body.classList.remove("collapsed");
+            syncSidebarToggleState($("body.breem-admin.vertical"));
         }
     }
 
@@ -25,9 +34,12 @@
             $body.addClass("collapsed");
         }
 
+        syncSidebarToggleState($body);
+
         $(".collapseSidebar").on("click", function (event) {
             event.preventDefault();
             $body.toggleClass("collapsed");
+            syncSidebarToggleState($body);
 
             if (isDesktop()) {
                 window.localStorage.setItem(storageKey, $body.hasClass("collapsed") ? "true" : "false");
@@ -35,6 +47,22 @@
         });
 
         $(".breem-menu a:not([data-toggle='collapse'])").on("click", closeMobileSidebar);
+
+        $(document).on("submit", "form[data-confirm-message]", function (event) {
+            var message = this.getAttribute("data-confirm-message");
+
+            if (message && !window.confirm(message)) {
+                event.preventDefault();
+            }
+        });
+
+        $(document).on("click", "button[data-confirm-message]", function (event) {
+            var message = this.getAttribute("data-confirm-message");
+
+            if (message && !window.confirm(message)) {
+                event.preventDefault();
+            }
+        });
 
         $(document).on("keydown", function (event) {
             if (event.key === "Escape") {
@@ -48,6 +76,8 @@
             } else if (window.localStorage.getItem(storageKey) === "true") {
                 $body.addClass("collapsed");
             }
+
+            syncSidebarToggleState($body);
         });
 
         window.setTimeout(function () {
