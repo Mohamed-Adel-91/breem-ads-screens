@@ -14,6 +14,8 @@
         'flex flex-col gap-1 py-1' => $variant === 'topnav-dropdown',
         'space-y-1' => $variant === 'topnav-responsive',
         'list-unstyled ms-3' => $variant === 'sidebar' && $level > 0,
+        'navbar-nav flex-fill w-100 mb-2 breem-menu' => $variant === 'next-sidebar' && $level === 0,
+        'navbar-nav flex-fill w-100 mb-0 breem-menu breem-submenu' => $variant === 'next-sidebar' && $level > 0,
     ])>
         @foreach($items as $item)
             @php
@@ -23,9 +25,66 @@
                 $url = $item['url'] ?? '#';
                 $isActive = (bool)($item['is_active'] ?? false);
                 $isOpen = (bool)($item['is_open'] ?? false);
+                $itemKey = (string) ($item['key'] ?? '');
+                $nextIconMap = [
+                    'dashboard' => 'home',
+                    'ads_system' => 'monitor',
+                    'ads_system_all_ads' => 'play',
+                    'ads_system_schedules' => 'calendar',
+                    'ads_system_screens' => 'monitor',
+                    'ads_system_places' => 'map-pin',
+                    'ads_system_monitoring' => 'activity',
+                    'ads_system_reports' => 'bar-chart-2',
+                    'ads_system_logs' => 'file-text',
+                    'admins_management' => 'shield',
+                    'admins_management_admins' => 'user-check',
+                    'admins_management_permissions' => 'key',
+                    'admins_management_roles' => 'lock',
+                    'users_management' => 'users',
+                    'users_management_all_users' => 'users',
+                    'users_management_create_user' => 'user-plus',
+                    'website_cms' => 'layout',
+                    'website_cms_seo_metas' => 'search',
+                    'website_cms_home_page' => 'home',
+                    'website_cms_who_we_are' => 'info',
+                    'website_cms_contact_us' => 'phone',
+                    'contact_submissions' => 'inbox',
+                    'contact_submissions_all' => 'mail',
+                ];
+                $nextIcon = $nextIconMap[$itemKey] ?? ($level === 0 ? 'grid' : 'circle');
+                $collapseId = 'next-menu-' . substr(md5($itemKey . '-' . $level), 0, 10);
             @endphp
 
-            @if($variant === 'sidebar')
+            @if($variant === 'next-sidebar')
+                <li @class([
+                    'nav-item',
+                    'dropdown' => $hasChildren,
+                    'active' => $isActive,
+                ])>
+                    @if($hasChildren)
+                        <a href="#{{ $collapseId }}"
+                           data-toggle="collapse"
+                           aria-expanded="{{ $isOpen ? 'true' : 'false' }}"
+                           aria-controls="{{ $collapseId }}"
+                           @class([
+                               'dropdown-toggle nav-link',
+                               'active' => $isActive,
+                               'collapsed' => !$isOpen,
+                           ])>
+                            <i class="fe fe-{{ $nextIcon }}" aria-hidden="true"></i>
+                            <span class="item-text">{{ $title }}</span>
+                        </a>
+                        <div id="{{ $collapseId }}" @class(['collapse', 'show' => $isOpen])>
+                            <x-admin.menu :items="$item['children']" :variant="$variant" :level="$level + 1" />
+                        </div>
+                    @else
+                        <a href="{{ $url }}" @class(['nav-link', 'active' => $isActive])>
+                            <i class="fe fe-{{ $nextIcon }}" aria-hidden="true"></i>
+                            <span class="item-text">{{ $title }}</span>
+                        </a>
+                    @endif
+                </li>
+            @elseif($variant === 'sidebar')
                 <li @class([
                     'sidebar-dropdown' => $hasChildren,
                     'active' => $isActive,

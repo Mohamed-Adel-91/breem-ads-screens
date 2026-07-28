@@ -1,0 +1,505 @@
+:root {
+    --breem-primary: #41a8a6;
+    --breem-primary-hover: #399997;
+    --breem-primary-soft: rgba(65, 168, 166, 0.1);
+    --breem-focus-ring: rgba(65, 168, 166, 0.25);
+    --breem-sidebar-width: 16rem;
+    --breem-sidebar-collapsed-width: 5rem;
+    --breem-surface: #ffffff;
+    --breem-page-bg: #f7f9fb;
+    --breem-border: #e7ecef;
+    --breem-heading: #334155;
+    --breem-muted: #718096;
+}
+
+html,
+body {
+    min-height: 100%;
+}
+
+body.breem-admin {
+    background: var(--breem-page-bg);
+    color: #64748b;
+    font-family: Tahoma, Arial, "Segoe UI", sans-serif;
+}
+
+body.breem-admin a {
+    color: var(--breem-primary);
+}
+
+body.breem-admin a:hover {
+    color: var(--breem-primary-hover);
+}
+
+body.breem-admin .text-primary {
+    color: var(--breem-primary) !important;
+}
+
+body.breem-admin .bg-primary,
+body.breem-admin .badge-primary {
+    background-color: var(--breem-primary) !important;
+}
+
+body.breem-admin .border-primary {
+    border-color: var(--breem-primary) !important;
+}
+
+body.breem-admin .btn-primary {
+    background-color: var(--breem-primary);
+    border-color: var(--breem-primary);
+    color: #fff;
+}
+
+body.breem-admin .btn-primary:hover,
+body.breem-admin .btn-primary:focus,
+body.breem-admin .btn-primary:not(:disabled):not(.disabled):active {
+    background-color: var(--breem-primary-hover);
+    border-color: var(--breem-primary-hover);
+    color: #fff;
+}
+
+body.breem-admin .btn-outline-primary {
+    border-color: var(--breem-primary);
+    color: var(--breem-primary);
+}
+
+body.breem-admin .btn-outline-primary:hover,
+body.breem-admin .btn-outline-primary:focus {
+    background-color: var(--breem-primary);
+    border-color: var(--breem-primary);
+    color: #fff;
+}
+
+body.breem-admin .form-control:focus,
+body.breem-admin .custom-select:focus {
+    border-color: var(--breem-primary);
+    box-shadow: 0 0 0 0.2rem var(--breem-focus-ring);
+}
+
+body.breem-admin .custom-control-input:checked ~ .custom-control-label::before,
+body.breem-admin .page-item.active .page-link,
+body.breem-admin .nav-pills .nav-link.active {
+    background-color: var(--breem-primary);
+    border-color: var(--breem-primary);
+}
+
+.breem-admin .wrapper {
+    min-height: 100vh;
+}
+
+.breem-admin .topnav {
+    min-height: 64px;
+    background: var(--breem-surface);
+    border-bottom: 1px solid var(--breem-border);
+    box-shadow: 0 2px 10px rgba(18, 38, 63, 0.04);
+}
+
+.breem-admin .topnav .navbar-toggler {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-top: 0 !important;
+    border-radius: 10px;
+    color: var(--breem-heading) !important;
+}
+
+.breem-admin .topnav .navbar-toggler:hover,
+.breem-admin .header-action:hover {
+    background: var(--breem-primary-soft);
+    color: var(--breem-primary) !important;
+}
+
+.breem-admin .header-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    color: var(--breem-muted) !important;
+    font-weight: 600;
+}
+
+.breem-admin .header-user-name {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.breem-admin .avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.breem-admin .avatar-sm {
+    width: 36px;
+    height: 36px;
+}
+
+.breem-admin .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.breem-admin .dropdown-menu {
+    min-width: 220px;
+    border-color: var(--breem-border);
+    box-shadow: 0 12px 30px rgba(18, 38, 63, 0.12);
+}
+
+.breem-admin .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: #526176;
+}
+
+.breem-admin .dropdown-item:hover,
+.breem-admin .dropdown-item:focus {
+    background: var(--breem-primary-soft);
+    color: var(--breem-primary-hover);
+}
+
+.breem-admin .sidebar-left {
+    background: var(--breem-surface) !important;
+    border-color: var(--breem-border) !important;
+}
+
+.breem-admin .sidebar-brand {
+    min-height: 88px;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--breem-border);
+}
+
+.breem-admin .sidebar-brand img {
+    display: block;
+    width: auto;
+    max-width: 145px;
+    height: 42px;
+    margin: 0 auto;
+    object-fit: contain;
+}
+
+.breem-admin .vertnav {
+    padding: 0.75rem;
+}
+
+.breem-admin .breem-menu .nav-item {
+    margin-bottom: 0.25rem;
+}
+
+.breem-admin .breem-menu .nav-link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.65rem 0.75rem;
+    border-radius: 9px;
+    color: #667085;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.breem-admin .breem-menu .nav-link:hover,
+.breem-admin .breem-menu .nav-item.active > .nav-link,
+.breem-admin .breem-menu .nav-link.active {
+    background: var(--breem-primary-soft);
+    color: var(--breem-primary-hover);
+}
+
+.breem-admin .breem-menu .nav-link i {
+    flex: 0 0 20px;
+    color: #98a2b3;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.breem-admin .breem-menu .nav-link:hover i,
+.breem-admin .breem-menu .nav-item.active > .nav-link i,
+.breem-admin .breem-menu .nav-link.active i {
+    color: var(--breem-primary);
+}
+
+.breem-admin.vertical .sidebar-left .navbar-nav > .nav-item.active::after,
+.breem-admin.vertical.hover .sidebar-left .navbar-nav > .nav-item.active::after {
+    background-color: var(--breem-primary);
+}
+
+.breem-admin .breem-menu .item-text {
+    margin-inline-start: 0.75rem;
+}
+
+.breem-admin .breem-menu .dropdown-toggle::after {
+    margin-inline-start: auto;
+}
+
+.breem-admin .breem-submenu {
+    padding-inline-start: 1.15rem;
+}
+
+.breem-admin .breem-submenu .nav-link {
+    min-height: 38px;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+    font-size: 0.82rem;
+}
+
+.breem-admin .main-content {
+    min-height: calc(100vh - 64px);
+    padding: 1.35rem 1rem 5rem;
+}
+
+.breem-admin .page-title {
+    color: var(--breem-heading);
+    font-size: 1.45rem;
+    font-weight: 700;
+}
+
+.breem-admin .page-kicker {
+    color: var(--breem-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.breem-admin .card {
+    border-color: var(--breem-border);
+    box-shadow: 0 6px 22px rgba(18, 38, 63, 0.05);
+}
+
+.breem-admin .dashboard-welcome {
+    position: relative;
+    overflow: hidden;
+    border: 0;
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.22), transparent 38%),
+        linear-gradient(135deg, var(--breem-primary), var(--breem-primary-hover));
+    color: #fff;
+}
+
+.breem-admin .dashboard-welcome::after {
+    position: absolute;
+    inset-inline-end: -48px;
+    bottom: -70px;
+    width: 190px;
+    height: 190px;
+    border: 28px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    content: "";
+}
+
+.breem-admin .dashboard-welcome .card-body {
+    position: relative;
+    z-index: 1;
+    padding: 2rem;
+}
+
+.breem-admin .dashboard-welcome .welcome-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 1.25rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.16);
+    font-size: 1.4rem;
+}
+
+.breem-admin .dashboard-welcome h2,
+.breem-admin .dashboard-welcome p {
+    color: #fff;
+}
+
+.breem-admin .dashboard-welcome p {
+    opacity: 0.86;
+}
+
+.breem-admin .dashboard-role {
+    display: inline-flex;
+    margin: 0.25rem 0.25rem 0 0;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 0.75rem;
+}
+
+[dir="rtl"] .breem-admin .dashboard-role {
+    margin-right: 0;
+    margin-left: 0.25rem;
+}
+
+.breem-admin .quick-link-card {
+    height: 100%;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.breem-admin .quick-link-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(18, 38, 63, 0.1);
+    color: inherit;
+}
+
+.breem-admin .quick-link-card .quick-link-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: var(--breem-primary-soft);
+    color: var(--breem-primary);
+    font-size: 1.15rem;
+}
+
+.breem-admin .quick-link-card h3 {
+    color: var(--breem-heading);
+    font-size: 1rem;
+}
+
+.breem-admin .quick-link-card .quick-link-arrow {
+    color: #a0aec0;
+}
+
+.breem-admin .breem-alerts {
+    padding-top: 1rem;
+}
+
+.breem-admin .alert {
+    border: 0;
+    border-inline-start: 4px solid currentColor;
+    box-shadow: 0 4px 16px rgba(18, 38, 63, 0.06);
+}
+
+.breem-admin .breem-footer {
+    margin-left: var(--breem-sidebar-width);
+    padding: 1.25rem 1rem;
+    border-top: 1px solid var(--breem-border);
+    background: var(--breem-surface);
+    color: var(--breem-muted);
+    font-size: 0.82rem;
+    text-align: center;
+}
+
+.breem-admin.vertical.collapsed .breem-footer {
+    margin-left: var(--breem-sidebar-collapsed-width);
+}
+
+.breem-admin .sidebar-backdrop {
+    display: none;
+}
+
+.breem-admin .sr-only-focusable:focus {
+    position: fixed;
+    z-index: 2000;
+    top: 0.75rem;
+    inset-inline-start: 0.75rem;
+    width: auto;
+    height: auto;
+    padding: 0.65rem 0.9rem;
+    overflow: visible;
+    clip: auto;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--breem-primary-hover);
+}
+
+[dir="rtl"] .breem-admin .dropdown-menu {
+    text-align: right;
+}
+
+[dir="rtl"] .breem-admin .dropdown-menu-right {
+    right: auto !important;
+    left: 0 !important;
+}
+
+[dir="rtl"] .breem-admin .dropdown-menu-right .dropdown-item {
+    text-align: right;
+}
+
+[dir="rtl"] .breem-admin .quick-link-arrow {
+    transform: scaleX(-1);
+}
+
+[dir="rtl"] .breem-admin .breem-footer {
+    margin-right: var(--breem-sidebar-width);
+    margin-left: 0;
+}
+
+[dir="rtl"] .breem-admin.vertical.collapsed .breem-footer {
+    margin-right: var(--breem-sidebar-collapsed-width);
+}
+
+@media (min-width: 992px) {
+    .breem-admin.vertical.collapsed .breem-menu > .nav-item > .collapse {
+        display: none !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .breem-admin .main-content {
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+    }
+
+    .breem-admin.vertical.collapsed .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        z-index: 999;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        border: 0;
+        background: rgba(15, 23, 42, 0.42);
+    }
+
+    .breem-admin.vertical.collapsed .topnav,
+    .breem-admin.vertical.collapsed .main-content {
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+    .breem-admin .breem-footer,
+    [dir="rtl"] .breem-admin .breem-footer,
+    .breem-admin.vertical.collapsed .breem-footer,
+    [dir="rtl"] .breem-admin.vertical.collapsed .breem-footer {
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+    .breem-admin .header-user-name {
+        display: none;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .breem-admin .topnav {
+        min-height: 58px;
+    }
+
+    .breem-admin .dashboard-welcome .card-body {
+        padding: 1.5rem;
+    }
+
+    .breem-admin .page-title {
+        font-size: 1.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .breem-admin *,
+    .breem-admin *::before,
+    .breem-admin *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}
