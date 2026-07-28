@@ -1,0 +1,112 @@
+/**
+ * Custom Form Inputs Validation Styles
+ * Provides visual feedback for validation states
+ */
+
+/* Select2 Validation Styles */
+.select2-container .select2-selection.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.select2-container .select2-selection.is-valid {
+    border-color: #28a745 !important;
+}
+
+.form-group.is-invalid .select2-container .select2-selection {
+    border-color: #dc3545 !important;
+}
+
+.form-group.is-valid .select2-container .select2-selection {
+    border-color: #28a745 !important;
+}
+
+/* TinyMCE Validation Styles */
+.tox-tinymce.is-invalid {
+    border: 2px solid #dc3545 !important;
+    border-radius: 0.25rem;
+}
+
+.tox-tinymce.is-valid {
+    border: 2px solid #28a745 !important;
+    border-radius: 0.25rem;
+}
+
+/* Image Uploader Validation Styles */
+.modern-image-uploader.is-invalid .input-group {
+    border-color: #dc3545;
+}
+
+.modern-image-uploader.is-invalid .form-control {
+    border-color: #dc3545;
+}
+
+.modern-image-uploader.is-valid .input-group {
+    border-color: #28a745;
+}
+
+.modern-image-uploader.is-valid .form-control {
+    border-color: #28a745;
+}
+
+/* Multi Image Uploader Validation Styles */
+.multi-image-uploader-wrapper.is-invalid .upload-dropzone {
+    border-color: #dc3545 !important;
+    background-color: #f8d7da !important;
+}
+
+.multi-image-uploader-wrapper.is-valid .upload-dropzone {
+    border-color: #28a745 !important;
+    background-color: #d4edda !important;
+}
+
+/* Validation Feedback */
+.invalid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+}
+
+.invalid-feedback.d-block {
+    display: block !important;
+}
+
+/* Form Validation States */
+.was-validated .modern-image-uploader.is-invalid .input-group,
+.was-validated .modern-image-uploader.is-invalid .form-control {
+    border-color: #dc3545;
+}
+
+.was-validated .multi-image-uploader-wrapper.is-invalid .upload-dropzone {
+    border-color: #dc3545 !important;
+    background-color: #f8d7da !important;
+}
+
+.was-validated .form-group.is-invalid .select2-container .select2-selection {
+    border-color: #dc3545 !important;
+}
+
+.was-validated .tox-tinymce.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+/* Focus States */
+.modern-image-uploader.is-invalid .form-control:focus,
+.modern-image-uploader.is-invalid .input-group:focus-within {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.multi-image-uploader-wrapper.is-invalid .upload-dropzone:hover {
+    border-color: #bd2130 !important;
+}
+
+/* Smooth Transitions */
+.input-group,
+.upload-dropzone,
+.select2-selection,
+.tox-tinymce {
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}

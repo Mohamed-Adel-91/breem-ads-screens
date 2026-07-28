@@ -1,0 +1,253 @@
+/* =========================================================
+   CRM Dashboard – Brand Override
+   Primary: #1b3155
+   ========================================================= */
+
+/* ---- CSS custom property ---- */
+:root {
+    --crm-primary:        #1b3155;
+    --crm-primary-dark:   #142441;
+    --crm-primary-light:  #274273;
+    --crm-primary-alpha:  rgba(27, 49, 85, 0.08);
+}
+
+/* ---- Bootstrap primary overrides ---- */
+.btn-primary {
+    background-color: var(--crm-primary) !important;
+    border-color:     var(--crm-primary) !important;
+    color: #fff !important;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--crm-primary-dark) !important;
+    border-color:     var(--crm-primary-dark) !important;
+    color: #fff !important;
+}
+
+.badge-primary {
+    background-color: var(--crm-primary) !important;
+    color: #fff !important;
+}
+
+.bg-primary {
+    background-color: var(--crm-primary) !important;
+}
+
+.text-primary {
+    color: var(--crm-primary) !important;
+}
+
+.border-primary {
+    border-color: var(--crm-primary) !important;
+}
+
+a.text-primary:hover {
+    color: var(--crm-primary-dark) !important;
+}
+
+/* ---- Sidebar active state ---- */
+.sidebar-left .nav-item.active > .nav-link {
+    color: var(--crm-primary) !important;
+    font-weight: 600;
+}
+
+.sidebar-left .nav-item.active > .nav-link i {
+    color: var(--crm-primary) !important;
+}
+
+/* ---- Table head ---- */
+.thead-dark th {
+    background-color: var(--crm-primary) !important;
+    border-color:     var(--crm-primary) !important;
+    color: #fff !important;
+}
+
+/* ---- Pagination active ---- */
+.page-item.active .page-link {
+    background-color: var(--crm-primary) !important;
+    border-color:     var(--crm-primary) !important;
+    color: #fff !important;
+}
+
+.page-link {
+    color: var(--crm-primary) !important;
+}
+
+.page-link:hover {
+    color: var(--crm-primary-dark) !important;
+}
+
+/* ---- Cards ---- */
+.card-header-crm {
+    background-color: var(--crm-primary) !important;
+    color: #fff !important;
+}
+
+/* ---- Stat cards ---- */
+.stat-card {
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    box-shadow: 0 6px 20px rgba(27, 49, 85, 0.15) !important;
+}
+
+.stat-card .stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.stat-card .stat-icon.bg-primary-soft {
+    background-color: var(--crm-primary-alpha);
+    color: var(--crm-primary);
+}
+
+/* ---- Clickable stat cards ---- */
+.stat-card-link {
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.stat-card-link:hover {
+    transform: translateY(-2px);
+}
+
+.stat-card-link:focus-visible {
+    outline: 2px solid var(--crm-primary);
+    outline-offset: 2px;
+}
+
+.stat-card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.stat-card-link:hover .stat-card-cta,
+.stat-card-link:focus-visible .stat-card-cta {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.insight-link:hover {
+    text-decoration: underline !important;
+}
+
+/* ---- Page navigation progress ---- */
+.crm-page-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 2050;
+    background: linear-gradient(90deg, var(--crm-primary), #17a2b8, #28a745);
+    box-shadow: 0 0 12px rgba(27, 49, 85, 0.35);
+    transition: width 180ms ease, opacity 160ms ease;
+}
+
+.crm-page-progress.is-active {
+    opacity: 1;
+}
+
+/* ---- Winner card accent ---- */
+.winner-card {
+    border-left: 4px solid var(--crm-primary);
+}
+
+/* ---- Filter card ---- */
+.filter-toggle {
+    cursor: pointer;
+}
+.filter-toggle .chev {
+    transition: transform .2s ease;
+}
+.filter-toggle:not(.collapsed) .chev {
+    transform: rotate(180deg);
+}
+
+/* ---- Action buttons spacing ---- */
+.action-btns .btn {
+    margin-right: 3px;
+    margin-bottom: 2px;
+}
+
+/* ---- Image thumbnail ---- */
+.table-img-thumb {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+}
+
+/* ---- Status badges ---- */
+.badge-active {
+    background-color: #28a745;
+    color: #fff;
+}
+.badge-blocked {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+/* ---- Responsive tweaks ---- */
+@media (max-width: 767.98px) {
+    .table-responsive table {
+        font-size: 0.82rem;
+    }
+}
+
+/* =========================================================
+   Theme Toggle Button
+   ========================================================= */
+.theme-toggle-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #495057;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    line-height: 1;
+}
+
+.theme-toggle-btn:hover,
+.theme-toggle-btn:focus {
+    background: rgba(27, 49, 85, 0.08);
+    border-color: var(--crm-primary);
+    color: var(--crm-primary);
+    outline: none;
+    box-shadow: none;
+}
+
+/* Moon icon: visible in light mode (inviting switch to dark) */
+.theme-toggle-btn .icon-moon { display: inline-block; }
+.theme-toggle-btn .icon-sun  { display: none; }
+
+/* When dark mode is active (data-mode="dark" set by config.js) */
+.theme-toggle-btn[data-mode="dark"] .icon-moon { display: none; }
+.theme-toggle-btn[data-mode="dark"] .icon-sun  { display: inline-block; }
+
+/* Sun colour tweak in dark mode */
+.theme-toggle-btn[data-mode="dark"] .icon-sun {
+    color: #f6c90e;
+}
