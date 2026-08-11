@@ -1,126 +1,101 @@
-@extends('admin.layouts.legacy.master')
+@extends('admin.layouts.master')
+
+@section('title', __('admin.contact_submissions.title'))
+
 @section('content')
-<div class="page-wrapper">
-    @include('admin.layouts.legacy.sidebar')
-    <div class="page-content">
-        @include('admin.layouts.legacy.page-header', ['pageName' => __('admin.contact_submissions.title')])
-        <div class="main-container">
-            @include('admin.layouts.legacy.alerts')
-            <div class="card">
-                <div class="card-body table-responsive">
-                    <table class="table align-middle">
+    @php
+        $heading = $pageName ?? __('admin.contact_submissions.title');
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $heading,
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.contact_submissions')],
+            ],
+        ])
+
+        @include('admin.partials.results-summary', [
+            'data' => $data,
+            'label' => \App\Support\Lang::t('admin.contact_submissions.results_label', 'submission(s)'),
+        ])
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ __('admin.sidebar.all_submissions') }}</h2>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 admin-table">
                         <thead>
                             <tr>
-                                <th>{{ __('admin.contact_submissions.table.id') }}</th>
-                                <th>{{ __('admin.contact_submissions.table.type') }}</th>
-                                <th>{{ __('admin.contact_submissions.table.name') }}</th>
-                                <th>{{ __('admin.contact_submissions.table.phone') }}</th>
-                                <th>{{ __('admin.contact_submissions.table.email') }}</th>
-                                <th>{{ __('admin.contact_submissions.table.created_at') }}</th>
-                                <th>{{ __('admin.contact_submissions.table.actions') }}</th>
+                                <th scope="col">{{ __('admin.contact_submissions.table.id') }}</th>
+                                <th scope="col">{{ __('admin.contact_submissions.table.type') }}</th>
+                                <th scope="col">{{ __('admin.contact_submissions.table.name') }}</th>
+                                <th scope="col">{{ __('admin.contact_submissions.table.phone') }}</th>
+                                <th scope="col">{{ __('admin.contact_submissions.table.email') }}</th>
+                                <th scope="col">{{ __('admin.contact_submissions.table.created_at') }}</th>
+                                <th scope="col" class="text-right">{{ __('admin.contact_submissions.table.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
-                        @forelse($data as $item)
-                            <tr>
-                                <td>{{ $item->id }}</td>
-                                <td><span class="badge bg-primary">{{ $item->type }}</span></td>
-                                <td>{{ $item->name }}</td>
-                                <td>{{ $item->phone }}</td>
-                                <td>{{ $item->email }}</td>
-                                <td>{{ $item->created_at?->format('Y-m-d H:i') }}</td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-info" onclick="showPayload({{ $item->id }})">{{ __('admin.contact_submissions.actions.view') }}</button>
-                                        {{-- <form id="delete_form_{{ $item->id }}" action="{{ route('admin.contact_submissions.destroy', ['lang'=>app()->getLocale(),'submission'=>$item->id]) }}" method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-outline-danger" onclick="checker(event, '{{ $item->id }}')">{{ __('admin.contact_submissions.actions.delete') }}</button>
-                                        </form> --}}
-                                    </div>
-                                    <script type="application/json" id="payload_{{ $item->id }}">@json($item->payload)</script>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="7" class="text-center text-muted">{{ __('admin.contact_submissions.messages.empty') }}</td></tr>
-                        @endforelse
+                            @forelse ($data as $item)
+                                <tr>
+                                    <th scope="row">{{ $item->id }}</th>
+                                    <td>
+                                        <x-admin.badge variant="primary">{{ $item->type }}</x-admin.badge>
+                                    </td>
+                                    <td>{{ $item->name ?: '-' }}</td>
+                                    <td>
+                                        @if ($item->phone)
+                                            <a href="tel:{{ $item->phone }}" dir="ltr">{{ $item->phone }}</a>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($item->email)
+                                            <a href="mailto:{{ $item->email }}">{{ $item->email }}</a>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ optional($item->created_at)->format('Y-m-d H:i') ?? '-' }}</td>
+                                    <td>
+                                        <x-admin.group-btn class="justify-content-end">
+                                            <button type="button"
+                                                    class="btn btn-outline-info btn-sm"
+                                                    data-toggle="modal"
+                                                    data-target="#submission_{{ $item->id }}"
+                                                    aria-label="{{ __('admin.contact_submissions.view_details', ['id' => $item->id]) }}">
+                                                <i class="fe fe-eye" aria-hidden="true"></i>
+                                                <span>{{ __('admin.contact_submissions.actions.view') }}</span>
+                                            </button>
+                                        </x-admin.group-btn>
+                                    </td>
+                                </tr>
+                            @empty
+                                @include('admin.partials.empty-state', [
+                                    'colspan' => 7,
+                                    'message' => __('admin.contact_submissions.messages.empty'),
+                                    'icon' => 'inbox',
+                                ])
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
-                @include('admin.partials.pagination', ['data' => $data])
+            </div>
+            <div class="card-footer bg-white">
+                @include('admin.partials.pagination', ['data' => $data, 'variant' => 'static'])
             </div>
         </div>
     </div>
-</div>
+
+    {{--
+        Payload detail is rendered server-side into a static Bootstrap 4 modal.
+        No SweetAlert, no client-side JSON parsing, no HTML built from user input.
+    --}}
+    @foreach ($data as $item)
+        @include('admin.contact_submissions.partials.detail-modal', ['submission' => $item])
+    @endforeach
 @endsection
-
-@push('custom-js-scripts')
-<script>
-function showPayload(id){
-    try{
-        const el = document.getElementById('payload_'+id);
-        const json = JSON.parse(el.textContent || el.innerText || '{}');
-        // Escape HTML to avoid XSS in values
-        const escapeHtml = (value) => String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;')
-            .replace(/`/g, '&#96;');
-
-        // Flatten nested objects/arrays into dotted keys
-        const flatten = (obj, prefix = '') => {
-            const rows = [];
-            const isObject = (v) => Object.prototype.toString.call(v) === '[object Object]';
-            const isArray = Array.isArray;
-            const add = (k, v) => rows.push([k, v]);
-
-            const walk = (val, keyPath) => {
-                if (isObject(val)) {
-                    const keys = Object.keys(val);
-                    if (keys.length === 0) add(keyPath, '{}');
-                    keys.forEach(k => walk(val[k], keyPath ? keyPath + '.' + k : k));
-                } else if (isArray(val)) {
-                    if (val.length === 0) add(keyPath, '[]');
-                    val.forEach((v, i) => walk(v, keyPath ? `${keyPath}[${i}]` : `[${i}]`));
-                } else {
-                    add(keyPath || '(root)', val == null ? '' : val);
-                }
-            };
-
-            walk(obj, prefix);
-            return rows;
-        };
-
-        const rows = flatten(json);
-        let fieldLabel = @js(__('admin.contact_submissions.table.field'));
-        let valueLabel = @js(__('admin.contact_submissions.table.value'));
-        const missingPrefix = 'admin.contact_submissions.table.';
-        if (typeof fieldLabel === 'string' && fieldLabel.indexOf(missingPrefix) === 0) fieldLabel = 'Field';
-        if (typeof valueLabel === 'string' && valueLabel.indexOf(missingPrefix) === 0) valueLabel = 'Value';
-        let table = '<div class="table-responsive">';
-        table += '<table class="table table-sm table-striped table-bordered align-middle">';
-        table += `<thead><tr><th class="text-muted" style="width:40%">${escapeHtml(fieldLabel)}</th><th class="text-muted">${escapeHtml(valueLabel)}</th></tr></thead>`;
-        table += '<tbody>';
-        if (rows.length === 0) {
-            table += `<tr><td colspan="2" class="text-center text-muted">${escapeHtml(@js(__('admin.contact_submissions.messages.empty')))}</td></tr>`;
-        } else {
-            rows.forEach(([k, v]) => {
-                const value = typeof v === 'boolean' ? (v ? 'true' : 'false') : (v === undefined ? '' : v);
-                table += `<tr><td class="text-nowrap">${escapeHtml(k)}</td><td><code>${escapeHtml(value)}</code></td></tr>`;
-            });
-        }
-        table += '</tbody></table></div>';
-
-        Swal.fire({title: @js(__('admin.contact_submissions.actions.payload')), html: table, width: 800});
-    }catch(e){
-        Swal.fire({
-            title: @js(__('admin.contact_submissions.messages.payload_error_title')),
-            text: @js(__('admin.contact_submissions.messages.payload_error_text')),
-            icon: 'error'
-        });
-    }
-}
-</script>
-@endpush

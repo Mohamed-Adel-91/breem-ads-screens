@@ -413,6 +413,99 @@ body.breem-admin .nav-pills .nav-link.active {
     display: block;
 }
 
+/* ---------- Phase 3: grouped checkbox control ---------- */
+
+.breem-admin .admin-checkbox-group {
+    border: 0;
+    min-width: 0;
+    padding: 0;
+}
+
+.breem-admin .admin-checkbox-group legend {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--breem-heading);
+}
+
+.breem-admin .admin-checkbox-group-body {
+    max-height: 22rem;
+    overflow-y: auto;
+    padding: 0.85rem;
+    border: 1px solid var(--breem-border);
+    border-radius: 0.5rem;
+    background: #fcfdfd;
+}
+
+.breem-admin .admin-checkbox-cluster + .admin-checkbox-cluster {
+    border-top: 1px dashed var(--breem-border);
+    padding-top: 0.85rem;
+}
+
+.breem-admin .admin-checkbox-cluster-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--breem-primary-hover);
+}
+
+.breem-admin .admin-checkbox-toggle {
+    font-size: 0.78rem;
+    text-decoration: underline;
+}
+
+.breem-admin .admin-checkbox-group .custom-control-label {
+    font-size: 0.86rem;
+    cursor: pointer;
+}
+
+.breem-admin .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: var(--breem-primary);
+    border-color: var(--breem-primary);
+}
+
+.breem-admin .custom-control-input:focus ~ .custom-control-label::before {
+    box-shadow: 0 0 0 0.2rem var(--breem-focus-ring);
+}
+
+/* ---------- Phase 3: media preview ---------- */
+
+.breem-admin .admin-media-preview .img-thumbnail {
+    background: #fff;
+    border-color: var(--breem-border);
+    padding: 0.25rem;
+}
+
+.breem-admin .admin-media-preview a:focus .img-thumbnail {
+    box-shadow: 0 0 0 0.2rem var(--breem-focus-ring);
+}
+
+/* ---------- Phase 3: key/value detail lists ---------- */
+
+.breem-admin .admin-detail-table {
+    font-size: 0.85rem;
+}
+
+.breem-admin .admin-detail-table th {
+    width: 40%;
+    font-weight: 600;
+    color: var(--breem-muted);
+    word-break: break-word;
+}
+
+.breem-admin .admin-detail-table td {
+    word-break: break-word;
+}
+
+.breem-admin .admin-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--breem-primary-hover);
+    margin-bottom: 0.75rem;
+}
+
 .breem-admin .dashboard-welcome {
     position: relative;
     overflow: hidden;
@@ -639,6 +732,25 @@ body.breem-admin .nav-pills .nav-link.active {
 
 [dir="rtl"] .breem-admin .fe-arrow-left {
     transform: scaleX(-1);
+}
+
+/* ---------- Phase 3 RTL ---------- */
+
+[dir="rtl"] .breem-admin .admin-checkbox-group legend,
+[dir="rtl"] .breem-admin .admin-detail-table th,
+[dir="rtl"] .breem-admin .admin-detail-table td {
+    text-align: right;
+}
+
+[dir="rtl"] .breem-admin .custom-control {
+    padding-right: 1.5rem;
+    padding-left: 0;
+}
+
+[dir="rtl"] .breem-admin .custom-control-label::before,
+[dir="rtl"] .breem-admin .custom-control-label::after {
+    right: -1.5rem;
+    left: auto;
 }
 
 [dir="rtl"] .breem-admin .breem-footer {

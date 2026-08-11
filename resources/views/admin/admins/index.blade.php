@@ -1,104 +1,127 @@
-@extends('admin.layouts.legacy.master')
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
 @section('content')
-    <div class="page-wrapper">
-        @include('admin.layouts.legacy.sidebar')
-        <div class="page-content">
-            @include('admin.layouts.legacy.page-header')
-            <div class="main-container">
-                @include('admin.layouts.legacy.alerts')
-                <div class="row gutters">
-                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-                        <div class="table-container">
-                            <div class="col-mb-12 p-0" style="margin: 15px;">
-                                <div class="row d-flex justify-content-end p-0">
-                                    <div class="col-md-2 d-flex justify-content-end p-0">
-                                        <div class="col-md-6 d-flex justify-content-end  p-0">
-                                            <button type="text" class="btn btn-primary" style="margin-top: 20px;">
-                                                <a href="{{ route('admin.admins.create', ['lang' => app()->getLocale()]) }}"
-                                                    style="color: #fff;">
-                                                    <i
-                                                        class="icon-plus-circle mr-1"></i>{{ __('admin.table.new') }}</a></button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            @include('admin.partials.results-summary', [
-                                'data' => $data,
-                                'label' => __('admin.sidebar.users_management'),
-                            ])
-                            <div class="table-responsive">
-                                <table class="table custom-table m-0">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>{{ __('admin.table.first_name') }}</th>
-                                            <th>{{ __('admin.table.last_name') }}</th>
-                                            <th>{{ __('admin.table.mobile') }}</th>
-                                            <th>{{ __('admin.table.email') }}</th>
-                                            <th>{{ __('admin.table.role') }}</th>
-                                            <th>{{ __('admin.table.created_at') }}</th>
-                                            <th>{{ __('admin.table.updated_at') }}</th>
-                                            <th>{{ __('admin.table.options') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @if (!empty($data) && count($data) > 0)
-                                            @foreach ($data as $item)
-                                                <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td>{{ $item->first_name }}</td>
-                                                    <td>{{ $item->last_name }}</td>
-                                                    <td>{{ $item->mobile }}</td>
-                                                    <td>{{ $item->email }}</td>
-                                                    <td>{{ $item->getRoleNames()->implode(', ') }}</td>
-                                                    <td>{{ $item->created_at->format('Y-m-d') }}</td>
-                                                    <td>{{ $item->updated_at->format('Y-m-d') }}</td>
-                                                    <td>
-                                                        <div class="td-actions">
-                                                            @if (Auth::guard('admin')->user()->hasRole('super-admin') || Auth::guard('admin')->user()->can('admins.edit'))
-                                                                <a href="{{ route('admin.admins.edit', ['lang' => app()->getLocale(), 'admin' => $item->id]) }}"
-                                                                    class="icon bg-info" data-toggle="tooltip"
-                                                                    data-placement="top" title="{{ \App\Support\Lang::t('admin.tooltips.edit_row', 'Edit Row') }}">
-                                                                    <i class="icon-edit"></i>
-                                                                </a>
-                                                            @endif
-                                                            @if (Auth::guard('admin')->user()->id != $item->id)
-                                                                @if (!$item->hasRole('super-admin'))
-                                                                    <form method="POST"
-                                                                        id="delete_form_{{ $item->id }}"
-                                                                        class="d-inline delete_form"
-                                                                        action="{{ route('admin.admins.destroy', ['lang' => app()->getLocale(), 'admin' => $item->id]) }}">
-                                                                        @csrf
-                                                                        @method('DELETE')
-                                                                        <button type="submit" class="icon red"
-                                                                            data-toggle="tooltip" data-placement="top"
-                                                                            title="{{ \App\Support\Lang::t('admin.tooltips.delete_row', 'Delete Row') }}"
-                                                                            onclick="checker(event, {{ $item->id }})">
-                                                                            <i class="icon-cancel"></i>
-                                                                        </button>
-                                                                    </form>
-                                                                @endif
-                                                            @endif
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        @else
-                                            <tr>
-                                                <td colspan="11" class="text-center">
-                                                    <div class="alert alert-warning">
-                                                        {{ __('admin.table.no_entries') }}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endif
-                                    </tbody>
-                                </table>
-                            </div>
-                            @include('admin.partials.pagination', ['data' => $data])
-                        </div>
-                    </div>
+    @php
+        $currentAdmin = Auth::guard('admin')->user();
+        $canEdit = $currentAdmin->hasRole('super-admin') || $currentAdmin->can('admins.edit');
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.admins_management')],
+                ['label' => __('admin.sidebar.admins')],
+            ],
+            'primaryAction' => [
+                'href' => route('admin.admins.create', ['lang' => app()->getLocale()]),
+                'label' => __('admin.table.new'),
+                'icon' => 'user-plus',
+            ],
+        ])
+
+        @include('admin.partials.results-summary', [
+            'data' => $data,
+            'label' => __('admin.sidebar.admins'),
+        ])
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ __('admin.sidebar.admins') }}</h2>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">{{ __('admin.table.image') }}</th>
+                                <th scope="col">{{ __('admin.table.first_name') }}</th>
+                                <th scope="col">{{ __('admin.table.last_name') }}</th>
+                                <th scope="col">{{ __('admin.table.mobile') }}</th>
+                                <th scope="col">{{ __('admin.table.email') }}</th>
+                                <th scope="col">{{ __('admin.table.role') }}</th>
+                                <th scope="col">{{ __('admin.table.created_at') }}</th>
+                                <th scope="col">{{ __('admin.table.updated_at') }}</th>
+                                <th scope="col" class="text-right">{{ __('admin.table.options') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($data as $item)
+                                <tr>
+                                    <th scope="row">{{ ($data->firstItem() ?? 1) + $loop->index }}</th>
+                                    <td>
+                                        <x-admin.media-preview
+                                            :url="$item->image_path"
+                                            :alt="trim($item->first_name . ' ' . $item->last_name)"
+                                            :fallback="asset('admin-assets/assets/images/default-avatar.jpg')"
+                                            :linkable="false"
+                                            max-height="40px" />
+                                    </td>
+                                    <td>{{ $item->first_name }}</td>
+                                    <td>{{ $item->last_name }}</td>
+                                    <td>{{ $item->mobile ?: '-' }}</td>
+                                    <td>
+                                        <a href="mailto:{{ $item->email }}">{{ $item->email }}</a>
+                                    </td>
+                                    <td>
+                                        @forelse ($item->getRoleNames() as $roleName)
+                                            <x-admin.badge variant="primary" class="mr-1">
+                                                {{ $roleName }}
+                                            </x-admin.badge>
+                                        @empty
+                                            <span class="text-muted">-</span>
+                                        @endforelse
+                                    </td>
+                                    <td>{{ optional($item->created_at)->format('Y-m-d') ?? '-' }}</td>
+                                    <td>{{ optional($item->updated_at)->format('Y-m-d') ?? '-' }}</td>
+                                    <td>
+                                        <x-admin.group-btn class="justify-content-end">
+                                            @if ($canEdit)
+                                                <x-admin.btn
+                                                    :href="route('admin.admins.edit', [
+                                                        'lang' => app()->getLocale(),
+                                                        'admin' => $item->id,
+                                                    ])"
+                                                    variant="outline-info"
+                                                    size="sm"
+                                                    icon="edit-2">
+                                                    {{ __('admin.tooltips.edit_row') }}
+                                                </x-admin.btn>
+                                            @endif
+
+                                            @if ($currentAdmin->id != $item->id && !$item->hasRole('super-admin'))
+                                                <x-admin.btn
+                                                    :href="route('admin.admins.destroy', [
+                                                        'lang' => app()->getLocale(),
+                                                        'admin' => $item->id,
+                                                    ])"
+                                                    method="DELETE"
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    icon="trash-2"
+                                                    :confirm="__('admin.sweet_alert.delete_text')">
+                                                    {{ __('admin.tooltips.delete_row') }}
+                                                </x-admin.btn>
+                                            @endif
+                                        </x-admin.group-btn>
+                                    </td>
+                                </tr>
+                            @empty
+                                @include('admin.partials.empty-state', [
+                                    'colspan' => 10,
+                                    'message' => __('admin.table.no_entries'),
+                                    'icon' => 'user-x',
+                                ])
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
+            </div>
+            <div class="card-footer bg-white">
+                @include('admin.partials.pagination', ['data' => $data, 'variant' => 'static'])
             </div>
         </div>
     </div>

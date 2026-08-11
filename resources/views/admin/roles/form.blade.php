@@ -1,68 +1,97 @@
-@extends('admin.layouts.legacy.master')
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
 @section('content')
-    <div class="page-wrapper">
-        @include('admin.layouts.legacy.sidebar')
-        <div class="page-content">
-            @include('admin.layouts.legacy.page-header')
-            <div class="main-container">
-                @include('admin.layouts.legacy.alerts')
-                <form method="POST"
-                    action="{{ isset($data)
-                        ? route('admin.roles.update', ['role' => $data->id, 'lang' => app()->getLocale()])
-                        : route('admin.roles.store', ['lang' => app()->getLocale()]) }}">
-                    @csrf
-                    @if (isset($data))
-                        @method('PUT')
-                    @endif
-                    <div class="row gutters">
-                        <div class="col-12">
-                            <div class="card h-100">
-                                <div class="card-header">
-                                    <div class="card-title">
-                                        {{ isset($data) ? __('admin.forms.edit') : __('admin.forms.create') }}
-                                        {{ __('admin.sidebar.roles') }}
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row gutters">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="name">{{ __('admin.forms.name') }}</label>
-                                                <input type="text" class="form-control" id="name" name="name"
-                                                    value="{{ old('name', $data->name ?? '') }}" required>
-                                                @error('name')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row gutters">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="permissions">{{ __('admin.forms.permissions') }}</label>
-                                                <select id="permissions" name="permissions[]" multiple="multiple" placeholder="{{ __('admin.forms.choose_permissions') }}">
-                                                    @foreach ($permissions as $id => $name)
-                                                        <option value="{{ $id }}"
-                                                            {{ in_array($id, old('permissions', isset($data) ? $data->permissions->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
-                                                            {{ $name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                                @error('permissions')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-footer">
-                                    <button type="submit" class="btn btn-primary">{{ __('admin.forms.save_button') }}</button>
-                                </div>
+    @php
+        $isEditing = isset($data);
+        $indexUrl = route('admin.roles.index', ['lang' => app()->getLocale()]);
+        $selectedPermissions = old(
+            'permissions',
+            $isEditing ? $data->permissions->pluck('id')->all() : [],
+        );
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.roles'), 'url' => $indexUrl],
+                ['label' => $isEditing ? __('admin.forms.edit') : __('admin.forms.create')],
+            ],
+            'secondaryAction' => [
+                'href' => $indexUrl,
+                'label' => __('admin.buttons.close'),
+                'icon' => 'arrow-left',
+            ],
+        ])
+
+        <form method="POST"
+              action="{{ $isEditing
+                  ? route('admin.roles.update', [
+                      'role' => $data->id,
+                      'lang' => app()->getLocale(),
+                  ])
+                  : route('admin.roles.store', ['lang' => app()->getLocale()]) }}">
+            @csrf
+            @if ($isEditing)
+                @method('PUT')
+            @endif
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title mb-0">
+                        {{ $isEditing ? __('admin.forms.edit') : __('admin.forms.create') }}
+                        {{ __('admin.sidebar.roles') }}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 col-lg-6">
+                            <div class="form-group">
+                                <label for="name">
+                                    {{ __('admin.forms.name') }}
+                                    <span class="text-danger" aria-hidden="true">*</span>
+                                </label>
+                                <input type="text"
+                                       id="name"
+                                       name="name"
+                                       required
+                                       value="{{ old('name', $data->name ?? '') }}"
+                                       @class(['form-control', 'is-invalid' => $errors->has('name')])>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
-                </form>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <x-admin.checkbox-group
+                                name="permissions"
+                                :options="$permissions"
+                                :selected="$selectedPermissions"
+                                :legend="__('admin.forms.permissions')"
+                                :help-text="__('admin.forms.permissions_help')"
+                                :group-by="true"
+                                :columns="3" />
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <x-admin.group-btn class="justify-content-end">
+                        <x-admin.btn :href="$indexUrl" variant="light" icon="x">
+                            {{ __('admin.buttons.close') }}
+                        </x-admin.btn>
+                        <x-admin.btn type="submit" icon="save">
+                            {{ __('admin.forms.save_button') }}
+                        </x-admin.btn>
+                    </x-admin.group-btn>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 @endsection

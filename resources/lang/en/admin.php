@@ -132,6 +132,12 @@ return [
         'activity_logs' => [
             'index' => 'Activity Logs',
         ],
+        'settings' => [
+            'edit' => 'Settings',
+        ],
+        'contact_submissions' => [
+            'index' => 'Contact Submissions',
+        ],
         'reports' => [
             'index' => 'Reports',
         ],
@@ -235,6 +241,8 @@ return [
         'no_entries' => 'No admin entries found matching your criteria.',
         'no_records' => 'No records found.',
         'search' => 'Search',
+        'details' => 'Details',
+        'image' => 'Image',
     ],
     'buttons' => [
         'filter' => 'Filter',
@@ -242,6 +250,11 @@ return [
         'export_excel' => 'Export Excel',
         'new' => 'New',
         'close' => 'Close',
+        'back' => 'Back',
+        'select_all' => 'Select all',
+        'clear_all' => 'Clear all',
+        'view' => 'View',
+        'delete' => 'Delete',
     ],
     'messages' => [
         'welcome' => 'Welcome...!!',
@@ -280,6 +293,15 @@ return [
             'delete' => 'Delete Row',
         ],
         'results_label' => 'record(s)',
+        'sections' => [
+            'target' => 'Target page',
+            'content' => 'Content (:locale)',
+        ],
+        'help' => [
+            'page' => 'Pick the public route this metadata belongs to.',
+            'canonical' => 'Absolute canonical URL. Leave empty to use the page URL.',
+            'keywords' => 'Comma separated keywords.',
+        ],
     ],
     'activity_logs' => [
         'filters' => [
@@ -298,6 +320,46 @@ return [
         'messages' => [
             'empty' => 'No activity log records match the criteria.',
         ],
+        'labels_extra' => [
+            'no_properties' => 'No properties recorded.',
+        ],
+    ],
+    'logs' => [
+        'filters' => [
+            'heading' => 'Filter logs',
+            'screen_status' => 'Screen status',
+            'all_statuses' => 'All statuses',
+            'screen' => 'Screen',
+            'all_screens' => 'All screens',
+            'from_date' => 'Reported from',
+            'to_date' => 'Reported to',
+            'ad' => 'Ad',
+            'all_ads' => 'All ads',
+            'played_from' => 'Played from',
+            'played_to' => 'Played to',
+        ],
+        'exports' => [
+            'heading' => 'Exports',
+            'system' => 'Download system log',
+            'screen' => 'Export screen logs',
+            'playback' => 'Export playback logs',
+        ],
+        'screen_logs' => [
+            'heading' => 'Screen status logs',
+            'place' => 'Place',
+            'status' => 'Status',
+            'reported_at' => 'Reported at',
+            'empty' => 'No screen logs match the selected filters.',
+        ],
+        'playback_logs' => [
+            'heading' => 'Playback logs',
+            'played_at' => 'Played at',
+            'duration' => 'Duration (seconds)',
+            'empty' => 'No playback logs match the selected filters.',
+        ],
+        'entries' => 'entries',
+        'unnamed_place' => 'Place #:id',
+        'unnamed_ad' => 'Ad #:id',
     ],
     'contact_submissions' => [
         'title' => 'Contact Submissions',
@@ -321,7 +383,12 @@ return [
             'empty' => 'No submissions',
             'payload_error_title' => 'Error',
             'payload_error_text' => 'Could not parse payload',
+            'payload_empty' => 'This submission carries no payload data.',
         ],
+        'results_label' => 'submission(s)',
+        'details_heading' => 'Submission #:id',
+        'view_details' => 'View submission #:id details',
+        'contact_details' => 'Contact details',
 
     ],
     'forms' => [
@@ -348,10 +415,22 @@ return [
         'roles' => 'Roles',
         'permissions' => 'Permissions',
         'route' => 'Route',
+        'guard' => 'Guard',
         'choose_route' => 'Choose route...',
         'choose_roles' => 'Choose roles...',
         'choose_permissions' => 'Choose permissions...',
         'profile_picture' => 'Profile Picture',
+        'required_hint' => 'Required',
+        'optional_hint' => 'Optional',
+        'no_options' => 'No options available.',
+        'selected_count' => ':count selected',
+        'password_optional_hint' => 'Leave both password fields empty to keep the current password.',
+        'password_min_hint' => 'At least 8 characters.',
+        'email_readonly_hint' => 'Contact a super administrator to change the account email.',
+        'roles_help' => 'Roles bundle a set of permissions. Assigning the super administrator role grants every permission automatically.',
+        'permissions_help' => 'Direct permissions are granted in addition to the ones inherited from the assigned roles.',
+        'password_otp_notice' => 'After saving, a verification code is emailed to you to confirm the change.',
+        'profile_information' => 'Profile information',
         'name' => 'Name',
         'show_status' => 'Show Status',
         'yes' => 'Yes',
@@ -461,12 +540,29 @@ return [
         'preview_alt' => ':label Preview',
     ],
 
+    'media' => [
+        'no_media_selected' => 'No image selected yet.',
+        'preview_alt' => ':label preview',
+        'current_image' => 'Current image',
+        'open_full_size' => 'Open the full-size image in a new tab',
+        'accepted_types' => 'Accepted formats: :types',
+        'max_size' => 'Maximum file size: :size',
+        'keep_current_hint' => 'Leave the field empty to keep the current image.',
+        'unavailable' => 'Image unavailable',
+    ],
+
     'layouts' => [
         'browser_upgrade' => 'You are using an <strong>outdated</strong> browser. Please upgrade your browser to improve your experience.',
     ],
 
     'settings' => [
         'no_settings' => 'No settings found.',
+        'key' => 'Setting key',
+        'json_help' => 'Structured value stored as JSON. Keep the syntax valid before saving.',
+        'text_help' => 'Plain text value.',
+        'group_other' => 'Other settings',
+        'intro' => 'Values are stored exactly as entered against their existing setting keys.',
+        'groups_count' => ':count group(s)',
     ],
 
     'cms' => [

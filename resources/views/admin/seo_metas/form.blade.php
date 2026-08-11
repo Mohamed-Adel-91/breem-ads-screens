@@ -1,108 +1,214 @@
-@extends('admin.layouts.legacy.master')
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
 @section('content')
-    <div class="page-wrapper">
-        @include('admin.layouts.legacy.sidebar')
-        <div class="page-content">
-            @include('admin.layouts.legacy.page-header')
-            <div class="main-container">
-                @include('admin.layouts.legacy.alerts')
-                @php
-                    $languages = ['en', 'ar'];
-                @endphp
-                <form method="POST"
-                    action="{{ isset($seoMeta) ? route('admin.seo_metas.update', ['lang' => app()->getLocale(), 'seo_meta' => $seoMeta->id]) : route('admin.seo_metas.store', ['lang' => app()->getLocale()]) }}"
-                    enctype="multipart/form-data">
-                    @csrf
-                    @if (isset($seoMeta))
-                        @method('PUT')
-                    @endif
-                    <div class="row gutters">
-                        <div class="col-12">
-                            <div class="card h-100">
-                                <div class="card-header">
-                                    <div class="card-title">{{ isset($data) ? __('admin.forms.edit') : __('admin.forms.create') }} {{ __('admin.forms.seo_meta') }}</div>
+    @php
+        $languages = ['en', 'ar'];
+        $record = $seoMeta ?? null;
+        $isEditing = $record !== null;
+        $indexUrl = route('admin.seo_metas.index', ['lang' => app()->getLocale()]);
+
+        $localized = function (string $field, string $lang) use ($record) {
+            return old(
+                $field . '.' . $lang,
+                $record ? $record->getTranslation($field, $lang, false) : '',
+            );
+        };
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.seo_metas'), 'url' => $indexUrl],
+                ['label' => $isEditing ? __('admin.forms.edit') : __('admin.forms.create')],
+            ],
+            'secondaryAction' => [
+                'href' => $indexUrl,
+                'label' => __('admin.buttons.close'),
+                'icon' => 'arrow-left',
+            ],
+        ])
+
+        <form method="POST"
+              action="{{ $isEditing
+                  ? route('admin.seo_metas.update', [
+                      'lang' => app()->getLocale(),
+                      'seo_meta' => $record->id,
+                  ])
+                  : route('admin.seo_metas.store', ['lang' => app()->getLocale()]) }}">
+            @csrf
+            @if ($isEditing)
+                @method('PUT')
+            @endif
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="card-title mb-0">
+                        {{ $isEditing ? __('admin.forms.edit') : __('admin.forms.create') }}
+                        {{ __('admin.forms.seo_meta') }}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="admin-section-title">{{ __('admin.seo_metas.sections.target') }}</p>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="page">
+                                    {{ __('admin.forms.page_identifier') }}
+                                    <span class="text-danger" aria-hidden="true">*</span>
+                                </label>
+                                <select id="page"
+                                        name="page"
+                                        required
+                                        aria-describedby="page_help"
+                                        @class(['form-control', 'is-invalid' => $errors->has('page')])>
+                                    <option value="">{{ __('admin.forms.choose_page') }}</option>
+                                    @foreach ($pagesRoutes as $routeName => $routeUrl)
+                                        <option value="{{ $routeName }}"
+                                            @selected(old('page', $record ? $record->page : '') === $routeName)>
+                                            {{ $routeUrl }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('page')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small id="page_help" class="form-text text-muted">
+                                    {{ __('admin.seo_metas.help.page') }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="canonical">{{ __('admin.forms.canonical') }}</label>
+                                <input type="text"
+                                       id="canonical"
+                                       name="canonical"
+                                       inputmode="url"
+                                       value="{{ old('canonical', $record ? $record->canonical : '') }}"
+                                       aria-describedby="canonical_help"
+                                       @class(['form-control', 'is-invalid' => $errors->has('canonical')])>
+                                @error('canonical')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small id="canonical_help" class="form-text text-muted">
+                                    {{ __('admin.seo_metas.help.canonical') }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                @foreach ($languages as $lang)
+                    <div class="col-lg-6">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header">
+                                <h2 class="card-title mb-0">
+                                    {{ __('admin.seo_metas.sections.content', ['locale' => strtoupper($lang)]) }}
+                                </h2>
+                            </div>
+                            <div class="card-body" @if ($lang === 'ar') dir="rtl" @else dir="ltr" @endif>
+                                <div class="form-group">
+                                    <label for="title_{{ $lang }}">
+                                        {{ __('admin.forms.title') }} ({{ strtoupper($lang) }})
+                                        <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="title_{{ $lang }}"
+                                           name="title[{{ $lang }}]"
+                                           required
+                                           lang="{{ $lang }}"
+                                           value="{{ $localized('title', $lang) }}"
+                                           @class(['form-control', 'is-invalid' => $errors->has('title.' . $lang)])>
+                                    @error('title.' . $lang)
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                <div class="card-body">
-                                    <div class="row gutters">
-                                        <!-- Page Identifier Dropdown -->
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label for="page">{{ __('admin.forms.page_identifier') }}</label>
-                                                <select class="form-control" id="page" name="page" required>
-                                                    <option value="">{{ __('admin.forms.choose_page') }}</option>
-                                                    @foreach ($pagesRoutes as $routeName => $routeUrl)
-                                                        <option value="{{ $routeName }}"
-                                                            @if ((isset($seoMeta) && $seoMeta->page == $routeName) || old('page') == $routeName) selected @endif>
-                                                            {{ $routeUrl }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                        @foreach ($languages as $lang)
-                                            <div class="col-md-6">
-                                                <h4 class="mt-4">Content for {{ strtoupper($lang) }}</h4>
-                                                <!-- Title -->
-                                                <div class="form-group">
-                                                    <label for="title_{{ $lang }}">{{ __('admin.forms.title') }}
-                                                        ({{ strtoupper($lang) }})
-                                                    </label>
-                                                    <input type="text" class="form-control"
-                                                        id="title_{{ $lang }}" name="title[{{ $lang }}]"
-                                                        value="{{ isset($seoMeta) ? $seoMeta->getTranslation('title', $lang, false) : old("title.$lang") }}"
-                                                        required>
-                                                </div>
-                                                <!-- Description -->
-                                                <div class="form-group">
-                                                    <label for="description_{{ $lang }}">{{ __('admin.forms.description') }}
-                                                        ({{ strtoupper($lang) }})</label>
-                                                    <textarea class="form-control" id="description_{{ $lang }}" rows="8" name="description[{{ $lang }}]">{{ isset($seoMeta) ? $seoMeta->getTranslation('description', $lang, false) : old("description.$lang") }}</textarea>
-                                                </div>
-                                                <!-- Keywords -->
-                                                <div class="form-group">
-                                                    <label for="keywords_{{ $lang }}">{{ __('admin.forms.keywords') }}
-                                                        ({{ strtoupper($lang) }})</label>
-                                                    <input type="text" class="form-control"
-                                                        id="keywords_{{ $lang }}"
-                                                        name="keywords[{{ $lang }}]"
-                                                        value="{{ isset($seoMeta) ? $seoMeta->getTranslation('keywords', $lang, false) : old("keywords.$lang") }}">
-                                                </div>
-                                                <!-- Open Graph Title -->
-                                                <div class="form-group">
-                                                    <label for="og_title_{{ $lang }}">{{ __('admin.forms.og_title') }}
-                                                        ({{ strtoupper($lang) }})</label>
-                                                    <input type="text" class="form-control"
-                                                        id="og_title_{{ $lang }}"
-                                                        name="og_title[{{ $lang }}]"
-                                                        value="{{ isset($seoMeta) ? $seoMeta->getTranslation('og_title', $lang, false) : old("og_title.$lang") }}">
-                                                </div>
-                                                <!-- Open Graph Description -->
-                                                <div class="form-group">
-                                                    <label for="og_description_{{ $lang }}">{{ __('admin.forms.og_description') }}
-                                                        ({{ strtoupper($lang) }})
-                                                    </label>
-                                                    <textarea class="form-control" id="og_description_{{ $lang }}" rows="8" name="og_description[{{ $lang }}]">{{ isset($seoMeta) ? $seoMeta->getTranslation('og_description', $lang, false) : old("og_description.$lang") }}</textarea>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                        <!-- Canonical URL -->
-                                        {{-- <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label for="canonical">{{ __('admin.forms.canonical') }}</label>
-                                                <input type="text" class="form-control" id="canonical" name="canonical"
-                                                    value="{{ isset($seoMeta) ? $seoMeta->canonical : old('canonical') }}">
-                                            </div>
-                                        </div> --}}
-                                        <div class="card-footer">
-                                            <button type="submit" class="btn btn-primary">{{ __('admin.forms.save_button') }}</button>
-                                        </div>
-                                    </div>
+
+                                <div class="form-group">
+                                    <label for="description_{{ $lang }}">
+                                        {{ __('admin.forms.description') }} ({{ strtoupper($lang) }})
+                                    </label>
+                                    <textarea id="description_{{ $lang }}"
+                                              name="description[{{ $lang }}]"
+                                              rows="5"
+                                              lang="{{ $lang }}"
+                                              @class(['form-control', 'is-invalid' => $errors->has('description.' . $lang)])>{{ $localized('description', $lang) }}</textarea>
+                                    @error('description.' . $lang)
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="keywords_{{ $lang }}">
+                                        {{ __('admin.forms.keywords') }} ({{ strtoupper($lang) }})
+                                    </label>
+                                    <input type="text"
+                                           id="keywords_{{ $lang }}"
+                                           name="keywords[{{ $lang }}]"
+                                           lang="{{ $lang }}"
+                                           value="{{ $localized('keywords', $lang) }}"
+                                           aria-describedby="keywords_{{ $lang }}_help"
+                                           @class(['form-control', 'is-invalid' => $errors->has('keywords.' . $lang)])>
+                                    @error('keywords.' . $lang)
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <small id="keywords_{{ $lang }}_help" class="form-text text-muted">
+                                        {{ __('admin.seo_metas.help.keywords') }}
+                                    </small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="og_title_{{ $lang }}">
+                                        {{ __('admin.forms.og_title') }} ({{ strtoupper($lang) }})
+                                    </label>
+                                    <input type="text"
+                                           id="og_title_{{ $lang }}"
+                                           name="og_title[{{ $lang }}]"
+                                           lang="{{ $lang }}"
+                                           value="{{ $localized('og_title', $lang) }}"
+                                           @class(['form-control', 'is-invalid' => $errors->has('og_title.' . $lang)])>
+                                    @error('og_title.' . $lang)
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group mb-0">
+                                    <label for="og_description_{{ $lang }}">
+                                        {{ __('admin.forms.og_description') }} ({{ strtoupper($lang) }})
+                                    </label>
+                                    <textarea id="og_description_{{ $lang }}"
+                                              name="og_description[{{ $lang }}]"
+                                              rows="5"
+                                              lang="{{ $lang }}"
+                                              @class(['form-control', 'is-invalid' => $errors->has('og_description.' . $lang)])>{{ $localized('og_description', $lang) }}</textarea>
+                                    @error('og_description.' . $lang)
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
                     </div>
-                </form>
+                @endforeach
             </div>
-        </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <x-admin.group-btn class="justify-content-end">
+                        <x-admin.btn :href="$indexUrl" variant="light" icon="x">
+                            {{ __('admin.buttons.close') }}
+                        </x-admin.btn>
+                        <x-admin.btn type="submit" icon="save">
+                            {{ __('admin.forms.save_button') }}
+                        </x-admin.btn>
+                    </x-admin.group-btn>
+                </div>
+            </div>
+        </form>
     </div>
 @endsection

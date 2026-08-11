@@ -1,72 +1,93 @@
-@extends('admin.layouts.legacy.master')
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
 @section('content')
-    <div class="page-wrapper">
-        @include('admin.layouts.legacy.sidebar')
-        <div class="page-content">
-            @include('admin.layouts.legacy.page-header')
-            <div class="main-container">
-                @include('admin.layouts.legacy.alerts')
-                <div class="row gutters">
-                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-                        <div class="table-container">
-                            <div class="col-mb-12 p-0" style="margin: 15px;">
-                                <div class="row d-flex justify-content-end p-0">
-                                    <div class="col-md-2 d-flex justify-content-end p-0">
-                                        <div class="col-md-6 d-flex justify-content-end  p-0">
-                                            <button type="text" class="btn btn-primary" style="margin-top: 20px;">
-                                                <a href="{{ route('admin.roles.create', ['lang' => app()->getLocale()]) }}" style="color: #fff;">
-                                                    <i class="icon-plus-circle mr-1"></i>{{ __('admin.table.new') }}</a>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            @include('admin.partials.results-summary', ['data' => $data, 'label' => __('admin.sidebar.roles')])
-                            <div class="table-responsive">
-                                <table class="table custom-table m-0">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>{{ __('admin.forms.name') }}</th>
-                                            <th>{{ __('admin.table.options') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($data as $role)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $role->name }}</td>
-                                                <td>
-                                                    <div class="td-actions">
-                                                        <a href="{{ route('admin.roles.edit', ['lang' => app()->getLocale(), 'role' => $role->id]) }}" class="icon bg-info" data-toggle="tooltip" data-placement="top" title="{{ __('admin.tooltips.edit_row') }}">
-                                                            <i class="icon-edit"></i>
-                                                        </a>
-                                                        <form method="POST" id="delete_form_{{ $role->id }}" class="d-inline delete_form" action="{{ route('admin.roles.destroy', ['lang' => app()->getLocale(), 'role' => $role->id]) }}">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="icon red" data-toggle="tooltip" data-placement="top" title="{{ __('admin.tooltips.delete_row') }}" onclick="checker(event, {{ $role->id }})">
-                                                                <i class="icon-cancel"></i>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="3" class="text-center">
-                                                    <div class="alert alert-warning">
-                                                        {{ __('admin.table.no_records') }}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                            @include('admin.partials.pagination', ['data' => $data])
-                        </div>
-                    </div>
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.admins_management')],
+                ['label' => __('admin.sidebar.roles')],
+            ],
+            'primaryAction' => [
+                'href' => route('admin.roles.create', ['lang' => app()->getLocale()]),
+                'label' => __('admin.table.new'),
+                'icon' => 'plus-circle',
+            ],
+        ])
+
+        @include('admin.partials.results-summary', [
+            'data' => $data,
+            'label' => __('admin.sidebar.roles'),
+        ])
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ __('admin.sidebar.roles') }}</h2>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">{{ __('admin.forms.name') }}</th>
+                                <th scope="col">{{ __('admin.forms.guard') }}</th>
+                                <th scope="col" class="text-right">{{ __('admin.table.options') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($data as $role)
+                                <tr>
+                                    <th scope="row">{{ ($data->firstItem() ?? 1) + $loop->index }}</th>
+                                    <td>{{ $role->name }}</td>
+                                    <td>
+                                        <x-admin.badge variant="primary">
+                                            {{ $role->guard_name }}
+                                        </x-admin.badge>
+                                    </td>
+                                    <td>
+                                        <x-admin.group-btn class="justify-content-end">
+                                            <x-admin.btn
+                                                :href="route('admin.roles.edit', [
+                                                    'lang' => app()->getLocale(),
+                                                    'role' => $role->id,
+                                                ])"
+                                                variant="outline-info"
+                                                size="sm"
+                                                icon="edit-2">
+                                                {{ __('admin.tooltips.edit_row') }}
+                                            </x-admin.btn>
+
+                                            <x-admin.btn
+                                                :href="route('admin.roles.destroy', [
+                                                    'lang' => app()->getLocale(),
+                                                    'role' => $role->id,
+                                                ])"
+                                                method="DELETE"
+                                                variant="outline-danger"
+                                                size="sm"
+                                                icon="trash-2"
+                                                :confirm="__('admin.sweet_alert.delete_text')">
+                                                {{ __('admin.tooltips.delete_row') }}
+                                            </x-admin.btn>
+                                        </x-admin.group-btn>
+                                    </td>
+                                </tr>
+                            @empty
+                                @include('admin.partials.empty-state', [
+                                    'colspan' => 4,
+                                    'message' => __('admin.table.no_records'),
+                                    'icon' => 'shield',
+                                ])
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
+            </div>
+            <div class="card-footer bg-white">
+                @include('admin.partials.pagination', ['data' => $data, 'variant' => 'static'])
             </div>
         </div>
     </div>

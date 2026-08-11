@@ -1,93 +1,95 @@
-@extends('admin.layouts.legacy.master')
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
 @section('content')
-    <div class="page-wrapper">
-        @include('admin.layouts.legacy.sidebar')
-        <div class="page-content">
-            @include('admin.layouts.legacy.page-header')
-            <div class="main-container">
-                @include('admin.layouts.legacy.alerts')
-                <div class="row gutters">
-                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-                        <div class="table-container">
-                            <div class="col-mb-12 p-0" style="margin: 15px;">
-                                <div class="row d-flex justify-content-end p-0">
-                                    <div class="col-md-2 d-flex justify-content-end p-0">
-                                        <div class="col-md-6 d-flex justify-content-end p-0">
-                                            <button type="button" class="btn btn-primary" style="margin-top: 20px;">
-                                                <a href="{{ route('admin.seo_metas.create', ['lang' => app()->getLocale()]) }}" style="color: #fff;">
-                                                    <i class="icon-plus-circle mr-1"></i> @t('admin.table.new')
-                                                </a>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            @include('admin.partials.results-summary', [
-                                'data' => $data,
-                                'label' => \App\Support\Lang::t('admin.seo_metas.results_label', 'record(s)'),
-                            ])
-                            <div class="table-responsive">
-                                <table class="table custom-table m-0">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>@t('admin.seo_metas.table.page')</th>
-                                            <th>@t('admin.seo_metas.table.title_en')</th>
-                                            <th>@t('admin.seo_metas.table.title_ar')</th>
-                                            <th>@t('admin.table.created_at')</th>
-                                            <th>@t('admin.table.updated_at')</th>
-                                            <th>@t('admin.table.options')</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @if (!empty($data) && $data->count() > 0)
-                                            @foreach ($data as $seoMeta)
-                                                <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td>{{ $seoMeta->page }}</td>
-                                                    <td>{{ $seoMeta->getTranslation('title', 'en') }}</td>
-                                                    <td>{{ $seoMeta->getTranslation('title', 'ar') }}</td>
-                                                    <td>{{ $seoMeta->created_at }}</td>
-                                                    <td>{{ $seoMeta->updated_at }}</td>
-                                                    <td>
-                                                        <div class="td-actions">
-                                                            <a href="{{ route('admin.seo_metas.edit', ['lang' => app()->getLocale(), 'seo_meta' => $seoMeta->id]) }}"
-                                                                class="icon bg-info" data-toggle="tooltip"
-                                                                data-placement="top" title="@t('admin.seo_metas.actions.edit')">
-                                                                <i class="icon-edit"></i>
-                                                            </a>
-                                                            <form method="POST" id="delete_form_{{ $seoMeta->id }}"
-                                                                class="d-inline delete_form"
-                                                                action="{{ route('admin.seo_metas.destroy', ['lang' => app()->getLocale(), 'seo_meta' => $seoMeta->id]) }}">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="submit" class="icon red"
-                                                                    data-toggle="tooltip" data-placement="top"
-                                                                    title="@t('admin.seo_metas.actions.delete')"
-                                                                    onclick="checker(event, {{ $seoMeta->id }})">
-                                                                    <i class="icon-cancel"></i>
-                                                                </button>
-                                                            </form>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        @else
-                                            <tr>
-                                                <td colspan="11" class="text-center">
-                                                    <div class="alert alert-danger">
-                                                        @t('admin.seo_metas.messages.empty')
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endif
-                                    </tbody>
-                                </table>
-                            </div>
-                            @include('admin.partials.pagination')
-                        </div>
-                    </div>
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.website_cms')],
+                ['label' => __('admin.sidebar.seo_metas')],
+            ],
+            'primaryAction' => [
+                'href' => route('admin.seo_metas.create', ['lang' => app()->getLocale()]),
+                'label' => __('admin.table.new'),
+                'icon' => 'plus-circle',
+            ],
+        ])
+
+        @include('admin.partials.results-summary', [
+            'data' => $data,
+            'label' => \App\Support\Lang::t('admin.seo_metas.results_label', 'record(s)'),
+        ])
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ __('admin.sidebar.seo_metas') }}</h2>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">{{ __('admin.seo_metas.table.page') }}</th>
+                                <th scope="col">{{ __('admin.seo_metas.table.title_en') }}</th>
+                                <th scope="col">{{ __('admin.seo_metas.table.title_ar') }}</th>
+                                <th scope="col">{{ __('admin.table.created_at') }}</th>
+                                <th scope="col">{{ __('admin.table.updated_at') }}</th>
+                                <th scope="col" class="text-right">{{ __('admin.table.options') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($data as $seoMeta)
+                                <tr>
+                                    <th scope="row">{{ ($data->firstItem() ?? 1) + $loop->index }}</th>
+                                    <td><code>{{ $seoMeta->page }}</code></td>
+                                    <td>{{ $seoMeta->getTranslation('title', 'en', false) ?: '-' }}</td>
+                                    <td>{{ $seoMeta->getTranslation('title', 'ar', false) ?: '-' }}</td>
+                                    <td>{{ optional($seoMeta->created_at)->format('Y-m-d H:i') ?? '-' }}</td>
+                                    <td>{{ optional($seoMeta->updated_at)->format('Y-m-d H:i') ?? '-' }}</td>
+                                    <td>
+                                        <x-admin.group-btn class="justify-content-end">
+                                            <x-admin.btn
+                                                :href="route('admin.seo_metas.edit', [
+                                                    'lang' => app()->getLocale(),
+                                                    'seo_meta' => $seoMeta->id,
+                                                ])"
+                                                variant="outline-info"
+                                                size="sm"
+                                                icon="edit-2">
+                                                {{ __('admin.seo_metas.actions.edit') }}
+                                            </x-admin.btn>
+
+                                            <x-admin.btn
+                                                :href="route('admin.seo_metas.destroy', [
+                                                    'lang' => app()->getLocale(),
+                                                    'seo_meta' => $seoMeta->id,
+                                                ])"
+                                                method="DELETE"
+                                                variant="outline-danger"
+                                                size="sm"
+                                                icon="trash-2"
+                                                :confirm="__('admin.sweet_alert.delete_text')">
+                                                {{ __('admin.seo_metas.actions.delete') }}
+                                            </x-admin.btn>
+                                        </x-admin.group-btn>
+                                    </td>
+                                </tr>
+                            @empty
+                                @include('admin.partials.empty-state', [
+                                    'colspan' => 7,
+                                    'message' => __('admin.seo_metas.messages.empty'),
+                                    'icon' => 'search',
+                                ])
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
+            </div>
+            <div class="card-footer bg-white">
+                @include('admin.partials.pagination', ['data' => $data, 'variant' => 'static'])
             </div>
         </div>
     </div>
