@@ -140,19 +140,40 @@
             <div class="col-lg-4">
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h2 class="card-title mb-0">{{ __('admin.screens.show.uptime_heading') }}</h2>
+                        <h2 class="card-title mb-0">{{ __('admin.screens.show.availability_heading') }}</h2>
                     </div>
                     <div class="card-body">
-                        @if (!is_null($uptime))
-                            <p class="admin-stat-value text-success mb-1">{{ $uptime }}%</p>
-                            <p class="text-muted small">{{ __('admin.screens.show.uptime_help') }}</p>
+                        {{-- Elapsed-time availability. The event counts below are a
+                             separate, honestly-labelled figure — they are report
+                             counts, not durations. --}}
+                        @php($hours = fn ($seconds) => round($seconds / 3600, 1))
+
+                        @if (! is_null($availability['availability']))
+                            <p class="admin-stat-value text-success mb-1">{{ $availability['availability'] }}%</p>
+                            <p class="text-muted small">{{ __('admin.screens.show.availability_help') }}</p>
                         @else
-                            <p class="text-muted small">{{ __('admin.screens.show.uptime_empty') }}</p>
+                            <p class="text-muted small">{{ __('admin.screens.show.availability_empty') }}</p>
                         @endif
 
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered mb-0 admin-detail-table">
                                 <tbody>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.screens.show.online_hours') }}</th>
+                                        <td dir="ltr">{{ $hours($availability['online_seconds']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.screens.show.offline_hours') }}</th>
+                                        <td dir="ltr">{{ $hours($availability['offline_seconds']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.screens.show.maintenance_hours') }}</th>
+                                        <td dir="ltr">{{ $hours($availability['maintenance_seconds']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.screens.show.unknown_hours') }}</th>
+                                        <td dir="ltr">{{ $hours($availability['unknown_seconds']) }}</td>
+                                    </tr>
                                     <tr>
                                         <th scope="row">{{ __('admin.screens.show.online_events') }}</th>
                                         <td>{{ $logSummary['online'] ?? 0 }}</td>

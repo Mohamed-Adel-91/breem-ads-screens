@@ -144,7 +144,8 @@
                         </thead>
                         <tbody>
                             @forelse ($screens as $screen)
-                                @php($latestLog = $screen->logs->first())
+                                {{-- latestLog is a latestOfMany relation, so every row gets its own. --}}
+                                @php($latestLog = $screen->latestLog)
                                 <tr>
                                     <th scope="row">{{ ($screens->firstItem() ?? 1) + $loop->index }}</th>
                                     <td><code>{{ $screen->code }}</code></td>

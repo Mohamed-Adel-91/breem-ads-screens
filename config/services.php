@@ -38,7 +38,15 @@ return [
         // one device must not compromise the others.
         'signature_leeway' => env('SCREENS_SIGNATURE_LEEWAY', 300),
         'pairing_code_ttl' => env('SCREENS_PAIRING_CODE_TTL', 900),
+
+        // How often a device is told to report in.
         'heartbeat_interval' => env('SCREENS_HEARTBEAT_INTERVAL', 60),
+
+        // How long a screen may go without a heartbeat before the server calls
+        // it offline. Read through App\Support\ScreenHealth, never directly —
+        // that class is the single source of truth and keeps the value coherent
+        // with the interval above. Null means "derive from the interval".
+        'offline_after' => env('SCREENS_OFFLINE_AFTER'),
         'playlist_ttl' => env('SCREENS_PLAYLIST_TTL', 300),
         'config_ttl' => env('SCREENS_CONFIG_TTL', 900),
     ],

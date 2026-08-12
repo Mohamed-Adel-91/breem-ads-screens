@@ -132,17 +132,93 @@ plays for an ad it was never given.
 
 Do not change those semantics outside an approved stabilization phase.
 
-## Heartbeat
+## Heartbeat and connectivity truth
 
-Server-authoritative. `HeartbeatService::touch()` updates `screens.status` and
-`screens.last_heartbeat` and appends a `ScreenLog`.
+**The dashboard must never claim a screen is online because an administrator
+clicked a button.** Everything below exists to hold that line.
+
+`HeartbeatService` owns every write to `screens.status` and
+`screens.last_heartbeat`. Nothing else may write them.
+
+| Fact | Owner | Rule |
+|---|---|---|
+| `last_heartbeat` | `HeartbeatService::touch()` | The instant the **server** accepted a signed heartbeat. Never derived from a device clock; never writable by an administrator; never stamped by an admin action. |
+| `online` | `HeartbeatService::touch()` | A request that passed `screen.auth` proves the device is reachable now. |
+| `offline` | `HeartbeatService::markOffline()`, via `CheckScreenHealthJob` | Silence longer than the threshold. Leaves `last_heartbeat` untouched — that is the evidence. |
+| `maintenance` | Admin, on the Screen edit form; or a device declaring it | Explicit operational mode, not connectivity. |
+
+Consequences that are easy to get wrong:
+
+- **A device cannot declare itself offline.** The heartbeat carrying the claim is
+  itself proof of reachability, so `status: offline` from a device resolves to
+  online. Only `CheckScreenHealthJob` can produce `offline`.
+- **A device may declare `maintenance`** — reachable but not serving.
+- **Administrator maintenance is sticky.** A heartbeat refreshes
+  `last_heartbeat` but does not silently return the screen to service; an
+  explicit Screen edit does.
+- **Maintenance suppresses the offline sweep.** Operators own the screen, so
+  connectivity alerting stops until they hand it back. `last_heartbeat` still
+  shows the staleness in the UI.
+- **`reported_at` is telemetry.** It orders the log stream, so it is clamped to
+  `[server receipt − signature_leeway, server receipt]`. It never reaches
+  `last_heartbeat`.
+- **Recovery is automatic.** offline → valid heartbeat → online, with no admin
+  action.
+- **Pairing marks a screen online** because the handshake is a real device
+  communication — but it grants no exemption; a device that pairs and goes quiet
+  is swept offline like any other.
 
 **Never derive online/offline in Blade or JavaScript.** Render the stored column.
+
+### Timing
+
+`App\Support\ScreenHealth` is the single source of truth. Do not read
+`services.screens.heartbeat_interval` directly and never inline a timeout.
+
+- `heartbeatInterval()` — cadence advertised to devices (`SCREENS_HEARTBEAT_INTERVAL`, default 60 s)
+- `offlineAfter()` — silence tolerated before offline (`SCREENS_OFFLINE_AFTER`; defaults to `interval × 2` = 120 s)
+- The threshold is always floored at `interval + 1`: a threshold at or below the
+  cadence would mark healthy screens offline between two on-time reports.
+
+### Offline detection
+
+`CheckScreenHealthJob`, scheduled every minute in **`routes/console.php`** and
+visible in `php artisan schedule:list`.
+
+Idempotent: it selects only screens that are still `online` with a stale
+heartbeat, and `markOffline()` re-checks eligibility before writing. A screen
+transitions once, logs once and notifies once, no matter how many ticks run.
+
+`app/Console/Kernel.php` also declares a `schedule()` method. Laravel 12 never
+binds that class, so it has never run — which is why offline detection was dead
+for the life of the project while appearing to be configured. Add schedule
+entries to `routes/console.php`.
+
+**The scheduler must actually be running in production** (`* * * * * php artisan
+schedule:run`). Without it `screens.status` silently goes stale. See the
+deployment runbook.
 
 ## Monitoring
 
 Presentation over operational state. It must not invent device activity, and it
 must not recompute status.
+
+**Acknowledging an alert means an administrator has seen it — nothing else.** It
+writes `acknowledged_at`, `acknowledged_by` and `acknowledgement_note` onto the
+`screen_logs` row that raised the alert, preserving the original event. It does
+not touch `screens.status` or `screens.last_heartbeat`, and it writes no new log.
+Putting a screen into maintenance is a separate action on the Screen edit form.
+
+**Availability is elapsed time.** `ScreenAvailabilityService` walks the log
+stream as a timeline over a 7-day window and returns per-status seconds.
+`availability = online / (online + offline)`. Maintenance is excluded from the
+denominator as planned downtime; time before the first-ever report is `unknown`
+and is excluded too — never counted as online. A zero denominator returns null
+and the UI says so rather than printing a misleading 0% or 100%.
+
+The old figure was `online log rows / total log rows`, an event ratio: a screen
+that reported online once and then died for six days scored 100%. If you ever
+need that number again, label it "reports", not "uptime".
 
 ## Deferred functional defects
 
@@ -202,17 +278,31 @@ Behaviour pinned by `tests/Feature/Api/DeviceApiContractTest.php` (38 tests).
 - The handshake throttle is keyed by IP, so a fleet behind one NAT shares the
   10/min pairing budget.
 
-**Heartbeat / Monitoring**
-- Acknowledging a monitoring alert sets `last_heartbeat = now()` with no device
-  contact, making a dead screen look healthy.
-- "Uptime" is `online log events / total log events`, an event ratio, not elapsed
-  time. The UI labels it "Online reports" to stay honest.
-- Monitoring's index eager-load `with(['logs' => fn => latest()->limit(1)])`
-  applies `LIMIT 1` to the whole query, so only one row on the page gets a last
-  report.
-- Offline detection depends entirely on `screens:check-status`; if the scheduler
-  is not running, `screens.status` silently goes stale.
-- No retention or pruning for `screen_logs` / `playback_logs`.
+**Heartbeat / Monitoring** — the first four entries below were fixed in Phase 11;
+see the sections above for the resulting contract. What remains:
+
+- **The playlist ETag is invalidated by every heartbeat.** The ETag includes
+  `screens.updated_at`, which every heartbeat bumps, so a device re-downloads an
+  identical manifest on every poll. Not fixable inside Phase 11: `PlaylistResource`
+  embeds `ScreenResource`, whose `status` and `last_heartbeat_at` genuinely do
+  change each heartbeat, so the response bytes really are different and a stable
+  ETag would be a lie. Fixing it means changing the playlist payload — Phase 12's
+  territory. Pinned by `PlaylistEtagHeartbeatInteractionTest`.
+- **Offline alerts are dropped when `ADMIN_EMAIL` is unset.** `CheckScreenHealthJob`
+  builds its recipient from `admin.email`; with none configured it returns
+  silently. Detection still works — nobody is told. Pinned by
+  `OfflineDetectionTest::test_offline_alerts_are_silently_dropped_without_a_recipient`.
+- `CheckScreenHealthJob::adminNotifiable()` reads
+  `services.slack.notifications.channel` and `.bot_user_oauth_token`, neither of
+  which exists in `config/services.php` (only `slack.webhook_url` does), so that
+  branch is permanently null. Harmless — the notification posts the webhook from
+  `toArray()` — but misleading.
+- A screen logs an entry on **every** heartbeat, not only on transitions, so
+  `screen_logs` grows at roughly `fleet size × 1440/day` at the default cadence.
+  There is still no retention or pruning for `screen_logs` / `playback_logs`, and
+  `ScreenAvailabilityService` walks the window's rows on every page view.
+- The offline sweep runs every minute regardless of fleet size; there is no
+  batching or chunking.
 
 **Scheduling**
 - Saving a schedule deactivates *any* overlapping schedule on the same screen —

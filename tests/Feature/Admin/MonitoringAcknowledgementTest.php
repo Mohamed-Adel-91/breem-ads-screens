@@ -14,15 +14,16 @@ use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 /**
- * Pre-Phase 8 — locks the Monitoring acknowledgement path against the defect
- * reproduced in Phase 7: `screen_logs.status` was enum('online','offline') while
- * AcknowledgeAlertRequest accepts `maintenance`, so acknowledging a screen as
- * under maintenance died with an integrity-constraint violation (HTTP 500).
+ * Monitoring acknowledgement means one thing: an administrator has seen an alert.
  *
- * NOTE — deliberately NOT changed here: acknowledging also sets
- * `last_heartbeat = now()` without any device contact. That is asserted below so
- * the behaviour is pinned, but it remains a known defect deferred to the Digital
- * Signage functional stabilization phase.
+ * Phase 11 separated that from connectivity. Acknowledging used to write
+ * `screens.status` from a dropdown AND stamp `screens.last_heartbeat = now()`,
+ * so a dead screen reported as healthy the instant somebody clicked the button —
+ * and the stamp destroyed the evidence of how long it had been dead.
+ *
+ * The tests below pin the new contract. The old known-defect test that asserted
+ * the heartbeat WAS stamped is replaced by its inverse, because the defect it
+ * described is fixed rather than merely documented.
  */
 class MonitoringAcknowledgementTest extends TestCase
 {
@@ -55,50 +56,149 @@ class MonitoringAcknowledgementTest extends TestCase
     {
         return Screen::factory()->create([
             'place_id' => Place::factory()->create()->id,
-            'code' => 'SCR-ACK-' . fake()->unique()->bothify('####'),
+            'code' => 'SCR-ACK-'.fake()->unique()->bothify('####'),
             'status' => ScreenStatus::Offline->value,
             'last_heartbeat' => now()->subDays(3),
         ]);
     }
 
-    public static function acknowledgeableStatusProvider(): array
+    /**
+     * The offline event an administrator would be acknowledging.
+     */
+    protected function raiseAlert(Screen $screen): ScreenLog
     {
-        return [
-            'online in english' => ['online', 'en'],
-            'online in arabic' => ['online', 'ar'],
-            'maintenance in english' => ['maintenance', 'en'],
-            'maintenance in arabic' => ['maintenance', 'ar'],
-        ];
+        return $screen->logs()->create([
+            'status' => ScreenStatus::Offline->value,
+            'reported_at' => now()->subHours(2),
+        ]);
     }
 
-    #[DataProvider('acknowledgeableStatusProvider')]
-    public function test_acknowledging_stores_the_status_and_writes_a_screen_log(string $status, string $locale): void
+    protected function acknowledge(Screen $screen, string $locale = 'en', array $payload = [])
+    {
+        return $this->actingAs($this->admin, 'admin')->post(
+            route('admin.monitoring.screens.acknowledge', ['lang' => $locale, 'screen' => $screen->id]),
+            $payload
+        );
+    }
+
+    public static function localeProvider(): array
+    {
+        return ['english' => ['en'], 'arabic' => ['ar']];
+    }
+
+    #[DataProvider('localeProvider')]
+    public function test_acknowledging_records_who_saw_the_alert_and_when(string $locale): void
     {
         $screen = $this->makeScreen();
+        $alert = $this->raiseAlert($screen);
 
-        $response = $this->actingAs($this->admin, 'admin')->post(
-            route('admin.monitoring.screens.acknowledge', ['lang' => $locale, 'screen' => $screen->id]),
-            ['status' => $status, 'note' => 'Technician dispatched']
-        );
+        $response = $this->acknowledge($screen, $locale, ['note' => 'Technician dispatched']);
 
-        // No HTTP 500 — the request completes and redirects to the detail page.
         $response->assertRedirect(
             route('admin.monitoring.screens.show', ['lang' => $locale, 'screen' => $screen->id])
         );
         $response->assertSessionHas('success');
 
-        // The screen carries the acknowledged status.
-        $this->assertSame($status, $screen->fresh()->status->value);
+        $alert->refresh();
+        $this->assertNotNull($alert->acknowledged_at);
+        $this->assertSame($this->admin->id, $alert->acknowledged_by);
+        $this->assertSame('Technician dispatched', $alert->acknowledgement_note);
+        $this->assertSame($this->admin->id, $alert->acknowledger->id);
+    }
 
-        // Exactly one screen log is written, with the same status.
+    public function test_acknowledging_never_touches_last_heartbeat(): void
+    {
+        $screen = $this->makeScreen();
+        $this->raiseAlert($screen);
+
+        $before = $screen->last_heartbeat;
+
+        $this->acknowledge($screen, 'en', ['note' => 'Seen it']);
+
+        $this->assertTrue(
+            $screen->fresh()->last_heartbeat->equalTo($before),
+            'Acknowledging an alert is not device contact and must never restamp last_heartbeat.'
+        );
+    }
+
+    public function test_acknowledging_cannot_make_a_dead_screen_look_online(): void
+    {
+        $screen = $this->makeScreen();
+        $this->raiseAlert($screen);
+
+        $this->acknowledge($screen, 'en', ['note' => 'Acknowledged, still dead']);
+
+        $this->assertSame(
+            ScreenStatus::Offline,
+            $screen->fresh()->status,
+            'The dashboard must never claim a screen is online because an administrator clicked a button.'
+        );
+    }
+
+    public function test_acknowledging_does_not_write_a_new_screen_log(): void
+    {
+        $screen = $this->makeScreen();
+        $this->raiseAlert($screen);
+
+        $this->acknowledge($screen, 'en');
+
+        // The original offline event is annotated, not duplicated — and not erased.
         $logs = $screen->logs()->get();
         $this->assertCount(1, $logs);
-        $this->assertSame($status, $logs->first()->status->value);
-        $this->assertNotNull($logs->first()->reported_at);
-        $this->assertDatabaseHas('screen_logs', [
-            'screen_id' => $screen->id,
-            'status' => $status,
-        ]);
+        $this->assertSame(ScreenStatus::Offline, $logs->first()->status);
+    }
+
+    public function test_a_status_submitted_by_a_client_is_ignored_entirely(): void
+    {
+        $screen = $this->makeScreen();
+        $this->raiseAlert($screen);
+
+        // `status` was a real field before Phase 11. A stale client, a bookmarked
+        // form or a hand-crafted POST must not be able to resurrect it.
+        $this->acknowledge($screen, 'en', ['status' => 'online', 'note' => 'Forged']);
+
+        $screen->refresh();
+        $this->assertSame(ScreenStatus::Offline, $screen->status);
+        $this->assertTrue($screen->last_heartbeat->lt(now()->subDays(2)));
+    }
+
+    public function test_acknowledging_twice_leaves_the_first_acknowledgement_intact(): void
+    {
+        $screen = $this->makeScreen();
+        $alert = $this->raiseAlert($screen);
+
+        $this->acknowledge($screen, 'en', ['note' => 'First']);
+        $firstAcknowledgedAt = $alert->fresh()->acknowledged_at;
+
+        // The alert is closed now, so a second submission has nothing to act on.
+        $this->acknowledge($screen, 'en', ['note' => 'Second'])
+            ->assertSessionHas('warning');
+
+        $alert->refresh();
+        $this->assertSame('First', $alert->acknowledgement_note);
+        $this->assertTrue($alert->acknowledged_at->equalTo($firstAcknowledgedAt));
+    }
+
+    public function test_acknowledging_with_no_open_alert_changes_nothing(): void
+    {
+        $screen = $this->makeScreen();
+
+        $this->acknowledge($screen, 'en', ['note' => 'Nothing to see'])
+            ->assertSessionHas('warning');
+
+        $this->assertSame(0, $screen->logs()->whereNotNull('acknowledged_at')->count());
+        $this->assertSame(ScreenStatus::Offline, $screen->fresh()->status);
+    }
+
+    public function test_the_note_is_length_limited(): void
+    {
+        $screen = $this->makeScreen();
+        $alert = $this->raiseAlert($screen);
+
+        $this->acknowledge($screen, 'en', ['note' => str_repeat('x', 501)])
+            ->assertSessionHasErrors('note');
+
+        $this->assertNull($alert->fresh()->acknowledged_at);
     }
 
     public function test_screen_logs_accepts_every_authoritative_screen_status(): void
@@ -118,42 +218,10 @@ class MonitoringAcknowledgementTest extends TestCase
         $this->assertSame(count(ScreenStatus::cases()), $screen->logs()->count());
     }
 
-    public function test_maintenance_acknowledgement_no_longer_throws(): void
-    {
-        $screen = $this->makeScreen();
-
-        // withoutExceptionHandling() turns the previous QueryException into a
-        // test failure instead of a rendered 500 page.
-        $this->withoutExceptionHandling()
-            ->actingAs($this->admin, 'admin')
-            ->post(
-                route('admin.monitoring.screens.acknowledge', ['lang' => 'en', 'screen' => $screen->id]),
-                ['status' => 'maintenance']
-            )
-            ->assertRedirect();
-
-        $this->assertSame('maintenance', $screen->fresh()->status->value);
-    }
-
-    public function test_acknowledgement_rejects_a_status_outside_the_allowed_set(): void
-    {
-        $screen = $this->makeScreen();
-
-        $this->actingAs($this->admin, 'admin')
-            ->post(
-                route('admin.monitoring.screens.acknowledge', ['lang' => 'en', 'screen' => $screen->id]),
-                ['status' => 'offline']
-            )
-            ->assertSessionHasErrors('status');
-
-        // Nothing was written.
-        $this->assertSame('offline', $screen->fresh()->status->value);
-        $this->assertSame(0, $screen->logs()->count());
-    }
-
     public function test_acknowledgement_requires_the_manage_permission(): void
     {
         $screen = $this->makeScreen();
+        $alert = $this->raiseAlert($screen);
 
         $viewer = Admin::create([
             'first_name' => 'View',
@@ -167,33 +235,11 @@ class MonitoringAcknowledgementTest extends TestCase
         $this->actingAs($viewer, 'admin')
             ->post(
                 route('admin.monitoring.screens.acknowledge', ['lang' => 'en', 'screen' => $screen->id]),
-                ['status' => 'maintenance']
+                ['note' => 'Not allowed']
             )
             ->assertForbidden();
 
-        $this->assertSame('offline', $screen->fresh()->status->value);
-        $this->assertSame(0, $screen->logs()->count());
-    }
-
-    /**
-     * Pins the KNOWN DEFECT so a future fix is a deliberate, visible change.
-     * Acknowledging stamps last_heartbeat even though no device reported in.
-     */
-    public function test_known_defect_acknowledgement_still_stamps_last_heartbeat(): void
-    {
-        $screen = $this->makeScreen();
-        $staleHeartbeat = $screen->last_heartbeat;
-
-        $this->actingAs($this->admin, 'admin')->post(
-            route('admin.monitoring.screens.acknowledge', ['lang' => 'en', 'screen' => $screen->id]),
-            ['status' => 'maintenance']
-        );
-
-        $screen->refresh();
-
-        $this->assertTrue(
-            $screen->last_heartbeat->isAfter($staleHeartbeat),
-            'Deferred defect: acknowledging rewrites last_heartbeat without device contact.'
-        );
+        $this->assertNull($alert->fresh()->acknowledged_at);
+        $this->assertSame(ScreenStatus::Offline, $screen->fresh()->status);
     }
 }

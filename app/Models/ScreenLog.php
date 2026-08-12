@@ -26,6 +26,7 @@ class ScreenLog extends Model
     protected $casts = [
         'status' => ScreenStatus::class,
         'reported_at' => 'datetime',
+        'acknowledged_at' => 'datetime',
     ];
 
     /**
@@ -34,5 +35,27 @@ class ScreenLog extends Model
     public function screen(): BelongsTo
     {
         return $this->belongsTo(Screen::class);
+    }
+
+    /**
+     * The administrator who acknowledged this event, if anyone has.
+     */
+    public function acknowledger(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'acknowledged_by');
+    }
+
+    /**
+     * An offline event is the thing an administrator acknowledges. Online and
+     * maintenance entries are not alerts.
+     */
+    public function isAlert(): bool
+    {
+        return $this->status === ScreenStatus::Offline;
+    }
+
+    public function isAcknowledged(): bool
+    {
+        return $this->acknowledged_at !== null;
     }
 }

@@ -71,24 +71,17 @@ class ScreenApiController extends Controller
         $screen = $request->authenticatedScreen();
         $payload = $request->validated();
 
-        $status = isset($payload['status'])
-            ? ScreenStatus::from($payload['status'])
-            : ScreenStatus::Online;
-
-        $reportedAt = isset($payload['reported_at'])
-            ? Carbon::parse($payload['reported_at'])
-            : now();
-
         $serverTime = now();
 
+        // The service stamps last_heartbeat with server time itself and decides
+        // the authoritative status; the device only contributes telemetry.
         $result = $this->heartbeatService->touch(
             $screen->id,
             $screen->device_uid,
             [
-                'status' => $status,
+                'status' => isset($payload['status']) ? ScreenStatus::from($payload['status']) : null,
                 'current_ad_code' => $payload['current_ad_code'] ?? null,
-                'reported_at' => $reportedAt,
-                'last_heartbeat' => $serverTime,
+                'reported_at' => isset($payload['reported_at']) ? Carbon::parse($payload['reported_at']) : null,
             ]
         );
 

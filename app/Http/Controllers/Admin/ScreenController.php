@@ -8,9 +8,10 @@ use App\Http\Requests\Admin\Screens\StoreScreenRequest;
 use App\Http\Requests\Admin\Screens\UpdateScreenRequest;
 use App\Models\Place;
 use App\Models\Screen;
+use App\Services\Monitoring\ScreenAvailabilityService;
 use App\Services\Screen\DevicePairingService;
 use App\Support\Lang;
-use Carbon\Carbon;
+use App\Support\ScreenHealth;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,10 @@ use Illuminate\View\View;
 
 class ScreenController extends Controller
 {
+    public function __construct(
+        protected ScreenAvailabilityService $availability
+    ) {}
+
     public function index(string $lang, Request $request): View
     {
         $query = Screen::query()
@@ -91,8 +96,12 @@ class ScreenController extends Controller
             'place_id' => $data['place_id'],
             'code' => $data['code'],
             'device_uid' => $data['device_uid'] ?? null,
-            'status' => $data['status'],
-            'last_heartbeat' => $data['last_heartbeat'] ? Carbon::parse($data['last_heartbeat']) : null,
+            // A brand-new screen has never been heard from, whatever the form
+            // says. Maintenance is the only status an administrator can assert.
+            'status' => $data['status'] === ScreenStatus::Maintenance->value
+                ? ScreenStatus::Maintenance
+                : ScreenStatus::Offline,
+            'last_heartbeat' => null,
         ]);
 
         activity()
@@ -116,24 +125,20 @@ class ScreenController extends Controller
             'schedules' => fn ($builder) => $builder->with('ad')->orderBy('start_time'),
         ]);
 
-        $recentLogs = $screen->logs()->latest('reported_at')->paginate(20, ['*'], 'logs_page');
+        $recentLogs = $screen->logs()->with('acknowledger')->latest('reported_at')->paginate(20, ['*'], 'logs_page');
         $recentPlaybacks = $screen->playbacks()->with('ad')->latest('played_at')->paginate(20, ['*'], 'playbacks_page');
 
-        $logsLastWeek = $screen->logs()
-            ->where('reported_at', '>=', Carbon::now()->subDays(7))
-            ->get();
+        $availability = $this->availability->forScreen($screen);
 
-        $onlineCount = $logsLastWeek->where('status', ScreenStatus::Online->value)->count();
-        $offlineCount = $logsLastWeek->where('status', ScreenStatus::Offline->value)->count();
-        $totalLogs = $logsLastWeek->count();
-        $uptime = $totalLogs > 0
-            ? round(($onlineCount / $totalLogs) * 100, 2)
-            : null;
-
-        $logSummary = [
-            ScreenStatus::Online->value => $onlineCount,
-            ScreenStatus::Offline->value => $offlineCount,
-        ];
+        // Counts of individual reports over the same window. Kept separate from
+        // availability so the two are never confused again: these are events,
+        // availability is elapsed time.
+        $logSummary = $screen->logs()
+            ->where('reported_at', '>=', $availability['period_start'])
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->all();
 
         $credential = $pairing->activeCredential($screen);
         $livePairingCode = $pairing->livePairingCode($screen);
@@ -146,7 +151,7 @@ class ScreenController extends Controller
             'screen' => $screen,
             'recentLogs' => $recentLogs,
             'recentPlaybacks' => $recentPlaybacks,
-            'uptime' => $uptime,
+            'availability' => $availability,
             'logSummary' => $logSummary,
         ]);
     }
@@ -162,17 +167,27 @@ class ScreenController extends Controller
         ]);
     }
 
-    public function update(string $lang, UpdateScreenRequest $request, Screen $screen): RedirectResponse
+    public function update(string $lang, UpdateScreenRequest $request, Screen $screen, DevicePairingService $pairing): RedirectResponse
     {
         $data = $request->validated();
 
-        $screen->update([
+        $attributes = [
             'place_id' => $data['place_id'],
             'code' => $data['code'],
-            'device_uid' => $data['device_uid'] ?? null,
-            'status' => $data['status'],
-            'last_heartbeat' => $data['last_heartbeat'] ? Carbon::parse($data['last_heartbeat']) : null,
-        ]);
+            'status' => $this->resolveStatus($screen, $data['status']),
+        ];
+
+        // A paired device owns its identity. Letting a routine screen edit
+        // rewrite device_uid would silently reassign which hardware the screen
+        // believes it is; re-pairing is the authoritative path. An unpaired
+        // screen can still have its UID set by hand.
+        if (! $pairing->activeCredential($screen)) {
+            $attributes['device_uid'] = $data['device_uid'] ?? null;
+        }
+
+        // `last_heartbeat` is never in this array. It is written only by
+        // HeartbeatService when a device actually reports in.
+        $screen->update($attributes);
 
         activity()
             ->performedOn($screen)
@@ -242,6 +257,26 @@ class ScreenController extends Controller
         return redirect()
             ->route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id])
             ->with('success', Lang::t('admin.screens.pairing.device_reset', 'Device credentials revoked.'));
+    }
+
+    /**
+     * Decide the status an administrator's edit is allowed to produce.
+     *
+     * Maintenance is a genuine administrative decision, so it is honoured.
+     * Anything else is a request to hand the screen back to automatic
+     * connectivity tracking, and the answer comes from the evidence — the
+     * freshness of `last_heartbeat` — not from the dropdown. That is what stops
+     * an administrator declaring a dead screen online.
+     */
+    private function resolveStatus(Screen $screen, string $requested): ScreenStatus
+    {
+        if ($requested === ScreenStatus::Maintenance->value) {
+            return ScreenStatus::Maintenance;
+        }
+
+        return ScreenHealth::isStale($screen->last_heartbeat)
+            ? ScreenStatus::Offline
+            : ScreenStatus::Online;
     }
 
     private function availableStatuses(): array

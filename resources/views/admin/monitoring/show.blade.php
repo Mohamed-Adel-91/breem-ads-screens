@@ -64,10 +64,16 @@
             <div class="col-sm-6 col-lg-3">
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
-                        <span class="admin-stat-label">{{ __('admin.monitoring.show.online_reports') }}</span>
-                        <span class="admin-stat-value">{{ $uptime !== null ? $uptime . '%' : '—' }}</span>
+                        {{-- Real elapsed-time availability from ScreenAvailabilityService,
+                             not the old online-log-count ratio. --}}
+                        <span class="admin-stat-label">{{ __('admin.monitoring.show.availability') }}</span>
+                        <span class="admin-stat-value">
+                            {{ $availability['availability'] !== null ? $availability['availability'] . '%' : '—' }}
+                        </span>
                         <small class="d-block text-muted mt-1">
-                            {{ __('admin.monitoring.show.online_reports_hint') }}
+                            {{ $availability['availability'] !== null
+                                ? __('admin.monitoring.show.availability_hint')
+                                : __('admin.monitoring.show.availability_empty') }}
                         </small>
                     </div>
                 </div>
@@ -125,58 +131,47 @@
                             <h2 class="card-title mb-0">{{ __('admin.monitoring.acknowledge.heading') }}</h2>
                         </div>
                         <div class="card-body">
-                            <form method="POST"
-                                  action="{{ route('admin.monitoring.screens.acknowledge', ['lang' => $lang, 'screen' => $screen->id]) }}"
-                                  data-confirm-message="{{ __('admin.monitoring.acknowledge.confirm') }}">
-                                @csrf
-                                <div class="row align-items-end">
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="status">
-                                                {{ __('admin.monitoring.acknowledge.status') }}
-                                                <span class="text-danger" aria-hidden="true">*</span>
-                                            </label>
-                                            <select id="status"
-                                                    name="status"
-                                                    required
-                                                    @class(['form-control', 'is-invalid' => $errors->has('status')])>
-                                                {{-- Only the two values AcknowledgeAlertRequest accepts. --}}
-                                                <option value="online" @selected(old('status', 'online') === 'online')>
-                                                    {{ __('admin.screens.statuses.online') }}
-                                                </option>
-                                                <option value="maintenance" @selected(old('status') === 'maintenance')>
-                                                    {{ __('admin.screens.statuses.maintenance') }}
-                                                </option>
-                                            </select>
-                                            @error('status')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <div class="form-group">
-                                            <label for="note">{{ __('admin.monitoring.acknowledge.note') }}</label>
-                                            <textarea id="note"
-                                                      name="note"
-                                                      rows="2"
-                                                      placeholder="{{ __('admin.monitoring.acknowledge.note_placeholder') }}"
-                                                      @class(['form-control', 'is-invalid' => $errors->has('note')])>{{ old('note') }}</textarea>
-                                            @error('note')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
+                            {{--
+                                Acknowledging records that an administrator has SEEN the
+                                alert. It no longer carries a status field: writing one
+                                here let the dashboard manufacture connectivity, which is
+                                exactly what Phase 11 removed. Connectivity comes from
+                                device heartbeats; maintenance is set on the Screen edit
+                                form.
+                            --}}
+                            @if ($openAlert)
+                                <p class="text-muted small">
+                                    {{ __('admin.monitoring.acknowledge.open_alert', [
+                                        'time' => optional($openAlert->reported_at)->format('Y-m-d H:i'),
+                                    ]) }}
+                                </p>
+
+                                <form method="POST"
+                                      action="{{ route('admin.monitoring.screens.acknowledge', ['lang' => $lang, 'screen' => $screen->id]) }}"
+                                      data-confirm-message="{{ __('admin.monitoring.acknowledge.confirm') }}">
+                                    @csrf
+                                    <div class="form-group">
+                                        <label for="note">{{ __('admin.monitoring.acknowledge.note') }}</label>
+                                        <textarea id="note"
+                                                  name="note"
+                                                  rows="2"
+                                                  placeholder="{{ __('admin.monitoring.acknowledge.note_placeholder') }}"
+                                                  @class(['form-control', 'is-invalid' => $errors->has('note')])>{{ old('note') }}</textarea>
+                                        @error('note')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                     </div>
 
-                                    <div class="col-12">
-                                        <p class="text-muted small">{{ __('admin.monitoring.acknowledge.notice') }}</p>
-                                        <x-admin.group-btn class="justify-content-end">
-                                            <x-admin.btn type="submit" icon="check-circle">
-                                                {{ __('admin.monitoring.acknowledge.submit') }}
-                                            </x-admin.btn>
-                                        </x-admin.group-btn>
-                                    </div>
-                                </div>
-                            </form>
+                                    <p class="text-muted small">{{ __('admin.monitoring.acknowledge.notice') }}</p>
+                                    <x-admin.group-btn class="justify-content-end">
+                                        <x-admin.btn type="submit" icon="check-circle">
+                                            {{ __('admin.monitoring.acknowledge.submit') }}
+                                        </x-admin.btn>
+                                    </x-admin.group-btn>
+                                </form>
+                            @else
+                                <p class="text-muted mb-0">{{ __('admin.monitoring.acknowledge.none_open') }}</p>
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -328,6 +328,13 @@ class MonitoringAdminViewsTest extends TestCase
         $screen = $this->makeScreen(['code' => 'SCR-ACK']);
         $ackUrl = route('admin.monitoring.screens.acknowledge', ['lang' => 'en', 'screen' => $screen->id]);
 
+        // Phase 11: the form appears only when there is a real open alert to
+        // acknowledge, so raise one.
+        $screen->logs()->create([
+            'status' => ScreenStatus::Offline->value,
+            'reported_at' => now()->subMinutes(5),
+        ]);
+
         // A manager sees the acknowledgement form.
         $manager = $this->actingAsAdmin()->get(
             route('admin.monitoring.screens.show', ['lang' => 'en', 'screen' => $screen->id])
@@ -355,7 +362,7 @@ class MonitoringAdminViewsTest extends TestCase
 
         // The mutating route is blocked for them too.
         $this->actingAs($viewer, 'admin')
-            ->post($ackUrl, ['status' => 'online'])
+            ->post($ackUrl, ['note' => 'Trying anyway'])
             ->assertForbidden();
     }
 

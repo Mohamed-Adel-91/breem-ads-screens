@@ -1,9 +1,72 @@
-# Runbook — re-pairing the fleet after the Phase 10 credential change
+# Runbook — device credentials and screen health
+
+## Part A — the scheduler is mandatory
+
+**Offline detection only works if the Laravel scheduler is running.** Without it,
+`screens.status` silently goes stale: a dead screen keeps reporting "online"
+forever and no offline alert is ever raised.
+
+Install exactly one entry per application host:
+
+```cron
+* * * * * cd /path/to/breem-ads-screens && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Or as a systemd timer, if that is the house style:
+
+```ini
+# /etc/systemd/system/breem-scheduler.service
+[Service]
+Type=oneshot
+WorkingDirectory=/path/to/breem-ads-screens
+ExecStart=/usr/bin/php artisan schedule:run
+
+# /etc/systemd/system/breem-scheduler.timer
+[Timer]
+OnCalendar=*:0/1
+AccuracySec=1s
+```
+
+Verify what is registered:
+
+```bash
+php artisan schedule:list
+```
+
+Expected — two entries:
+
+| Frequency | Task |
+|---|---|
+| `* * * * *` | Mark screens offline after 120s without a heartbeat |
+| `0 9 * * *` | Notify administrators about ads nearing their end date |
+
+The offline sweep is idempotent, so a missed tick costs only detection latency,
+never correctness. If the scheduler has been down, screens that died during the
+outage are transitioned on the next successful run.
+
+**Also set `ADMIN_EMAIL`.** Offline notifications are built from it; with no
+recipient configured the sweep still transitions screens correctly but tells
+nobody.
+
+Relevant settings:
+
+| Key | Default | Meaning |
+|---|---|---|
+| `SCREENS_HEARTBEAT_INTERVAL` | 60 | Cadence advertised to devices, in seconds. |
+| `SCREENS_OFFLINE_AFTER` | `interval × 2` (120) | Silence tolerated before a screen is called offline. Floored at `interval + 1`. |
+| `ADMIN_EMAIL` | — | Recipient for offline alerts. |
+
+There is one queue dependency: `CheckScreenHealthJob` and the notifications it
+sends are queued, so `php artisan queue:work` must also be running.
+
+---
+
+## Part B — re-pairing the fleet after the Phase 10 credential change
 
 **This is a breaking change for every device already in the field.** Read it
 before deploying.
 
-## What changed and why every device breaks
+### What changed and why every device breaks
 
 Before Phase 10, a device authenticated by sending its `device_uid` and a
 signature made with a single fleet-wide secret (`SCREENS_HMAC_SECRET`). Both
@@ -25,14 +88,14 @@ existing device receives:
 ```
 
 and the screen stops fetching playlists. The screens will show as `offline` once
-`screens:check-status` next runs. **Every screen must be re-paired by hand.**
+the offline sweep next runs (see Part A). **Every screen must be re-paired by hand.**
 
 This is the intended outcome, not a defect. A migration that auto-issued
 credentials to already-known `device_uid` values would grant a credential to
 whatever hardware currently claims that UID — which is precisely the weakness
 Phase 10 removes.
 
-## Before you deploy
+### Before you deploy
 
 1. **Schedule a window.** Content stops rotating on each screen until that screen
    is re-paired. Devices keep playing whatever they last cached, so screens go
@@ -44,7 +107,7 @@ Phase 10 removes.
 4. **Take a database backup.** The three new tables are additive and `screens` is
    untouched, but back up anyway.
 
-## Deploy
+### Deploy
 
 ```bash
 php artisan down
@@ -67,7 +130,7 @@ more; leaving it there implies a fleet secret still exists.
 Add `SCREENS_PAIRING_CODE_TTL` if you want a lifetime other than the 900-second
 default.
 
-## Re-pair one screen
+### Re-pair one screen
 
 1. Admin panel → **Screens** → open the screen.
 2. In the **Device pairing** panel, click **Reset device** if the screen still
@@ -84,7 +147,7 @@ default.
 A code expires after `SCREENS_PAIRING_CODE_TTL`. Generate it when you are ready
 to use it, not in a batch the day before.
 
-## Verifying the fleet
+### Verifying the fleet
 
 ```sql
 -- Screens with no live credential — these still need re-pairing.
@@ -105,7 +168,7 @@ WHERE revoked_at IS NULL AND last_used_at IS NULL;
 The Monitoring page is the operational view, but it reports stored status; the
 queries above are the authoritative answer to "is this screen paired".
 
-## Rollback
+### Rollback
 
 Application rollback works: revert the code, restore the previous `.env`
 including `SCREENS_HMAC_SECRET`, and the old scheme resumes — devices still hold
@@ -115,7 +178,7 @@ Leave the three new tables in place during a rollback. Dropping them destroys an
 credentials already issued to screens you re-paired, forcing those screens
 through the whole process again when you roll forward.
 
-## Routine operations after migration
+### Routine operations after migration
 
 | Situation | Action |
 |---|---|
@@ -127,7 +190,7 @@ through the whole process again when you roll forward.
 Resetting one screen affects only that screen. There is no fleet-wide secret, so
 there is nothing fleet-wide to rotate.
 
-## Limitations
+### Limitations
 
 - **No bulk pairing.** Codes are issued per screen through the admin panel. A
   CLI bulk-issue command would have to write codes somewhere readable, which

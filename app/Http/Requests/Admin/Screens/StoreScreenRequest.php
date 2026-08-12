@@ -22,7 +22,9 @@ class StoreScreenRequest extends FormRequest
             'code' => ['required', 'string', 'max:255', 'unique:screens,code'],
             'device_uid' => ['nullable', 'string', 'max:255', 'unique:screens,device_uid'],
             'status' => ['required', Rule::in($statuses)],
-            'last_heartbeat' => ['nullable', 'date'],
+            // `last_heartbeat` is deliberately not accepted: it records when the
+            // server heard from a device, so a screen that has never reported
+            // must start with none.
         ];
     }
 }

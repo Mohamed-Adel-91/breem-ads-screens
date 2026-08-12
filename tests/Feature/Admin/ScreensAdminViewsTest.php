@@ -127,8 +127,12 @@ class ScreensAdminViewsTest extends TestCase
         $response->assertSee('name="code"', false);
         $response->assertSee('name="device_uid"', false);
         $response->assertSee('name="status"', false);
-        $response->assertSee('name="last_heartbeat"', false);
         $response->assertSee(route('admin.screens.store', ['lang' => $locale]), false);
+
+        // Phase 11: last_heartbeat is server-owned operational evidence and is
+        // no longer a form input. It used to be an editable datetime-local field,
+        // which let an administrator forge connectivity freshness.
+        $response->assertDontSee('name="last_heartbeat"', false);
     }
 
     #[DataProvider('localeProvider')]

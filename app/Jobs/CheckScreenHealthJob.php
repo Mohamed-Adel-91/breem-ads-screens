@@ -6,6 +6,7 @@ use App\Enums\ScreenStatus;
 use App\Models\Screen;
 use App\Notifications\ScreenOfflineNotification;
 use App\Services\Screen\HeartbeatService;
+use App\Support\ScreenHealth;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,7 +14,6 @@ use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification as BaseNotification;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 
 class CheckScreenHealthJob implements ShouldQueue
@@ -24,39 +24,32 @@ class CheckScreenHealthJob implements ShouldQueue
     use SerializesModels;
 
     /**
-     * Execute the job.
+     * Transition every screen that has gone silent.
+     *
+     * Idempotent by construction. The query selects only screens that are still
+     * `online`, so once a screen has been transitioned it drops out and no
+     * further work — no duplicate log, no repeat notification — happens on the
+     * next tick. HeartbeatService::markOffline() re-checks eligibility, so a
+     * screen that heartbeated between the query and the write is left alone.
      */
     public function handle(HeartbeatService $heartbeatService): void
     {
-        $threshold = $this->threshold();
-
         $screens = Screen::query()
             ->with('place')
             ->where('status', ScreenStatus::Online)
             ->whereNotNull('last_heartbeat')
-            ->where('last_heartbeat', '<', $threshold)
+            ->where('last_heartbeat', '<', ScreenHealth::offlineThreshold())
             ->get();
 
         foreach ($screens as $screen) {
-            $heartbeatService->touch($screen, $screen->device_uid, [
-                'status' => ScreenStatus::Offline,
-                'reported_at' => now(),
-                'last_heartbeat' => $screen->last_heartbeat,
-            ]);
+            $lastHeartbeat = $screen->last_heartbeat;
 
-            $this->notifyAdmins(new ScreenOfflineNotification($screen, now(), $screen->last_heartbeat));
+            if (! $heartbeatService->markOffline($screen)) {
+                continue;
+            }
+
+            $this->notifyAdmins(new ScreenOfflineNotification($screen, now(), $lastHeartbeat));
         }
-    }
-
-    /**
-     * Determine the latest acceptable heartbeat timestamp.
-     */
-    protected function threshold(): Carbon
-    {
-        $interval = max(1, (int) config('services.screens.heartbeat_interval', 60));
-        $grace = max($interval, (int) ($interval * 2));
-
-        return now()->subSeconds($grace);
     }
 
     /**

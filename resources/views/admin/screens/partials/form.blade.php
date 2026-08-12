@@ -103,23 +103,27 @@
                     @error('status')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    <small id="status_help" class="form-text text-muted">
+                        {{ __('admin.screens.form.status_help') }}
+                    </small>
                 </div>
             </div>
 
             <div class="col-md-6">
+                {{--
+                    last_heartbeat is read-only operational evidence: it records
+                    when the server accepted a signed heartbeat. It used to be an
+                    editable datetime-local input, which let an administrator
+                    forge connectivity freshness and blanked a live screen's
+                    heartbeat whenever the field was left empty.
+                --}}
                 <div class="form-group">
-                    <label for="last_heartbeat">{{ __('admin.screens.form.last_heartbeat') }}</label>
-                    <input type="datetime-local"
-                           id="last_heartbeat"
-                           name="last_heartbeat"
-                           dir="ltr"
-                           aria-describedby="last_heartbeat_help"
-                           value="{{ old('last_heartbeat', optional($screen->last_heartbeat)->format('Y-m-d\TH:i')) }}"
-                           @class(['form-control', 'is-invalid' => $errors->has('last_heartbeat')])>
-                    @error('last_heartbeat')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                    <small id="last_heartbeat_help" class="form-text text-muted">
+                    <label>{{ __('admin.screens.form.last_heartbeat') }}</label>
+                    <p class="form-control-static mb-0" dir="ltr">
+                        {{ optional($screen->last_heartbeat)->format('Y-m-d H:i')
+                            ?? __('admin.screens.form.last_heartbeat_never') }}
+                    </p>
+                    <small class="form-text text-muted">
                         {{ __('admin.screens.form.last_heartbeat_help') }}
                     </small>
                 </div>

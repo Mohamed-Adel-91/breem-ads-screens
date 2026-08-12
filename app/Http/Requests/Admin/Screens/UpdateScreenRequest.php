@@ -14,9 +14,19 @@ class UpdateScreenRequest extends FormRequest
         return true;
     }
 
+    /**
+     * `last_heartbeat` is absent on purpose — it is server-owned operational
+     * evidence, written only when a device actually reports in. It used to be an
+     * accepted field, which meant an administrator could forge connectivity
+     * freshness, and omitting it from the form nulled a live screen's heartbeat.
+     *
+     * `status` is still accepted so the existing form keeps working, but the
+     * controller only honours a move into or out of maintenance; it never lets
+     * an administrator declare a silent screen online.
+     */
     public function rules(): array
     {
-        $statuses = array_map(fn(ScreenStatus $status) => $status->value, ScreenStatus::cases());
+        $statuses = array_map(fn (ScreenStatus $status) => $status->value, ScreenStatus::cases());
         $screen = $this->route('screen');
         $screenId = $screen instanceof Screen ? $screen->id : $screen;
 
@@ -25,7 +35,6 @@ class UpdateScreenRequest extends FormRequest
             'code' => ['required', 'string', 'max:255', Rule::unique('screens', 'code')->ignore($screenId)],
             'device_uid' => ['nullable', 'string', 'max:255', Rule::unique('screens', 'device_uid')->ignore($screenId)],
             'status' => ['required', Rule::in($statuses)],
-            'last_heartbeat' => ['nullable', 'date'],
         ];
     }
 }

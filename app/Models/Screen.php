@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Screen extends Model
 {
@@ -62,6 +63,43 @@ class Screen extends Model
     public function logs(): HasMany
     {
         return $this->hasMany(ScreenLog::class);
+    }
+
+    /**
+     * The most recent log entry for this screen.
+     *
+     * Prefer this over eager-loading `logs` with a `limit(1)` constraint. That
+     * pattern was long recorded as a bug — one combined child query, so only one
+     * screen on the page got a latest log — and it genuinely was on older
+     * Laravel. Laravel 11+ rewrites the limit into
+     * `row_number() OVER (PARTITION BY screen_id ...)`, so it is no longer
+     * wrong, but it relies on the framework quietly transforming the query and
+     * hands Blade a one-element collection. This relation states the intent
+     * directly and returns a model.
+     *
+     * Ordered by `reported_at` to match the log stream everywhere else, with the
+     * primary key breaking ties between entries written in the same second.
+     */
+    public function latestLog(): HasOne
+    {
+        return $this->hasOne(ScreenLog::class)->ofMany([
+            'reported_at' => 'max',
+            'id' => 'max',
+        ]);
+    }
+
+    /**
+     * The newest unacknowledged offline event, if the screen has one.
+     */
+    public function openAlert(): HasOne
+    {
+        return $this->hasOne(ScreenLog::class)
+            ->ofMany(
+                ['reported_at' => 'max', 'id' => 'max'],
+                fn ($query) => $query
+                    ->where('status', ScreenStatus::Offline->value)
+                    ->whereNull('acknowledged_at')
+            );
     }
 
     /**
