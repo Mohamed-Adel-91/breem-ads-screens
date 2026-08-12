@@ -6,19 +6,23 @@ use App\Contracts\FileServiceInterface;
 use App\Enums\AdStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Ads\StoreAdRequest;
+use App\Http\Requests\Admin\Ads\TransitionAdStatusRequest;
 use App\Http\Requests\Admin\Ads\UpdateAdRequest;
 use App\Models\Ad;
 use App\Models\Screen;
 use App\Models\User;
 use App\Services\Screen\AdSchedulerService;
+use App\Support\CreativeMedia;
 use App\Support\Lang;
 use App\Support\VideoProbe;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Throwable;
 
 class AdController extends Controller
 {
@@ -105,54 +109,65 @@ class AdController extends Controller
             'pageName' => Lang::t('admin.pages.ads.create', 'إنشاء إعلان جديد'),
             'lang' => $lang,
             'ad' => $ad,
-            'statuses' => $this->availableStatuses(),
             'screens' => Screen::with('place')->orderBy('code')->get(),
             'owners' => User::orderBy('name')->get(),
+            'uploadLimits' => $this->uploadLimits(),
         ]);
     }
 
     public function store(string $lang, StoreAdRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $upload = $request->file('creative');
 
-        $filePath = $this->fileService->uploadSingle($request, 'creative', Ad::UPLOAD_FOLDER);
-        $fileType = $this->determineFileType($request->file('creative'), $filePath);
+        // The category comes from the file's own contents, and the stored extension
+        // is derived from it — never from the client filename.
+        $fileType = CreativeMedia::categoryOf($upload);
+        $filePath = $this->fileService->uploadSingle(
+            $request,
+            'creative',
+            Ad::UPLOAD_FOLDER,
+            null,
+            CreativeMedia::extensionOf($upload)
+        );
 
-        $hasDurationValue = array_key_exists('duration_seconds', $data) && $data['duration_seconds'] !== null;
-        $durationSeconds = $hasDurationValue ? (int) $data['duration_seconds'] : 0;
+        $duration = $this->resolveDuration($fileType, $filePath, $data, null);
 
-        if (
-            $fileType === 'video'
-            && config('ads.try_ffprobe', true)
-            && (!$hasDurationValue || $durationSeconds === 0)
-        ) {
-            $probedDuration = VideoProbe::durationSeconds($filePath);
-
-            if ($probedDuration === null) {
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        'duration_seconds' => 'duration_seconds required (ffprobe unavailable or failed)',
-                    ]);
-            }
-
-            $durationSeconds = $probedDuration;
+        if ($duration === null) {
+            // The creative is already on disk at this point, so it must be removed
+            // before the request unwinds; otherwise a failed probe leaves an orphan.
+            return $this->failedProbe();
         }
 
         $ad = new Ad();
-        $ad->title = $this->prepareTranslations($data['title'] ?? []);
-        $ad->description = $this->prepareTranslations($data['description'] ?? []);
-        $ad->file_path = $filePath;
-        $ad->file_type = $fileType;
-        $ad->duration_seconds = $durationSeconds;
-        $ad->status = AdStatus::from($data['status'] ?? AdStatus::Pending->value);
-        $ad->created_by = $data['created_by'];
-        $ad->approved_by = $data['approved_by'] ?? null;
-        $ad->start_date = $data['start_date'] ?? null;
-        $ad->end_date = $data['end_date'] ?? null;
-        $ad->save();
 
-        $this->syncScreens($ad, $data['screens'] ?? [], $request->input('play_order', []));
+        try {
+            DB::transaction(function () use ($ad, $data, $request, $filePath, $fileType, $duration): void {
+                $ad->title = $this->prepareTranslations($data['title'] ?? []);
+                $ad->description = $this->prepareTranslations($data['description'] ?? []);
+                $ad->file_path = $filePath;
+                $ad->file_type = $fileType;
+                $ad->duration_seconds = $duration;
+                // A new ad is always pending: publishing is an approval action, not
+                // a field on this form.
+                $ad->status = AdStatus::Pending;
+                $ad->created_by = $data['created_by'];
+                $ad->created_by_admin_id = Auth::guard('admin')->id();
+                $ad->start_date = $data['start_date'] ?? null;
+                $ad->end_date = $data['end_date'] ?? null;
+                $ad->save();
+
+                $this->syncScreens($ad, $data['screens'] ?? [], $request->input('play_order', []));
+            });
+        } catch (Throwable $e) {
+            $this->fileService->discardUploadedFiles();
+
+            throw $e;
+        }
+
+        // Nothing was replaced on a create, but the pending list is still cleared so
+        // the service does not carry state into anything else in this request.
+        $this->fileService->commitReplacedFiles();
 
         activity()
             ->performedOn($ad)
@@ -175,6 +190,8 @@ class AdController extends Controller
             'schedules' => fn ($query) => $query->with('screen.place')->orderBy('start_time'),
             'creator',
             'approver',
+            'creatorAdmin',
+            'approverAdmin',
             'playbacks' => fn ($query) => $query->with('screen')->latest('played_at')->limit(20),
         ]);
 
@@ -193,6 +210,11 @@ class AdController extends Controller
             'playbackStats' => $playbackStats,
             'upcomingSchedules' => $ad->schedules->filter(fn ($schedule) => $schedule->start_time?->isFuture()),
             'pastSchedules' => $ad->schedules->filter(fn ($schedule) => $schedule->end_time?->isPast()),
+            // Resolved here, not in Blade: the view renders the edges the ad's
+            // current status actually permits.
+            'availableActions' => array_keys($ad->status->allowedTransitions()),
+            'validFrom' => $ad->validFrom(),
+            'validBefore' => $ad->validBefore(),
         ]);
     }
 
@@ -204,82 +226,184 @@ class AdController extends Controller
             'pageName' => Lang::t('admin.pages.ads.edit', 'تعديل الإعلان'),
             'lang' => $lang,
             'ad' => $ad,
-            'statuses' => $this->availableStatuses(),
             'screens' => Screen::with('place')->orderBy('code')->get(),
             'owners' => User::orderBy('name')->get(),
+            'uploadLimits' => $this->uploadLimits(),
         ]);
     }
 
     public function update(string $lang, UpdateAdRequest $request, Ad $ad): RedirectResponse
     {
         $data = $request->validated();
+        $upload = $request->file('creative');
 
-        $filePath = $this->fileService->uploadSingle($request, 'creative', Ad::UPLOAD_FOLDER, $ad->file_path);
-        $fileChanged = $filePath && $filePath !== $ad->file_path;
-
-        if ($fileChanged) {
-            $fileType = $this->determineFileType($request->file('creative'), $filePath);
-            $ad->file_path = $filePath;
-            $ad->file_type = $fileType;
+        // Order matters throughout: the new file is written first, every way the
+        // write can fail is handled before the old one is touched, and the old file
+        // is removed only after the database has committed.
+        if ($upload) {
+            $fileType = CreativeMedia::categoryOf($upload);
+            $filePath = $this->fileService->uploadSingle(
+                $request,
+                'creative',
+                Ad::UPLOAD_FOLDER,
+                $ad->file_path,
+                CreativeMedia::extensionOf($upload)
+            );
         } else {
             $fileType = $ad->file_type;
             $filePath = $ad->file_path;
         }
 
-        $hasDurationValue = array_key_exists('duration_seconds', $data) && $data['duration_seconds'] !== null;
-        $durationSeconds = $hasDurationValue
-            ? (int) $data['duration_seconds']
-            : ($fileChanged ? 0 : ($ad->duration_seconds !== null ? (int) $ad->duration_seconds : 0));
+        $fileChanged = (bool) $upload && $filePath !== $ad->file_path;
 
-        if (
-            $fileChanged
-            && $fileType === 'video'
-            && config('ads.try_ffprobe', true)
-            && (!$hasDurationValue || $durationSeconds === 0)
-        ) {
-            $probedDuration = VideoProbe::durationSeconds($filePath);
+        $duration = $fileChanged
+            ? $this->resolveDuration($fileType, $filePath, $data, null)
+            : $this->resolveDuration($fileType, $filePath, $data, (int) $ad->duration_seconds);
 
-            if ($probedDuration === null) {
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        'duration_seconds' => 'duration_seconds required (ffprobe unavailable or failed)',
-                    ]);
-            }
-
-            $durationSeconds = $probedDuration;
+        if ($duration === null) {
+            // Nothing has been written to the ad row, so the database still points at
+            // the old creative and that file is still on disk. Only the new candidate
+            // is thrown away.
+            return $this->failedProbe();
         }
 
-        $ad->title = $this->prepareTranslations($data['title'] ?? []);
-        $ad->description = $this->prepareTranslations($data['description'] ?? []);
-        $ad->duration_seconds = $durationSeconds;
-        $ad->status = AdStatus::from($data['status'] ?? $ad->status->value);
-        $ad->created_by = $data['created_by'];
-        $ad->approved_by = $data['approved_by'] ?? null;
-        $ad->start_date = $data['start_date'] ?? null;
-        $ad->end_date = $data['end_date'] ?? null;
-        $ad->save();
+        $requiresReapproval = $this->requiresReapproval($ad, $filePath, $fileType, $duration, $data);
 
-        $this->syncScreens($ad, $data['screens'] ?? [], $request->input('play_order', []));
+        try {
+            DB::transaction(function () use ($ad, $data, $request, $filePath, $fileType, $duration, $requiresReapproval): void {
+                $ad->title = $this->prepareTranslations($data['title'] ?? []);
+                $ad->description = $this->prepareTranslations($data['description'] ?? []);
+                $ad->file_path = $filePath;
+                $ad->file_type = $fileType;
+                $ad->duration_seconds = $duration;
+                $ad->created_by = $data['created_by'];
+                $ad->start_date = $data['start_date'] ?? null;
+                $ad->end_date = $data['end_date'] ?? null;
+
+                if ($requiresReapproval) {
+                    // What a screen would play has changed, so the previous review no
+                    // longer covers it. The approval trail is cleared with the status
+                    // it belonged to.
+                    $ad->status = AdStatus::Pending;
+                    $ad->approved_by_admin_id = null;
+                    $ad->approved_at = null;
+                }
+
+                $ad->save();
+
+                $this->syncScreens($ad, $data['screens'] ?? [], $request->input('play_order', []));
+            });
+        } catch (Throwable $e) {
+            $this->fileService->discardUploadedFiles();
+
+            throw $e;
+        }
+
+        // Committed: the replaced creative can finally go.
+        $this->fileService->commitReplacedFiles();
 
         activity()
             ->performedOn($ad)
             ->causedBy(Auth::guard('admin')->user())
             ->withProperties([
                 'status' => $ad->status->value,
+                'creative_replaced' => $fileChanged,
+                'reapproval_required' => $requiresReapproval,
             ])
             ->log('Updated ad');
 
+        $message = $requiresReapproval
+            ? Lang::t('admin.flash.ads.updated_pending_review', 'Ad updated. Playback-relevant changes need approval again.')
+            : Lang::t('admin.flash.ads.updated', 'Ad updated successfully.');
+
         return redirect()
             ->route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id])
-            ->with('success', Lang::t('admin.flash.ads.updated', 'Ad updated successfully.'));
+            ->with('success', $message);
     }
 
+    /**
+     * Move an advertisement along one declared lifecycle edge.
+     *
+     * Separate from update() on purpose. Approval is an authority, not a form field:
+     * this action is gated by `ads.approve`, takes an action name rather than a
+     * target status, and refuses any edge AdStatus does not declare from the ad's
+     * current status.
+     */
+    public function transition(string $lang, TransitionAdStatusRequest $request, Ad $ad): RedirectResponse
+    {
+        $action = $request->action();
+        $from = $ad->status;
+        $to = $from->resultOf($action);
+
+        if (! $to) {
+            return back()->withErrors([
+                'action' => Lang::t(
+                    'admin.ads.transitions.not_allowed',
+                    'That action is not available for an ad in its current state.'
+                ),
+            ]);
+        }
+
+        $approver = Auth::guard('admin')->user();
+
+        $ad->status = $to;
+
+        if ($action === AdStatus::ACTION_APPROVE) {
+            $ad->approved_by_admin_id = $approver?->id;
+            $ad->approved_at = now();
+        }
+
+        // Saving the ad flushes every assigned screen's playlist through AdObserver,
+        // so an approval or takedown reaches devices on their next poll rather than
+        // after the cache TTL.
+        $ad->save();
+
+        activity()
+            ->performedOn($ad)
+            ->causedBy($approver)
+            ->withProperties(array_filter([
+                'action' => $action,
+                'from' => $from->value,
+                'to' => $to->value,
+                'reason' => $request->reason(),
+            ], fn ($value) => $value !== null))
+            ->log('Changed ad status');
+
+        return redirect()
+            ->route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id])
+            ->with('success', Lang::t(
+                'admin.flash.ads.status_changed',
+                'Ad status updated.'
+            ));
+    }
+
+    /**
+     * Delete an advertisement and, only afterwards, the creative it owned.
+     *
+     * The order is deliberate:
+     *   1. capture the affected screens while the pivot rows still exist;
+     *   2. remove the database rows;
+     *   3. invalidate those screens' playlists, so no device is still being handed
+     *      a creative that is about to disappear;
+     *   4. delete the file last, and only if this ad was the only record pointing
+     *      at it.
+     *
+     * If step 2 fails, nothing is deleted from disk at all.
+     */
     public function destroy(string $lang, Ad $ad): RedirectResponse
     {
         $filePath = $ad->file_path;
 
         $screenIds = $ad->screens()->pluck('screens.id')->all();
+
+        // A creative is normally owned by one ad, but a path can be reused — by a
+        // duplicated row, or by a seeded asset shared between ads. Check before
+        // deleting, because an unlinked file cannot be recovered.
+        $isSharedCreative = $filePath
+            && Ad::query()
+                ->where('file_path', $filePath)
+                ->whereKeyNot($ad->getKey())
+                ->exists();
 
         activity()
             ->performedOn($ad)
@@ -287,8 +411,10 @@ class AdController extends Controller
             ->withProperties(['id' => $ad->id])
             ->log('Deleted ad');
 
-        $ad->screens()->detach();
-        $ad->delete();
+        DB::transaction(function () use ($ad): void {
+            $ad->screens()->detach();
+            $ad->delete();
+        });
 
         $screenIds = collect($screenIds)
             ->filter()
@@ -300,7 +426,7 @@ class AdController extends Controller
             $this->scheduler->forgetMany($screenIds);
         }
 
-        if ($filePath) {
+        if ($filePath && ! $isSharedCreative) {
             $this->fileService->deleteFile(basename($filePath), Ad::UPLOAD_FOLDER);
         }
 
@@ -309,11 +435,35 @@ class AdController extends Controller
             ->with('success', Lang::t('admin.flash.ads.deleted', 'Ad deleted successfully.'));
     }
 
+    /**
+     * Status list for the index filter. It is no longer a form field — the create
+     * and edit forms carry no status select at all.
+     *
+     * @return array<string, string>
+     */
     private function availableStatuses(): array
     {
         return collect(AdStatus::cases())
             ->mapWithKeys(fn (AdStatus $status) => [$status->value => ucfirst($status->value)])
             ->toArray();
+    }
+
+    /**
+     * Accepted formats and size ceilings, for the form's helper text.
+     *
+     * Read from CreativeMedia so the text can never advertise a limit the validator
+     * does not enforce.
+     *
+     * @return array<string, mixed>
+     */
+    private function uploadLimits(): array
+    {
+        return [
+            'accept' => CreativeMedia::allowedMimeTypeList(),
+            'image_max_kb' => CreativeMedia::maxKilobytes(CreativeMedia::CATEGORY_IMAGE),
+            'gif_max_kb' => CreativeMedia::maxKilobytes(CreativeMedia::CATEGORY_GIF),
+            'video_max_kb' => CreativeMedia::maxKilobytes(CreativeMedia::CATEGORY_VIDEO),
+        ];
     }
 
     private function prepareTranslations(?array $values): array
@@ -346,50 +496,125 @@ class AdController extends Controller
         $ad->flushScreensCache($affectedScreenIds);
     }
 
-    private function resolveDurationSeconds(StoreAdRequest|UpdateAdRequest $request, string $fileType, ?string $filePath, bool $fileChanged, bool $hasDurationValue, ?int $requestedDuration, ?int $currentDuration = null): int
+    /**
+     * The single duration calculation for both create and update.
+     *
+     * PRECEDENCE, in order:
+     *   1. an explicit non-zero `duration_seconds` from the operator always wins;
+     *   2. otherwise, for a video, ffprobe reads it from the file itself;
+     *   3. otherwise the current value is kept (update) or zero (create).
+     *
+     * Images and GIFs are never probed — how long a still is shown is a playlist
+     * decision, not a property of the file.
+     *
+     * Returns **null** to mean "probing was required and failed", which the callers
+     * turn into a validation error after cleaning up the uploaded candidate. It is
+     * never a valid duration, so the ad row can never be written with an
+     * unknown-duration video.
+     *
+     * @param  array<string, mixed>  $data  validated request data
+     */
+    private function resolveDuration(string $fileType, ?string $filePath, array $data, ?int $currentDuration): ?int
     {
-        $duration = $hasDurationValue ? (int) ($requestedDuration ?? 0) : ($currentDuration ?? 0);
+        $requested = array_key_exists('duration_seconds', $data) && $data['duration_seconds'] !== null
+            ? (int) $data['duration_seconds']
+            : null;
 
-        if ($fileType !== 'video') {
-            return $duration;
+        if ($requested !== null && $requested > 0) {
+            return $requested;
         }
 
-        if (!$fileChanged) {
-            return $duration;
+        $fallback = $requested ?? $currentDuration ?? 0;
+
+        if (! CreativeMedia::requiresProbedDuration($fileType)) {
+            return $fallback;
         }
 
-        if ($hasDurationValue && $duration > 0) {
-            return $duration;
+        // A video already carrying a duration (an edit that did not replace the file)
+        // needs no probe.
+        if ($requested === null && ($currentDuration ?? 0) > 0) {
+            return $currentDuration;
         }
 
-        if (!config('ads.try_ffprobe', true)) {
-            return $duration;
+        if (! config('ads.try_ffprobe', true)) {
+            return $fallback;
         }
 
-        $probedDuration = VideoProbe::durationSeconds($filePath);
-
-        if ($probedDuration === null) {
-            $request->failDurationProbe();
-        }
-
-        return $probedDuration;
+        // Deliberately outside any database transaction: ffprobe shells out to an
+        // external binary and must not hold a transaction open.
+        return VideoProbe::durationSeconds($filePath);
     }
 
-    private function determineFileType(?UploadedFile $file, ?string $path = null): string
+    /**
+     * Abandon the uploaded candidate and send the operator back with an error.
+     */
+    private function failedProbe(): RedirectResponse
     {
-        $extension = null;
+        $this->fileService->discardUploadedFiles();
 
-        if ($file) {
-            $extension = strtolower($file->getClientOriginalExtension());
-        } elseif ($path) {
-            $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        return back()
+            ->withInput()
+            ->withErrors([
+                'duration_seconds' => 'duration_seconds required (ffprobe unavailable or failed)',
+            ]);
+    }
+
+    /**
+     * Does this edit invalidate the creative review the ad already passed?
+     *
+     * Only for an ad that has actually been reviewed (`approved` or `active`), and
+     * only when an attribute the device consumes has genuinely changed value —
+     * re-saving the same values is not a change. Title and description are excluded
+     * because they never reach a screen.
+     *
+     * Assignment, schedules and play order are not ad attributes and are handled
+     * elsewhere; changing them never revokes creative approval.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function requiresReapproval(Ad $ad, ?string $filePath, string $fileType, int $duration, array $data): bool
+    {
+        if (! $ad->status->isReviewed()) {
+            return false;
         }
 
-        return match (true) {
-            in_array($extension, ['mp4', 'm4v', 'mov', 'avi', 'wmv', 'mkv', 'webm', 'mpeg'], true) => 'video',
-            $extension === 'gif' => 'gif',
-            default => 'image',
-        };
+        $incoming = [
+            'file_path' => $filePath,
+            'file_type' => $fileType,
+            'duration_seconds' => $duration,
+            'start_date' => $data['start_date'] ?? null,
+            'end_date' => $data['end_date'] ?? null,
+        ];
+
+        foreach (Ad::PLAYBACK_RELEVANT_ATTRIBUTES as $attribute) {
+            if ($this->attributeChanged($ad, $attribute, $incoming[$attribute])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Compare a stored attribute with its incoming value, normalising dates so a
+     * re-submitted identical date does not read as a change.
+     */
+    private function attributeChanged(Ad $ad, string $attribute, mixed $incoming): bool
+    {
+        $current = $ad->getOriginal($attribute);
+
+        if (in_array($attribute, ['start_date', 'end_date'], true)) {
+            $currentValue = $current ? Carbon::parse($current)->toDateTimeString() : null;
+            $incomingValue = $incoming ? Carbon::parse($incoming)->toDateTimeString() : null;
+
+            return $currentValue !== $incomingValue;
+        }
+
+        if ($attribute === 'duration_seconds') {
+            return (int) $current !== (int) $incoming;
+        }
+
+        return (string) $current !== (string) $incoming;
     }
 }
 

@@ -132,7 +132,7 @@ class FileService implements FileServiceInterface
      */
     private array $pendingDeletions = [];
 
-    public function uploadSingle(Request $request, string $field, string $baseFolder, ?string $existing = null): ?string
+    public function uploadSingle(Request $request, string $field, string $baseFolder, ?string $existing = null, ?string $extension = null): ?string
     {
         if (!$request->hasFile($field)) {
             return $existing;
@@ -149,6 +149,10 @@ class FileService implements FileServiceInterface
             $folder
         ], [
             'path'
+        ], null, [
+            // Null keeps the client extension, for callers that have no trusted
+            // alternative. Ad creatives pass one derived from the detected MIME type.
+            $extension,
         ]);
 
         if (empty($uploaded[0])) {

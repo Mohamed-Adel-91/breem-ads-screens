@@ -152,13 +152,18 @@ class AdsAdminViewsTest extends TestCase
         $response->assertSee('name="description[ar]"', false);
         $response->assertSee('name="creative"', false);
         $response->assertSee('name="duration_seconds"', false);
-        $response->assertSee('name="status"', false);
         $response->assertSee('name="created_by"', false);
-        $response->assertSee('name="approved_by"', false);
         $response->assertSee('name="start_date"', false);
         $response->assertSee('name="end_date"', false);
         $response->assertSee('name="screens[]"', false);
         $response->assertSee('name="play_order[', false);
+
+        // Phase 13 removed both of these from the content form: a status select let
+        // anyone with ads.create publish without review, and approved_by let the
+        // editor author their own approval. Status moves only through
+        // admin.ads.transition, which requires ads.approve.
+        $response->assertDontSee('name="status"', false);
+        $response->assertDontSee('name="approved_by"', false);
 
         // Multipart is mandatory for the creative upload.
         $response->assertSee('enctype="multipart/form-data"', false);

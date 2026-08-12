@@ -103,6 +103,134 @@ Assignment happens in two places — `AdController::syncScreens()` (admin form) 
 `ScheduleController::ensureScreenAttachment()` (auto-attach when a schedule is
 created). Both must stay consistent.
 
+### Status lifecycle
+
+Five statuses, unchanged since the original schema. What Phase 13 added is that a
+status may only move along an edge `AdStatus::allowedTransitions()` declares —
+before that, `status` was a free select on the ad form, so any value could overwrite
+any other and "approval" meant whatever the last person to save chose.
+
+| From | approve | reject | publish | unpublish | expire |
+|---|---|---|---|---|---|
+| `pending` | `approved` | `rejected` | — | — | — |
+| `approved` | — | `rejected` | `active` | — | `expired` |
+| `rejected` | `approved` | — | — | — | — |
+| `active` | — | `rejected` | — | `approved` | `expired` |
+| `expired` | `approved` | — | — | — | — |
+
+- **Only `active` plays.** Approval and going live are separate edges: `approved`
+  means "cleared for broadcast", `active` means "broadcasting".
+- `pending` has **no** `publish` edge. Going live without review is the bypass the
+  map exists to prevent.
+- `rejected` and `expired` can be approved again, so no ad is stranded — editing an
+  ad only ever returns it to `pending`.
+- Every action requires the **`ads.approve`** permission and goes through
+  `POST admin.ads.transition`. That permission was already seeded (super-admin and
+  admin, not viewer) with zero consumers; Phase 13 wired it up rather than inventing
+  new RBAC.
+- The request takes an **action name**, never a target status: the target is derived
+  server-side, so an undeclared pair cannot be reached however the request is shaped.
+- `status` and `approved_by` are **absent from StoreAdRequest and UpdateAdRequest**
+  and from the ad form. Do not add them back.
+
+### Approval audit trail
+
+`created_by` and `approved_by` are foreign keys to **`users`**, but the dashboard is
+operated by the **`admins`** guard — a different actor domain. Writing an admin id
+into a users FK would misattribute the action, so Phase 13 added columns instead of
+repurposing them:
+
+| Column | Meaning |
+|---|---|
+| `created_by` | legacy content owner (users FK, NOT NULL, still on the form) |
+| `created_by_admin_id` | the admin who performed the create |
+| `approved_by` | legacy (users FK). Preserved, never written to any more |
+| `approved_by_admin_id` | the admin who approved |
+| `approved_at` | when they approved |
+
+The migration is additive and backfills nothing. Rows created before Phase 13 have
+NULL admin columns: there is no mapping from a user id to an admin id, and a null
+audit value is honest where a fabricated one is not.
+
+### Edit after approval
+
+A playback-relevant edit to a **reviewed** ad (`approved` or `active`) returns it to
+`pending` and clears `approved_by_admin_id` / `approved_at`. The attributes that
+count are `Ad::PLAYBACK_RELEVANT_ATTRIBUTES`: `file_path`, `file_type`,
+`duration_seconds`, `start_date`, `end_date`.
+
+- Only a genuine **change of value** triggers it — re-saving identical values does
+  not.
+- **Title and description never do**: they are not in the device manifest, so
+  editing them changes nothing a viewer sees.
+- **Assignment, schedules and play order never do.** Approval covers the creative,
+  not where or when it runs; those carry their own authorization.
+
+Because the re-approval write goes through the model, `AdObserver` flushes the
+affected playlists, so an unreviewed creative stops playing immediately rather than
+at the end of the cache TTL.
+
+### Creative media lifecycle
+
+The filesystem is not transactional, so safety is ordering plus explicit
+compensation:
+
+```
+upload new  →  probe  →  DB transaction  →  commitReplacedFiles() (delete the old)
+                  │            │
+                  └────────────┴──→  discardUploadedFiles() (keep the old)
+```
+
+- ffprobe runs **outside** the transaction — it shells out to an external binary and
+  must never hold one open.
+- A failed probe or a failed database write discards **only** the new candidate. The
+  old file and the old database value both survive.
+- The replaced file is deleted **only after** the transaction commits, so the
+  database never points at a file that is gone.
+- `AdController::update()` previously did neither half: a failed probe returned early
+  leaving the new upload orphaned, and a successful replacement never called
+  `commitReplacedFiles()`, so every superseded creative stayed on disk forever.
+
+Delete order is: capture affected screens → delete rows in a transaction →
+invalidate those playlists → delete the file last, and only when no other ad row
+references the same path.
+
+### Duration
+
+One implementation, `AdController::resolveDuration()`. Precedence:
+
+1. an explicit non-zero `duration_seconds` from the operator;
+2. otherwise, for a **video**, ffprobe reads it from the file;
+3. otherwise the current value (update) or zero (create).
+
+Images and GIFs are never probed — how long a still is shown is a playlist decision,
+not a property of the file. A required probe that fails returns null, which becomes a
+validation error; an ad row is never written with an unknown-duration video. The dead
+`resolveDurationSeconds()` and the `failDurationProbe()` methods it was the only
+caller of were removed.
+
+### Global validity dates
+
+`ads.start_date` / `ads.end_date` come from `type="date"` inputs, so they are
+calendar dates stored at midnight. `App\Support\AdValidity` owns their boundary
+contract — deliberately **not** folded into `TimeWindow`, whose literal
+to-the-second rule schedule rows still follow:
+
+- `start_date` is used as stored, **inclusive**;
+- a **midnight** `end_date` covers the whole of that calendar day, so the exclusive
+  bound becomes the following midnight;
+- an `end_date` carrying a **time** is a precise instant and is used as stored.
+
+So `Aug 1 → Aug 31` plays from `Aug 1 00:00` up to `Sep 1 00:00` exclusive — the ad
+runs throughout Aug 31, which is what the form implies. The second clause is what
+makes this safe for existing data: legacy rows holding real datetimes (the seeded
+demo ads do) keep their exact meaning. **No stored date is rewritten**; only the
+interpretation of date-only values changed, so no data migration was needed.
+
+Dates are UTC calendar days, matching `config('app.timezone')`. This bound is used
+consistently by eligibility, the cache boundary TTL, the admin "effective window"
+display, and the manifest's `valid_until` / `ad_valid_until`.
+
 ## Scheduling
 
 One source of truth: `AdSchedulerService`. Do **not** duplicate eligibility logic
@@ -441,24 +569,29 @@ the Scheduling and Playlist sections above for the resulting contract. What rema
 - The schedules overview reads `ad_schedules` directly; it has no index tuned for
   the `state` filter beyond the existing `(screen_id, start_time, end_time)`.
 
-**Ads**
-- Status is directly editable; there is no approval workflow and `approved_by` is
-  free-form.
-- `created_by`/`approved_by` are FKs to `users`, but the panel is operated by
-  `admins`.
-- `determineFileType()` trusts the client filename extension.
-- No upload size limit on the creative.
-- `AdController::update()` never calls `commitReplacedFiles()`, so every replaced
-  creative stays on disk forever. Re-audited in Phase 12 and **deliberately left
-  alone**: the proven CMS lifecycle (`BasePageContentController::persistContent()`)
-  wraps its writes in a transaction and pairs `commitReplacedFiles()` with
-  `discardUploadedFiles()` on failure. `AdController::update()` is not transactional
-  and has an early `return back()->withErrors(...)` after the upload has already
-  been written (the ffprobe path), which currently leaks the *new* file too. Adding
-  only the commit call would half-fix it, so the whole path belongs to Phase 13.
-- `AdController::destroy()` deletes the creative immediately after `delete()`
-  without the deferred-commit protection.
-- `resolveDurationSeconds()` is dead code; the logic is inlined twice.
+**Ads** — every entry previously listed here was fixed in Phase 13 (free status
+editing, the missing approval workflow, the users/admins actor mismatch,
+extension-based type detection, the absent size limit, the missing
+`commitReplacedFiles()` call, the unprotected delete, and the dead
+`resolveDurationSeconds()`); see the Advertisements section above for the resulting
+contract. What remains:
+
+- The size ceilings in `config('ads.upload')` are an *application* limit. An upload is
+  still bounded by PHP's `upload_max_filesize` / `post_max_size` and by any
+  web-server body limit, whichever is smallest, and raising a config value does
+  nothing unless the platform allows it too. There is no check that the two agree, so
+  a generous config value can silently be capped by a stricter `php.ini`.
+- ffprobe is off by default (`ADS_TRY_FFPROBE=false`). With it off, a video uploaded
+  without an explicit duration is stored with `duration_seconds = 0` and the playlist
+  will hand the player a zero duration.
+- `Ad::scopeExpiringSoon()` (used by `CheckExpiringAdsJob` for notifications) compares
+  the raw `end_date`, not the effective one from `AdValidity`, so the "expiring soon"
+  email can fire up to a day early. It is a notification heuristic, not eligibility.
+- `Ad::scopeActiveIn()` has no callers.
+- `creative` accepts a still-image MIME set of JPEG/PNG only; WebP is not accepted,
+  which is a product decision rather than an oversight.
+- There is no per-advertiser identity: `created_by` points at a `users` row, but there
+  is no advertiser, campaign or billing domain and none was invented.
 
 **Reports**
 - Seeded types (`performance`, `availability`) are not producible by

@@ -58,8 +58,37 @@ All managed uploads go through `FileService`:
 - files land under `public/`, so they are intentionally publicly readable — do not
   store anything sensitive there
 
-**Known gaps** (documented, unfixed): no `max:` size rule on ad creatives, and
-`determineFileType()` derives the media type from the client filename extension.
+### Ad creatives
+
+`App\Support\CreativeMedia` is the single authority for what a creative may be —
+accepted MIME types, the category each maps to, the stored extension, and the size
+ceiling per category. That list used to be duplicated across two Form Requests, the
+controller and the Blade form, which is how they came to disagree.
+
+Two rules, both server-side:
+
+1. **The file's contents decide what it is.** `mimetypes:` validates the detected MIME
+   type, and `CreativeMedia::categoryOf()` classifies from the same value. The
+   controller's old `determineFileType()` read the *client filename extension*
+   instead, so an MP4 named `holiday.jpg` was accepted as a video and recorded as an
+   image.
+2. **The stored extension is derived, never copied.** `CreativeMedia::extensionOf()`
+   supplies it from the detected MIME type, so a creative cannot land in a web-served
+   directory carrying an executable suffix chosen by the uploader. `FileUploadTrait`
+   accepts the override; passing nothing keeps the old client-extension behaviour for
+   callers with no trusted alternative, so **always pass one where the type can be
+   detected**.
+
+Laravel's own `mimetypes` rule independently refuses php-family client extensions.
+That is a second layer, not the primary defence — do not rely on it alone, and do not
+remove it.
+
+Size ceilings come from `config('ads.upload')` (`ADS_IMAGE_MAX_KB`, `ADS_GIF_MAX_KB`,
+`ADS_VIDEO_MAX_KB`). A blanket `max:` rule rejects anything above the largest limit,
+then `ValidatesCreativeUpload` narrows it to the limit for the detected category — so
+a 150 MB video allowance never becomes a 150 MB allowance for a JPEG. These are an
+application ceiling on top of PHP's `upload_max_filesize` / `post_max_size` and any
+web-server body limit, not a replacement for them.
 
 ## Rate limiting
 
@@ -81,13 +110,21 @@ and consider removing it in favour of a CLI-only workflow.
 
 ## Mass assignment
 
-`Ad`, `AdSchedule`, `Place`, `PlaybackLog`, `Report`, `Screen` and `ScreenLog` use
+`AdSchedule`, `Place`, `PlaybackLog`, `Report`, `Screen` and `ScreenLog` use
 `$guarded = []`. Every current caller passes an explicit, validated array from a
 Form Request, so this is contained but fragile.
 
 Do **not** flip these to `$fillable` blindly — audit every `create()`/`update()`
 call site first, including seeders, factories and services. A partial change
 silently drops columns.
+
+`Ad` is the exception: Phase 13 converted it to an explicit `$fillable` after
+tracing every call site, because the ads module was in scope. Note that being
+fillable is not the same as being form-settable — `status`, `approved_by_admin_id`
+and `approved_at` are fillable (the lifecycle action and factories write them) but
+are absent from `StoreAdRequest` and `UpdateAdRequest` entirely, so no request field
+can reach them. Adding a column to `ads` means adding it to `$fillable` too, or
+writes will silently drop it.
 
 ## API authentication
 

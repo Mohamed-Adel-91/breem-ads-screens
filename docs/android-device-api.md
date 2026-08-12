@@ -160,6 +160,17 @@ Each item carries `ad_id`, `file_url`, `file_type`, `duration_seconds`,
 computes its own eligibility. One assigned ad is always one item, however many
 schedule rows currently match.
 
+`file_type` is one of `video`, `image`, `gif`, and is determined from the uploaded
+file's own contents rather than its filename — so it can be trusted to pick a
+decoder.
+
+`valid_from` / `valid_until` and `ad_valid_from` / `ad_valid_until` are **effective**
+bounds: start inclusive, end exclusive. Where the ad's own validity comes from a
+date-only value, the end bound is the following midnight, because such an ad plays
+through the whole of the day the operator selected. Bounds taken from a schedule row
+are exact to the second. In every case the value is the instant the server will
+genuinely stop serving the item, so a player may act on it directly.
+
 `meta.expires_at` is boundary-aware: it is never later than the next instant at
 which eligibility can change, so a device that refetches then will never play
 content that has started or stopped being valid. It may be much sooner than

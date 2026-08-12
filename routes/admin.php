@@ -86,6 +86,13 @@ Route::group([
             Route::put('/{ad}', [AdController::class, 'update'])->name('update')->middleware('permission:ads.edit');
             Route::delete('/{ad}', [AdController::class, 'destroy'])->name('destroy')->middleware('permission:ads.delete');
 
+            // Lifecycle actions (approve / reject / publish / unpublish / expire).
+            // Deliberately NOT part of admin.ads.update: approval is an authority
+            // gated by ads.approve, not a field on the content form.
+            Route::post('/{ad}/transition', [AdController::class, 'transition'])
+                ->name('transition')
+                ->middleware('permission:ads.approve');
+
             Route::prefix('{ad}/schedules')->as('schedules.')->group(function () {
                 Route::get('/', [ScheduleController::class, 'index'])->name('index')->middleware('permission:ads.view');
                 Route::post('/', [ScheduleController::class, 'store'])->name('store')->middleware('permission:ads.schedule');

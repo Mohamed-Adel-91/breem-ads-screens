@@ -114,8 +114,8 @@ class ApiRouteRegistrationTest extends TestCase
         foreach ([
             'admin.dashboard', 'admin.login', 'admin.places.index', 'admin.screens.index',
             'admin.ads.index', 'admin.ads.schedules.index', 'admin.ads.schedules.overview',
-            'admin.monitoring.index', 'admin.reports.index', 'admin.roles.index',
-            'admin.users.index',
+            'admin.ads.transition', 'admin.monitoring.index', 'admin.reports.index',
+            'admin.roles.index', 'admin.users.index',
         ] as $name) {
             $this->assertNotNull(Route::getRoutes()->getByName($name), "Admin route [{$name}] disappeared.");
         }
@@ -125,9 +125,10 @@ class ApiRouteRegistrationTest extends TestCase
             ->count();
 
         // 93 through Phase 9, plus the two Phase 10 pairing actions
-        // (admin.screens.pairing.generate and admin.screens.pairing.reset), plus
-        // the Phase 12 schedules overview (admin.ads.schedules.overview).
-        $this->assertSame(96, $adminRoutes, 'The admin route surface changed.');
+        // (admin.screens.pairing.generate and admin.screens.pairing.reset), the
+        // Phase 12 schedules overview (admin.ads.schedules.overview), and the
+        // Phase 13 lifecycle action (admin.ads.transition).
+        $this->assertSame(97, $adminRoutes, 'The admin route surface changed.');
     }
 
     public function test_the_health_endpoint_declared_in_bootstrap_is_reachable(): void

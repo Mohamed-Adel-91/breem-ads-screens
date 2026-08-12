@@ -6,6 +6,7 @@ use App\Enums\AdStatus;
 use App\Models\Ad;
 use App\Models\AdSchedule;
 use App\Models\Screen;
+use App\Support\AdValidity;
 use App\Support\MediaUrl;
 use App\Support\TimeWindow;
 use Carbon\CarbonInterface;
@@ -283,6 +284,11 @@ class AdSchedulerService
 
     /**
      * Determine if the ad's own status and global window allow playback.
+     *
+     * The global window goes through AdValidity, not TimeWindow directly: the ad's
+     * dates come from date-only inputs, so a stored `end_date` of Aug 31 means
+     * "through Aug 31", not "up to Aug 31 00:00". Schedule rows keep TimeWindow's
+     * literal to-the-second rule.
      */
     protected function adIsEligible(Ad $ad, Carbon $moment): bool
     {
@@ -290,7 +296,7 @@ class AdSchedulerService
             return false;
         }
 
-        return TimeWindow::contains($ad->start_date, $ad->end_date, $moment);
+        return AdValidity::contains($ad->start_date, $ad->end_date, $moment);
     }
 
     /**
@@ -349,8 +355,12 @@ class AdSchedulerService
                 continue;
             }
 
-            $moments[] = $ad->start_date;
-            $moments[] = $ad->end_date;
+            // The ad's own boundaries are the *effective* ones, so a date-only
+            // end_date expires the cache at the following midnight — the instant
+            // eligibility actually changes — not a day early.
+            foreach (AdValidity::boundaries($ad->start_date, $ad->end_date) as $moment) {
+                $moments[] = $moment;
+            }
 
             foreach ($ad->schedules as $schedule) {
                 if (!$schedule->is_active) {
@@ -442,14 +452,19 @@ class AdSchedulerService
                 'end_time' => optional($schedule->end_time)->toAtomString(),
                 'is_active' => (bool) $schedule->is_active,
             ] : null,
+            // Ad-derived bounds are the EFFECTIVE ones, from AdValidity. Reporting the
+            // raw end_date would tell a player that a date-only "ends Aug 31" campaign
+            // stops at Aug 31 00:00, a day before the server actually stops serving it
+            // — so a device that self-expires on this value would go dark early.
+            // Schedule-derived bounds are already exact and are passed through.
             'valid_from' => $schedule
                 ? optional($schedule->start_time)->toAtomString()
-                : optional($ad->start_date)->toAtomString(),
+                : optional($ad->validFrom())->toAtomString(),
             'valid_until' => $schedule
                 ? optional($schedule->end_time)->toAtomString()
-                : optional($ad->end_date)->toAtomString(),
-            'ad_valid_from' => optional($ad->start_date)->toAtomString(),
-            'ad_valid_until' => optional($ad->end_date)->toAtomString(),
+                : optional($ad->validBefore())->toAtomString(),
+            'ad_valid_from' => optional($ad->validFrom())->toAtomString(),
+            'ad_valid_until' => optional($ad->validBefore())->toAtomString(),
         ]);
     }
 

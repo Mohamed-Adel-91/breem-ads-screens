@@ -2,14 +2,22 @@
 
 namespace App\Http\Requests\Admin\Ads;
 
-use App\Enums\AdStatus;
+use App\Support\CreativeMedia;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
+/**
+ * Editing an advertisement's content.
+ *
+ * `status` and `approved_by` are absent for the same reason as in StoreAdRequest:
+ * this request edits content, and content editing is not approval authority. An
+ * edit that changes what a screen would actually play sends a reviewed ad back to
+ * `pending` — see AdController::update().
+ */
 class UpdateAdRequest extends FormRequest
 {
+    use ValidatesCreativeUpload;
+
     public function authorize(): bool
     {
         return true;
@@ -17,8 +25,6 @@ class UpdateAdRequest extends FormRequest
 
     public function rules(): array
     {
-        $statusValues = array_map(fn(AdStatus $status) => $status->value, AdStatus::cases());
-
         return [
             'title' => ['nullable', 'array'],
             'title.en' => ['nullable', 'string', 'max:255'],
@@ -26,11 +32,14 @@ class UpdateAdRequest extends FormRequest
             'description' => ['nullable', 'array'],
             'description.en' => ['nullable', 'string'],
             'description.ar' => ['nullable', 'string'],
-            'creative' => ['nullable', 'file', 'mimetypes:video/mp4,video/x-m4v,video/quicktime,video/x-msvideo,video/x-ms-wmv,video/mpeg,video/webm,image/jpeg,image/png,image/gif'],
+            'creative' => [
+                'nullable',
+                'file',
+                'mimetypes:'.CreativeMedia::allowedMimeTypeList(),
+                'max:'.CreativeMedia::absoluteMaxKilobytes(),
+            ],
             'duration_seconds' => ['nullable', 'integer', 'min:0'],
-            'status' => ['nullable', Rule::in($statusValues)],
             'created_by' => ['required', 'exists:users,id'],
-            'approved_by' => ['nullable', 'exists:users,id'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'screens' => ['nullable', 'array'],
@@ -40,16 +49,8 @@ class UpdateAdRequest extends FormRequest
         ];
     }
 
-    public function failDurationProbe(): never
+    public function withValidator(Validator $validator): void
     {
-        $validator = $this->getValidatorInstance();
-
-        $validator->after(function (Validator $validator): void {
-            $validator->errors()->add('duration_seconds', __('duration_seconds required when probe unavailable'));
-        });
-
-        $validator->fails();
-
-        throw new ValidationException($validator);
+        $this->validateCreativeSize($validator);
     }
 }

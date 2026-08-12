@@ -13,7 +13,14 @@ interface FileServiceInterface
 
     public function deleteFile(string $filename, string $folder): void;
 
-    public function uploadSingle(Request $request, string $field, string $baseFolder, ?string $existing = null): ?string;
+    /**
+     * Store a single uploaded file, deferring removal of the file it replaces.
+     *
+     * `$extension` overrides the stored file's extension. Pass one whenever the
+     * type can be determined from the file's own contents — the client filename is
+     * attacker-controlled.
+     */
+    public function uploadSingle(Request $request, string $field, string $baseFolder, ?string $existing = null, ?string $extension = null): ?string;
 
     /**
      * Delete the files superseded by this request's uploads.

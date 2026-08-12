@@ -1,13 +1,21 @@
 {{--
     Shared Ad form body. Every input name (`title[en]`, `title[ar]`,
-    `description[en]`, `description[ar]`, `creative`, `duration_seconds`, `status`,
-    `created_by`, `approved_by`, `start_date`, `end_date`, `screens[]`,
-    `play_order[{screen}]`) is emitted verbatim so the existing StoreAdRequest /
-    UpdateAdRequest contract is untouched.
+    `description[en]`, `description[ar]`, `creative`, `duration_seconds`,
+    `created_by`, `start_date`, `end_date`, `screens[]`, `play_order[{screen}]`) is
+    emitted verbatim so the StoreAdRequest / UpdateAdRequest contract is matched
+    exactly.
+
+    `status` and `approved_by` are NOT in this form, and must not be added back.
+    They were removed in Phase 13: a status select here let anyone holding
+    `ads.create` publish straight to `active` without review, and `approved_by` put
+    approval authorship in the hands of whoever was editing the content. Status now
+    moves only along the edges AdStatus declares, through admin.ads.transition,
+    which requires `ads.approve`. The approval controls live on the Ad show page.
 
     `creativeRequired` mirrors the request rules: required on store, nullable on
-    update. The `accept` attribute is a browser hint only — server-side mimetype
-    validation is unchanged and is still the authority.
+    update. `accept` and the helper text are browser/operator hints only — the
+    `mimetypes:` rule and the per-category size check are the authority, and both
+    read the same App\Support\CreativeMedia map these hints come from.
 --}}
 @php
     $creativeRequired = $creativeRequired ?? false;
@@ -15,9 +23,12 @@
     $titleTranslations = $ad->getTranslations('title');
     $descriptionTranslations = $ad->getTranslations('description');
 
-    // Mirrors the `mimetypes:` rule in Store/UpdateAdRequest. Hint only.
-    $creativeAccept = 'video/mp4,video/x-m4v,video/quicktime,video/x-msvideo,'
-        . 'video/x-ms-wmv,video/mpeg,video/webm,image/jpeg,image/png,image/gif';
+    // Straight from the controller, which reads CreativeMedia — so the hint can
+    // never advertise a format or size the validator rejects.
+    $creativeAccept = $uploadLimits['accept'];
+    $imageMaxMb = round(($uploadLimits['image_max_kb'] ?? 0) / 1024, 1);
+    $gifMaxMb = round(($uploadLimits['gif_max_kb'] ?? 0) / 1024, 1);
+    $videoMaxMb = round(($uploadLimits['video_max_kb'] ?? 0) / 1024, 1);
 
     $selectedScreens = collect(old('screens', $ad->screens?->pluck('id')->all() ?? []));
 
@@ -104,6 +115,14 @@
                         @if (!$creativeRequired)
                             {{ __('admin.ads.form.creative_help_edit') }}
                         @endif
+                        <span class="d-block" dir="ltr">
+                            {{ __('admin.ads.form.creative_limits', [
+                                'image' => $imageMaxMb,
+                                'gif' => $gifMaxMb,
+                                'video' => $videoMaxMb,
+                            ]) }}
+                        </span>
+                        <span class="d-block">{{ __('admin.ads.form.creative_type_notice') }}</span>
                     </small>
                 </div>
             </div>
@@ -128,22 +147,22 @@
                 </div>
             </div>
 
+            {{-- Where the status select used to be. Status is read-only here: it is
+                 shown so the operator knows what an edit will do, but it is not a
+                 field and no status value is submitted. --}}
             <div class="col-md-3">
                 <div class="form-group">
-                    <label for="status">{{ __('admin.ads.form.status') }}</label>
-                    <select id="status"
-                            name="status"
-                            @class(['form-control', 'is-invalid' => $errors->has('status')])>
-                        @foreach ($statuses as $value => $label)
-                            <option value="{{ $value }}"
-                                @selected(old('status', optional($ad->status)->value ?? array_key_first($statuses)) === $value)>
-                                {{ \App\Support\Lang::t('admin.ads.statuses.' . $value, $label) }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('status')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+                    <span class="d-block">{{ __('admin.ads.form.status') }}</span>
+                    @if ($ad->status)
+                        <x-admin.badge :variant="$ad->status->isLive() ? 'success' : ($ad->status === \App\Enums\AdStatus::Pending ? 'warning' : 'secondary')">
+                            {{ __('admin.ads.statuses.' . $ad->status->value) }}
+                        </x-admin.badge>
+                    @endif
+                    <small class="form-text text-muted">
+                        {{ $creativeRequired
+                            ? __('admin.ads.form.status_help_create')
+                            : __('admin.ads.form.status_help_edit') }}
+                    </small>
                 </div>
             </div>
         </div>
@@ -178,22 +197,18 @@
                 </div>
             </div>
 
+            {{-- The approved_by select is gone: approval authorship is recorded by
+                 the approver, not typed in by whoever edits the content. The
+                 approving admin and timestamp are shown on the Ad show page. --}}
             <div class="col-md-6">
                 <div class="form-group">
-                    <label for="approved_by">{{ __('admin.ads.form.approved_by') }}</label>
-                    <select id="approved_by"
-                            name="approved_by"
-                            @class(['form-control', 'is-invalid' => $errors->has('approved_by')])>
-                        <option value="">{{ __('admin.ads.form.not_set') }}</option>
-                        @foreach ($owners as $owner)
-                            <option value="{{ $owner->id }}" @selected(old('approved_by', $ad->approved_by) == $owner->id)>
-                                {{ $owner->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('approved_by')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+                    <span class="d-block">{{ __('admin.ads.form.approved_by') }}</span>
+                    <span class="text-muted">
+                        {{ $ad->approverAdmin?->email
+                            ?? $ad->approver?->name
+                            ?? __('admin.ads.form.not_set') }}
+                    </span>
+                    <small class="form-text text-muted">{{ __('admin.ads.form.approved_by_help') }}</small>
                 </div>
             </div>
         </div>
@@ -228,11 +243,18 @@
                            name="end_date"
                            dir="ltr"
                            value="{{ old('end_date', optional($ad->end_date)->format('Y-m-d')) }}"
+                           aria-describedby="end_date_help"
                            @class(['form-control', 'is-invalid' => $errors->has('end_date')])>
                     @error('end_date')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    <small id="end_date_help" class="form-text text-muted">
+                        {{ __('admin.ads.form.end_date_help') }}
+                    </small>
                 </div>
+            </div>
+            <div class="col-12">
+                <p class="text-muted small mb-0">{{ __('admin.ads.form.validity_help') }}</p>
             </div>
         </div>
     </div>
