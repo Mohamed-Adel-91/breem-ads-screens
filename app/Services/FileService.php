@@ -7,6 +7,7 @@ use App\Traits\DeleteFileTrait;
 use App\Traits\FileUploadTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class FileService implements FileServiceInterface
 {
@@ -114,6 +115,22 @@ class FileService implements FileServiceInterface
         }
     }
 
+    /**
+     * Absolute paths of files written during the current request that must be
+     * removed if the surrounding database work fails.
+     *
+     * @var string[]
+     */
+    private array $pendingUploads = [];
+
+    /**
+     * Absolute paths of superseded files that may only be removed once the
+     * surrounding database work has succeeded.
+     *
+     * @var string[]
+     */
+    private array $pendingDeletions = [];
+
     public function uploadSingle(Request $request, string $field, string $baseFolder, ?string $existing = null): ?string
     {
         if (!$request->hasFile($field)) {
@@ -121,36 +138,102 @@ class FileService implements FileServiceInterface
         }
 
         $folder = $this->buildModelFolder($baseFolder);
-        $existingFile = $existing ? basename($existing) : null;
 
-        $stub = new class extends Model {
-            protected $table = 'file_service_stub';
-            public $timestamps = false;
-            protected $fillable = ['path'];
-
-            public function save(array $options = [])
-            {
-                return true;
-            }
-        };
-
-        if ($existingFile) {
-            $stub->setAttribute('path', $existingFile);
-        }
-
+        // The replaced file is NOT deleted here: the caller's transaction may
+        // still roll back, and the database would then point at a file that no
+        // longer exists. Deletion is deferred to commitReplacedFiles().
         $uploaded = $this->uploadFile([
             $request->file($field)
         ], [
             $folder
         ], [
             'path'
-        ], $stub);
+        ]);
 
-        if (!empty($uploaded[0])) {
-            return trim($baseFolder, '/') . '/' . $uploaded[0];
+        if (empty($uploaded[0])) {
+            return $existing;
         }
 
-        return $existing;
+        $storedPath = trim($baseFolder, '/') . '/' . $uploaded[0];
+        $this->pendingUploads[] = $folder . '/' . $uploaded[0];
+
+        $supersededPath = $this->resolveReplaceablePath($existing, $folder);
+
+        if ($supersededPath !== null) {
+            $this->pendingDeletions[] = $supersededPath;
+        }
+
+        return $storedPath;
+    }
+
+    /**
+     * Confirm the uploads: delete the files they replaced.
+     *
+     * Call this only after the database work has committed.
+     */
+    public function commitReplacedFiles(): void
+    {
+        foreach ($this->pendingDeletions as $path) {
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+
+        $this->resetPendingFiles();
+    }
+
+    /**
+     * Abandon the uploads: delete the newly written files and keep the ones
+     * they would have replaced.
+     *
+     * Call this when the database work failed.
+     */
+    public function discardUploadedFiles(): void
+    {
+        foreach ($this->pendingUploads as $path) {
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+
+        $this->resetPendingFiles();
+    }
+
+    private function resetPendingFiles(): void
+    {
+        $this->pendingUploads = [];
+        $this->pendingDeletions = [];
+    }
+
+    /**
+     * Decide whether a stored path points at a managed file this service may
+     * delete once it has been replaced.
+     *
+     * Only files living inside the destination folder qualify. Seeded and
+     * shared assets (frontend/…, storage/…, remote URLs) are left alone,
+     * because other records may still reference them.
+     */
+    private function resolveReplaceablePath(?string $existing, string $folder): ?string
+    {
+        if (!$existing || Str::startsWith($existing, ['http://', 'https://'])) {
+            return null;
+        }
+
+        $candidate = $folder . '/' . basename($existing);
+
+        if (!is_file($candidate)) {
+            return null;
+        }
+
+        // basename() alone would match a same-named file in a different
+        // directory, so compare the resolved directories too.
+        $existingDirectory = public_path(trim(dirname(ltrim($existing, '/')), '/'));
+
+        if (realpath($existingDirectory) !== realpath($folder)) {
+            return null;
+        }
+
+        return $candidate;
     }
 }
 

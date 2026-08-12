@@ -6,26 +6,26 @@ use App\Http\Controllers\Controller;
 use App\Models\SectionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
+/**
+ * These routes live under a `{lang?}` prefix, so every action must declare the
+ * locale as its first parameter. Laravel splices route values positionally, and
+ * omitting it shifts the locale string onto the model argument.
+ */
 class SectionItemController extends Controller
 {
-    public function toggle(Request $request, SectionItem $item)
+    public function toggle(?string $lang, SectionItem $item)
     {
-        // Prefer a dedicated column if exists; if not, fall back to JSON `data.is_active`
-        if (Schema::hasColumn($item->getTable(), 'is_active')) {
-            $item->is_active = ! (bool) ($item->is_active ?? true);
-        } else {
-            $data = $item->data ?? [];
-            $data['is_active'] = ! (bool) ($data['is_active'] ?? true);
-            $item->data = $data;
-        }
+        // Activation lives in the section_items.is_active column. It used to be
+        // written into the translated `data` JSON, which the public renderer
+        // never read; translated content is left untouched here.
+        $item->is_active = ! $item->is_active;
         $item->save();
-        $isActive = isset($item->is_active) ? (bool)$item->is_active : (bool)($item->data['is_active'] ?? true);
-        return response()->json(['ok' => true, 'is_active' => $isActive]);
+
+        return response()->json(['ok' => true, 'is_active' => $item->is_active]);
     }
 
-    public function update(Request $request, SectionItem $item)
+    public function update(?string $lang, SectionItem $item, Request $request)
     {
         $data = $request->validate([
             'order' => ['nullable', 'integer', 'min:0'],
@@ -36,22 +36,14 @@ class SectionItemController extends Controller
         DB::transaction(function () use ($item, $data) {
             if (array_key_exists('order', $data)) $item->order = $data['order'];
             if (array_key_exists('data', $data)) $item->data = $data['data'];
-            if (array_key_exists('is_active', $data)) {
-                if (Schema::hasColumn($item->getTable(), 'is_active')) {
-                    $item->is_active = (bool) $data['is_active'];
-                } else {
-                    $tmp = $item->data ?? [];
-                    $tmp['is_active'] = (bool) $data['is_active'];
-                    $item->data = $tmp;
-                }
-            }
+            if (array_key_exists('is_active', $data)) $item->is_active = (bool) $data['is_active'];
             $item->save();
         });
 
         return response()->json(['ok' => true, 'item' => $item->fresh()]);
     }
 
-    public function destroy(SectionItem $item)
+    public function destroy(?string $lang, SectionItem $item)
     {
         $item->delete();
         return response()->json(['ok' => true]);

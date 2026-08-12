@@ -28,4 +28,5 @@ Route::group([
 
 /***************************** Fallback ROUTES **********************************/
 
-Route::fallback(fn() => view('404'));
+// Same 404 view as before, but with a real 404 status instead of 200.
+Route::fallback(fn() => response()->view('404', [], 404));

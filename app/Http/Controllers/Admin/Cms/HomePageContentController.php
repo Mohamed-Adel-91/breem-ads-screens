@@ -6,7 +6,6 @@ use App\Models\SectionItem;
 use App\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class HomePageContentController extends BasePageContentController
 {
@@ -108,7 +107,7 @@ class HomePageContentController extends BasePageContentController
 
         $validated = $request->validate($rules);
 
-        DB::transaction(function () use ($request, $banner, $partners, $about, $stats, $where, $cta) {
+        $this->persistContent(function () use ($request, $banner, $partners, $about, $stats, $where, $cta) {
             if ($banner) {
                 $this->updateBannerSection($request, $banner);
             }

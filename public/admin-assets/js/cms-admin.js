@@ -233,8 +233,11 @@
         }
 
         /**
-         * The HTTP contract is preserved exactly as the legacy axios calls made
-         * it: real PATCH/DELETE verbs, CSRF header, JSON or FormData body.
+         * Routes and CSRF are unchanged. Multipart bodies are sent as POST with
+         * Laravel method spoofing, because PHP only parses multipart form data
+         * for POST — a real PATCH would deliver an empty $_POST and $_FILES.
+         * Content-Type is deliberately left unset so the browser can generate
+         * the multipart boundary.
          */
         function send(method, endpoint, body) {
             var headers = {
@@ -243,9 +246,12 @@
                 Accept: 'application/json'
             };
 
+            var verb = method;
             var payload;
 
             if (body instanceof FormData) {
+                body.append('_method', method);
+                verb = 'POST';
                 payload = body;
             } else if (body) {
                 headers['Content-Type'] = 'application/json';
@@ -253,7 +259,7 @@
             }
 
             return window.fetch(endpoint, {
-                method: method,
+                method: verb,
                 headers: headers,
                 credentials: 'same-origin',
                 body: payload

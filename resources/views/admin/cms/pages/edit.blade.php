@@ -58,14 +58,19 @@
             <div class="card-body">
                 <h2 class="card-title mb-2">
                     {{ __('admin.cms.page_details', ['name' => $page->name, 'slug' => $page->slug]) }}
+                    <x-admin.badge :variant="$page->is_active ? 'success' : 'danger'" class="ml-2">
+                        {{ __('admin.cms.ui.page_status') }}:
+                        {{ $page->is_active ? __('admin.forms.active') : __('admin.cms.inactive') }}
+                    </x-admin.badge>
                 </h2>
 
-                {{-- Documented limitations of this screen. Both are backend --}}
-                {{-- issues that Phase 4 deliberately leaves untouched. --}}
-                <div class="alert alert-warning mb-0" role="alert">
-                    <p class="mb-1">{{ __('admin.cms.ui.section_unreachable') }}</p>
-                    <p class="mb-0">{{ __('admin.cms.ui.section_upload_defect') }}</p>
-                </div>
+                @unless ($page->is_active)
+                    <div class="alert alert-warning" role="alert">
+                        {{ __('admin.cms.ui.page_inactive_notice') }}
+                    </div>
+                @endunless
+
+                <p class="text-muted mb-0">{{ __('admin.cms.ui.pages_maintenance_notice') }}</p>
             </div>
         </div>
 
@@ -240,8 +245,6 @@
                     <h3 class="h6 mt-4">{{ __('admin.cms.actions') }}</h3>
 
                     @if ($section->items->count())
-                        <p class="text-muted small">{{ __('admin.cms.ui.item_activation_defect') }}</p>
-
                         <div class="table-responsive">
                             <table class="table table-sm align-middle mb-0">
                                 <thead>
@@ -254,13 +257,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($section->items as $item)
-                                        @php
-                                            // section_items has no is_active column; the flag lives
-                                            // inside the translated data payload.
-                                            $itemActive = is_array($item->data)
-                                                ? (bool) ($item->data['is_active'] ?? true)
-                                                : true;
-                                        @endphp
+                                        @php $itemActive = (bool) $item->is_active; @endphp
                                         <tr id="item_{{ $item->id }}">
                                             <td>{{ $item->id }}</td>
                                             <td><span data-item-order>{{ $item->order }}</span></td>

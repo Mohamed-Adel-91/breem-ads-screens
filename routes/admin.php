@@ -144,6 +144,8 @@ Route::group([
         Route::put('/contact-us', [ContactUsPageContentController::class, 'update'])->name('contact.update');
     });
     Route::resource('seo_metas', SeoMetaController::class)->except(['show']);
+    // Sends a page slug to its curated editor; anything without one falls
+    // through to the low-level section editor below.
     Route::get('/cms/pages/{slug}/edit', function (?string $lang, string $slug) {
         $targets = [
             'home' => 'admin.cms.home.edit',
@@ -151,12 +153,19 @@ Route::group([
             'contact-us' => 'admin.cms.contact.edit',
         ];
 
-        if (!array_key_exists($slug, $targets)) {
-            abort(404);
+        if (array_key_exists($slug, $targets)) {
+            return redirect()->route($targets[$slug], ['lang' => $lang]);
         }
 
-        return redirect()->route($targets[$slug], ['lang' => $lang]);
+        $page = \App\Models\Page::where('slug', $slug)->firstOrFail();
+
+        return redirect()->route('admin.cms.pages.sections', ['lang' => $lang, 'page' => $page->slug]);
     })->name('cms.pages.edit');
+
+    // Low-level section/item maintenance for any page.
+    Route::get('/cms/pages/{page:slug}/sections', [PageController::class, 'edit'])
+        ->name('cms.pages.sections')
+        ->middleware('permission:cms.manage');
 
     // Sections
     Route::patch('/cms/sections/{section}/toggle', [PageSectionController::class, 'toggle'])->name('cms.sections.toggle');

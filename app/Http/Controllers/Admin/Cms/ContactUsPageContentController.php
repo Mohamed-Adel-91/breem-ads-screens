@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin\Cms;
 use App\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class ContactUsPageContentController extends BasePageContentController
 {
@@ -110,7 +109,7 @@ class ContactUsPageContentController extends BasePageContentController
 
         $validated = $request->validate($rules);
 
-        DB::transaction(function () use ($request, $banner, $contact, $map, $bottom, $ads, $screens, $create, $faq) {
+        $this->persistContent(function () use ($request, $banner, $contact, $map, $bottom, $ads, $screens, $create, $faq) {
             if ($banner) {
                 $this->updateImageOnlySection($request, $banner, 'banner.image', 'cms/contact/banner');
             }

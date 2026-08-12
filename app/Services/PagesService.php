@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Page;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -10,65 +11,16 @@ class PagesService
 {
     public function home()
     {
-        $data = Cache::rememberForever('page.home', function () {
-            $page = Page::where('slug', 'home')
-                ->with([
-                    'sections' => function ($query) {
-                        $query->where('is_active', true)
-                            ->orderBy('order')
-                            ->with([
-                                'items' => function ($query) {
-                                    $query->orderBy('order');
-                                },
-                            ]);
-                    },
-                ])
-                ->firstOrFail();
+        $data = $this->loadPage('home');
 
-            $disabledSections = [];
-            $sections = $page->sections->map(function ($section) use (&$disabledSections) {
-                $totalItems = $section->items->count();
-                $items = $section->items
-                    ->filter(fn($item) => $item->is_active ?? true)
-                    ->sortBy('order')
-                    ->values();
-                if ($items->count() === 0 && $totalItems > 0) {
-                    $disabledSections[] = [
-                        'section_id' => $section->id,
-                        'type' => $section->type ?? null,
-                        'total_items' => $totalItems,
-                    ];
-                }
-                $section->setRelation('items', $items);
-                return $section;
-            });
-
-            if (!empty($disabledSections)) {
-                Log::info('Home page sections have no active items', [
-                    'page_id' => $page->id,
-                    'slug' => $page->slug,
-                    'sections' => $disabledSections,
-                ]);
-            }
-
-            // Collect some metrics to help with later decisions/logging
-            $totalSections = $page->sections()->count();
-            $disabledCount = $page->sections()->where('is_active', false)->count();
-
-            return [
-                'page' => $page,
-                'sections' => $sections,
-                'metrics' => [
-                    'active_sections' => $sections->count(),
-                    'total_sections' => $totalSections,
-                    'disabled_sections' => $disabledCount,
-                ],
-            ];
-        });
+        if ($data === null) {
+            return $this->notFound();
+        }
 
         if ($data['sections']->isEmpty()) {
             Log::warning('Home page has no active sections', $data['metrics'] ?? []);
-            return response()->view('404', [], 404);
+
+            return $this->notFound();
         }
 
         return view('web.pages.index', [
@@ -79,51 +31,16 @@ class PagesService
 
     public function whoweare()
     {
-        $data = Cache::rememberForever('page.whoweare', function () {
-            $page = Page::where('slug', 'whoweare')
-                ->with([
-                    'sections' => function ($query) {
-                        $query->where('is_active', true)
-                            ->orderBy('order')
-                            ->with(['items' => function ($q) {
-                                $q->orderBy('order');
-                            }]);
-                    },
-                ])
-                ->firstOrFail();
+        $data = $this->loadPage('whoweare');
 
-            $disabledSections = [];
-            $sections = $page->sections->map(function ($section) use (&$disabledSections) {
-                $totalItems = $section->items->count();
-                $items = $section->items
-                    ->filter(fn($item) => $item->is_active ?? true)
-                    ->sortBy('order')
-                    ->values();
-                if ($items->count() === 0 && $totalItems > 0) {
-                    $disabledSections[] = [
-                        'section_id' => $section->id,
-                        'type' => $section->type ?? null,
-                        'total_items' => $totalItems,
-                    ];
-                }
-                $section->setRelation('items', $items);
-                return $section;
-            });
-
-            if (!empty($disabledSections)) {
-                Log::info('WhoWeAre page sections have no active items', [
-                    'page_id' => $page->id,
-                    'slug' => $page->slug,
-                    'sections' => $disabledSections,
-                ]);
-            }
-
-            return compact('page', 'sections');
-        });
+        if ($data === null) {
+            return $this->notFound();
+        }
 
         if ($data['sections']->isEmpty()) {
-            Log::warning('WhoWeAre page has no active sections');
-            return response()->view('404', [], 404);
+            Log::warning('WhoWeAre page has no active sections', $data['metrics'] ?? []);
+
+            return $this->notFound();
         }
 
         return view('web.pages.whoweare', [
@@ -134,36 +51,98 @@ class PagesService
 
     public function contactUs()
     {
-        $data = Cache::rememberForever('page.contact-us', function () {
-            $page = Page::where('slug', 'contact-us')
-                ->with(['sections' => function ($query) {
-                    $query->where('is_active', true)
-                        ->orderBy('order')
-                        ->with(['items' => function ($q) {
-                            $q->orderBy('order');
-                        }]);
-                }])
-                ->firstOrFail();
+        $data = $this->loadPage('contact-us');
 
-            $sections = $page->sections->map(function ($section) {
-                $items = $section->items
-                    ->filter(fn($item) => $item->is_active ?? true)
-                    ->sortBy('order')
-                    ->values();
-                $section->setRelation('items', $items);
-                return $section;
-            });
-
-            return compact('page', 'sections');
-        });
-
-        if ($data['sections']->isEmpty()) {
-            return response()->view('404', [], 404);
+        if ($data === null || $data['sections']->isEmpty()) {
+            return $this->notFound();
         }
 
         return view('web.pages.contact_us', [
             'page' => $data['page'],
             'sections' => $data['sections'],
         ]);
+    }
+
+    /**
+     * Load a published page with its active sections and active items.
+     *
+     * Activation is filtered in the query for pages, sections and items alike,
+     * so an inactive record never reaches the view. Returns null when the page
+     * does not exist or is not active.
+     */
+    protected function loadPage(string $slug): ?array
+    {
+        $cacheKey = 'page.' . $slug;
+
+        $cached = Cache::get($cacheKey);
+
+        if ($cached !== null) {
+            return $cached === false ? null : $cached;
+        }
+
+        try {
+            $page = Page::where('slug', $slug)
+                ->where('is_active', true)
+                ->with([
+                    'sections' => function ($query) {
+                        $query->where('is_active', true)
+                            ->orderBy('order')
+                            // items_count counts every item, while the loaded
+                            // relation holds only the active ones.
+                            ->withCount('items')
+                            ->with([
+                                'items' => function ($query) {
+                                    $query->where('is_active', true)->orderBy('order');
+                                },
+                            ]);
+                    },
+                ])
+                ->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            // Cache the miss so an unpublished page does not hit the database on
+            // every request. The page observers clear this key on any change.
+            Cache::forever($cacheKey, false);
+
+            return null;
+        }
+
+        $sections = $page->sections;
+
+        $emptied = $sections
+            ->filter(fn ($section) => $section->items->isEmpty() && $section->items_count > 0)
+            ->map(fn ($section) => [
+                'section_id' => $section->id,
+                'type' => $section->type ?? null,
+                'total_items' => $section->items_count,
+            ])
+            ->values()
+            ->all();
+
+        if (!empty($emptied)) {
+            Log::info('Page sections have no active items', [
+                'page_id' => $page->id,
+                'slug' => $page->slug,
+                'sections' => $emptied,
+            ]);
+        }
+
+        $data = [
+            'page' => $page,
+            'sections' => $sections,
+            'metrics' => [
+                'active_sections' => $sections->count(),
+                'total_sections' => $page->sections()->count(),
+                'disabled_sections' => $page->sections()->where('is_active', false)->count(),
+            ],
+        ];
+
+        Cache::forever($cacheKey, $data);
+
+        return $data;
+    }
+
+    protected function notFound()
+    {
+        return response()->view('404', [], 404);
     }
 }

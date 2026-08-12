@@ -6,7 +6,6 @@ use App\Models\SectionItem;
 use App\Support\Lang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class WhoWeArePageContentController extends BasePageContentController
 {
@@ -60,7 +59,7 @@ class WhoWeArePageContentController extends BasePageContentController
 
         $validated = $request->validate($rules);
 
-        DB::transaction(function () use ($request, $banner, $whoWe, $port) {
+        $this->persistContent(function () use ($request, $banner, $whoWe, $port) {
             if ($banner) {
                 $this->updateBanner($request, $banner);
             }
