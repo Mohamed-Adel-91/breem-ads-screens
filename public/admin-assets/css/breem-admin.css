@@ -530,6 +530,33 @@ body.breem-admin .nav-pills .nav-link.active {
     line-height: 1.2;
 }
 
+/* ---------- Phase 6: Ads creative preview + inline schedule editor ---------- */
+
+.breem-admin .admin-ad-creative {
+    max-width: 100%;
+    max-height: 260px;
+    width: auto;
+    height: auto;
+}
+
+/* Collapsible edit panel rendered inside a table row (Bootstrap 4 collapse). */
+.breem-admin .admin-inline-editor-row td {
+    background: transparent;
+}
+
+.breem-admin .admin-inline-editor {
+    padding: 1rem 1.25rem 0.5rem;
+    border-top: 1px solid var(--breem-border);
+    background: #f8fafb;
+}
+
+/* Long stored file paths must wrap instead of widening the card. */
+.breem-admin .admin-wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+}
+
 .breem-admin .dashboard-welcome {
     position: relative;
     overflow: hidden;

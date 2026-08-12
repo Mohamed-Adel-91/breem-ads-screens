@@ -1,190 +1,381 @@
-@extends('admin.layouts.legacy.master')
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
 @section('content')
-    <div class="page-wrapper">
-        @include('admin.layouts.legacy.sidebar')
-        <div class="page-content">
-            @include('admin.layouts.legacy.page-header')
-            <div class="main-container">
-                @include('admin.layouts.legacy.alerts')
-                <div class="row gutters">
-                    <div class="col-12">
-                        <div class="card mb-3">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">{{ $ad->getTranslation('title', app()->getLocale()) ?? __('Ad details') }}</h5>
-                                <div class="d-flex gap-2">
-                                    @can('ads.edit')
-                                        <a href="{{ route('admin.ads.edit', ['lang' => $lang, 'ad' => $ad->id]) }}" class="btn btn-primary btn-sm">{{ __('Edit') }}</a>
-                                    @endcan
-                                    @can('ads.view')
-                                        <a href="{{ route('admin.ads.schedules.index', ['lang' => $lang, 'ad' => $ad->id]) }}" class="btn btn-light btn-sm">{{ __('Manage schedules') }}</a>
-                                    @endcan
-                                    @can('ads.view')
-                                        <a href="{{ route('admin.ads.index', ['lang' => $lang]) }}" class="btn btn-outline-secondary btn-sm">{{ __('Back to list') }}</a>
-                                    @endcan
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-3">
-                                        <strong>{{ __('Status') }}</strong>
-                                        <div>{{ ucfirst($ad->status->value) }}</div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <strong>{{ __('Start date') }}</strong>
-                                        <div>{{ optional($ad->start_date)->format('Y-m-d') ?? '—' }}</div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <strong>{{ __('End date') }}</strong>
-                                        <div>{{ optional($ad->end_date)->format('Y-m-d') ?? '—' }}</div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <strong>{{ __('Duration (seconds)') }}</strong>
-                                        <div>{{ $ad->duration_seconds }}</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <strong>{{ __('Owner') }}</strong>
-                                        <div>{{ $ad->creator?->name ?? '—' }}</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <strong>{{ __('Approved by') }}</strong>
-                                        <div>{{ $ad->approver?->name ?? '—' }}</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <strong>{{ __('Creative') }}</strong>
-                                        @if ($ad->file_url)
-                                            <div><a href="{{ $ad->file_url }}" target="_blank">{{ __('Open asset') }}</a></div>
-                                        @else
-                                            <div>—</div>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
+    @php
+        $indexUrl = route('admin.ads.index', ['lang' => $lang]);
+
+        $adTitle = data_get($ad->getTranslations('title'), app()->getLocale())
+            ?: __('admin.ads.untitled', ['id' => $ad->id]);
+        $adDescription = data_get($ad->getTranslations('description'), app()->getLocale()) ?: null;
+
+        $screenLabel = fn ($screen) => $screen
+            ? $screen->code
+            : __('admin.ads.show.screen_removed');
+
+        $placeName = function ($screen) {
+            if (!$screen || !$screen->place) {
+                return null;
+            }
+
+            return data_get($screen->place->getTranslations('name'), app()->getLocale()) ?: null;
+        };
+
+        // Everything below is already eager-loaded / computed by AdController::show
+        // (screens.place, schedules.screen.place, creator, approver, playbacks.screen).
+        // No additional domain query is issued from this view.
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $adTitle,
+            'subtitle' => __('admin.ads.show_subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.ads_system')],
+                ['label' => __('admin.sidebar.ads_system_all_ads'), 'url' => $indexUrl],
+                ['label' => $adTitle],
+            ],
+            'secondaryAction' => [
+                'href' => $indexUrl,
+                'label' => __('admin.ads.actions.back_to_list'),
+                'icon' => 'arrow-left',
+            ],
+            'primaryAction' => auth('admin')->user()?->can('ads.edit')
+                ? [
+                    'href' => route('admin.ads.edit', ['lang' => $lang, 'ad' => $ad->id]),
+                    'label' => __('admin.ads.actions.edit'),
+                    'icon' => 'edit-2',
+                ]
+                : null,
+        ])
+
+        @can('ads.view')
+            <div class="card mb-4">
+                <div class="card-body">
+                    <x-admin.group-btn>
+                        <x-admin.btn
+                            :href="route('admin.ads.schedules.index', ['lang' => $lang, 'ad' => $ad->id])"
+                            variant="outline-primary"
+                            size="sm"
+                            icon="calendar">
+                            {{ __('admin.ads.actions.manage_schedules') }}
+                        </x-admin.btn>
+                        @can('ads.delete')
+                            <x-admin.btn
+                                :href="route('admin.ads.destroy', ['lang' => $lang, 'ad' => $ad->id])"
+                                method="DELETE"
+                                variant="outline-danger"
+                                size="sm"
+                                icon="trash-2"
+                                :confirm="__('admin.ads.actions.delete_confirm')">
+                                {{ __('admin.ads.actions.delete') }}
+                            </x-admin.btn>
+                        @endcan
+                    </x-admin.group-btn>
+                </div>
+            </div>
+        @endcan
+
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title mb-0">{{ __('admin.ads.show.identity') }}</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0 admin-detail-table">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.table.id') }}</th>
+                                        <td>{{ $ad->id }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.table.title') }}</th>
+                                        <td>{{ $adTitle }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.table.status') }}</th>
+                                        <td>
+                                            @include('admin.ads.partials.status-badge', ['status' => $ad->status])
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.table.media') }}</th>
+                                        <td>
+                                            <x-admin.badge variant="light">
+                                                {{ \App\Support\Lang::t('admin.ads.file_types.' . $ad->file_type, ucfirst((string) $ad->file_type)) }}
+                                            </x-admin.badge>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.show.description') }}</th>
+                                        <td>{{ $adDescription ?? __('admin.ads.show.no_description') }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <div class="row gutters">
-                    <div class="col-lg-6">
-                        <div class="card mb-3">
-                            <div class="card-header"><h6 class="mb-0">{{ __('Linked screens') }}</h6></div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title mb-0">{{ __('admin.ads.show.timing') }}</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0 admin-detail-table">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.table.start_date') }}</th>
+                                        <td>{{ optional($ad->start_date)->format('Y-m-d') ?? '—' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.table.end_date') }}</th>
+                                        <td>{{ optional($ad->end_date)->format('Y-m-d') ?? '—' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.form.duration_seconds') }}</th>
+                                        <td>{{ $ad->duration_seconds }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title mb-0">{{ __('admin.ads.show.audit') }}</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0 admin-detail-table">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.form.owner') }}</th>
+                                        <td>{{ $ad->creator?->name ?? '—' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.form.approved_by') }}</th>
+                                        <td>{{ $ad->approver?->name ?? '—' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.show.created_at') }}</th>
+                                        <td>{{ optional($ad->created_at)->format('Y-m-d H:i') ?? '—' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.ads.show.updated_at') }}</th>
+                                        <td>{{ optional($ad->updated_at)->format('Y-m-d H:i') ?? '—' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title mb-0">{{ __('admin.ads.show.media') }}</h2>
+                    </div>
+                    <div class="card-body">
+                        @include('admin.ads.partials.creative-preview', ['ad' => $ad, 'caption' => null])
+
+                        @if ($ad->file_path)
+                            <p class="text-muted small mb-0 mt-3">
+                                {{ __('admin.ads.show.file_path') }}:
+                                <code class="admin-wrap-anywhere">{{ $ad->file_path }}</code>
+                            </p>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                        <h2 class="card-title mb-0">{{ __('admin.ads.show.linked_screens') }}</h2>
+                        <x-admin.badge variant="light">{{ $ad->screens->count() }}</x-admin.badge>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 admin-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ __('admin.ads.table.screens') }}</th>
+                                        <th scope="col">{{ __('admin.ads.show.place') }}</th>
+                                        <th scope="col">{{ __('admin.ads.show.play_order') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                                     @forelse ($ad->screens as $screen)
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            <span>{{ $screen->code }} @if($screen->place) - {{ $screen->place->getTranslation('name', app()->getLocale()) }} @endif</span>
-                                            <span class="badge bg-light text-dark">{{ __('Order') }}: {{ $screen->pivot->play_order }}</span>
-                                        </li>
+                                        <tr>
+                                            <td><code>{{ $screen->code }}</code></td>
+                                            <td>{{ $placeName($screen) ?? '—' }}</td>
+                                            <td>{{ $screen->pivot->play_order }}</td>
+                                        </tr>
                                     @empty
-                                        <li class="list-group-item text-muted">{{ __('No screens linked yet.') }}</li>
+                                        @include('admin.partials.empty-state', [
+                                            'colspan' => 3,
+                                            'message' => __('admin.ads.show.linked_screens_empty'),
+                                            'icon' => 'monitor',
+                                        ])
                                     @endforelse
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="card mb-3">
-                            <div class="card-header"><h6 class="mb-0">{{ __('Playback summary (last 7 days)') }}</h6></div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>{{ __('Date') }}</th>
-                                                <th>{{ __('Plays') }}</th>
-                                                <th>{{ __('Total duration') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse ($playbackStats as $date => $stat)
-                                                <tr>
-                                                    <td>{{ $date }}</td>
-                                                    <td>{{ $stat['plays'] }}</td>
-                                                    <td>{{ $stat['duration'] }}</td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="3" class="text-center text-muted">{{ __('No playback records in the selected period.') }}</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="row gutters">
-                    <div class="col-lg-6">
-                        <div class="card mb-3">
-                            <div class="card-header"><h6 class="mb-0">{{ __('Upcoming schedules') }}</h6></div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title mb-0">{{ __('admin.ads.show.upcoming_schedules') }}</h2>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 admin-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ __('admin.ads.table.screens') }}</th>
+                                        <th scope="col">{{ __('admin.schedules.form.start_time') }}</th>
+                                        <th scope="col">{{ __('admin.schedules.form.end_time') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                                     @forelse ($upcomingSchedules as $schedule)
-                                        <li class="list-group-item">
-                                            <div class="fw-semibold">{{ $schedule->screen?->code ?? __('Screen removed') }}</div>
-                                            <div class="text-muted">{{ $schedule->start_time->format('Y-m-d H:i') }} → {{ $schedule->end_time->format('Y-m-d H:i') }}</div>
-                                        </li>
+                                        <tr>
+                                            <td>{{ $screenLabel($schedule->screen) }}</td>
+                                            <td dir="ltr">{{ optional($schedule->start_time)->format('Y-m-d H:i') ?? '—' }}</td>
+                                            <td dir="ltr">{{ optional($schedule->end_time)->format('Y-m-d H:i') ?? '—' }}</td>
+                                        </tr>
                                     @empty
-                                        <li class="list-group-item text-muted">{{ __('No upcoming schedules.') }}</li>
+                                        @include('admin.partials.empty-state', [
+                                            'colspan' => 3,
+                                            'message' => __('admin.ads.show.upcoming_schedules_empty'),
+                                            'icon' => 'calendar',
+                                        ])
                                     @endforelse
-                                </ul>
-                            </div>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div class="col-lg-6">
-                        <div class="card mb-3">
-                            <div class="card-header"><h6 class="mb-0">{{ __('Past schedules') }}</h6></div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title mb-0">{{ __('admin.ads.show.past_schedules') }}</h2>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 admin-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ __('admin.ads.table.screens') }}</th>
+                                        <th scope="col">{{ __('admin.schedules.form.start_time') }}</th>
+                                        <th scope="col">{{ __('admin.schedules.form.end_time') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{-- take(5) preserved verbatim from the pre-migration view. --}}
                                     @forelse ($pastSchedules->take(5) as $schedule)
-                                        <li class="list-group-item">
-                                            <div class="fw-semibold">{{ $schedule->screen?->code ?? __('Screen removed') }}</div>
-                                            <div class="text-muted">{{ $schedule->start_time->format('Y-m-d H:i') }} → {{ $schedule->end_time->format('Y-m-d H:i') }}</div>
-                                        </li>
+                                        <tr>
+                                            <td>{{ $screenLabel($schedule->screen) }}</td>
+                                            <td dir="ltr">{{ optional($schedule->start_time)->format('Y-m-d H:i') ?? '—' }}</td>
+                                            <td dir="ltr">{{ optional($schedule->end_time)->format('Y-m-d H:i') ?? '—' }}</td>
+                                        </tr>
                                     @empty
-                                        <li class="list-group-item text-muted">{{ __('No past schedules.') }}</li>
+                                        @include('admin.partials.empty-state', [
+                                            'colspan' => 3,
+                                            'message' => __('admin.ads.show.past_schedules_empty'),
+                                            'icon' => 'calendar',
+                                        ])
                                     @endforelse
-                                </ul>
-                            </div>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="row gutters">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header"><h6 class="mb-0">{{ __('Recent playbacks') }}</h6></div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>{{ __('Screen') }}</th>
-                                                <th>{{ __('Played at') }}</th>
-                                                <th>{{ __('Duration') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse ($ad->playbacks as $log)
-                                                <tr>
-                                                    <td>{{ $log->screen?->code ?? '—' }}</td>
-                                                    <td>{{ optional($log->played_at)->format('Y-m-d H:i') }}</td>
-                                                    <td>{{ $log->duration }}</td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="3" class="text-center text-muted">{{ __('No playback logs available.') }}</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title mb-0">{{ __('admin.ads.show.playback_summary') }}</h2>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 admin-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ __('admin.ads.show.date') }}</th>
+                                        <th scope="col">{{ __('admin.ads.show.plays') }}</th>
+                                        <th scope="col">{{ __('admin.ads.show.total_duration') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($playbackStats as $date => $stat)
+                                        <tr>
+                                            <td dir="ltr">{{ $date }}</td>
+                                            <td>{{ $stat['plays'] }}</td>
+                                            <td>{{ $stat['duration'] }}</td>
+                                        </tr>
+                                    @empty
+                                        @include('admin.partials.empty-state', [
+                                            'colspan' => 3,
+                                            'message' => __('admin.ads.show.playback_summary_empty'),
+                                            'icon' => 'bar-chart-2',
+                                        ])
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+            </div>
 
+            <div class="col-lg-7">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title mb-0">{{ __('admin.ads.show.recent_playbacks') }}</h2>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 admin-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ __('admin.ads.table.screens') }}</th>
+                                        <th scope="col">{{ __('admin.ads.show.played_at') }}</th>
+                                        <th scope="col">{{ __('admin.ads.show.duration') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($ad->playbacks as $log)
+                                        <tr>
+                                            <td>{{ $log->screen?->code ?? '—' }}</td>
+                                            <td dir="ltr">{{ optional($log->played_at)->format('Y-m-d H:i') ?? '—' }}</td>
+                                            <td>{{ $log->duration }}</td>
+                                        </tr>
+                                    @empty
+                                        @include('admin.partials.empty-state', [
+                                            'colspan' => 3,
+                                            'message' => __('admin.ads.show.recent_playbacks_empty'),
+                                            'icon' => 'play-circle',
+                                        ])
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

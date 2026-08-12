@@ -1,168 +1,314 @@
-<div class="space-y-10">
-    <div class="grid gap-6 sm:grid-cols-2">
-        <div>
-            <label for="title_en" class="block text-sm font-medium text-gray-700">{{ __('Title (English)') }}</label>
-            <input id="title_en" type="text" name="title[en]"
-                   value="{{ old('title.en', $ad->getTranslation('title', 'en', false)) }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            @error('title.en')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div>
-            <label for="title_ar" class="block text-sm font-medium text-gray-700">{{ __('Title (Arabic)') }}</label>
-            <input id="title_ar" type="text" name="title[ar]"
-                   value="{{ old('title.ar', $ad->getTranslation('title', 'ar', false)) }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            @error('title.ar')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div>
-            <label for="description_en" class="block text-sm font-medium text-gray-700">{{ __('Description (English)') }}</label>
-            <textarea id="description_en" name="description[en]" rows="3"
-                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description.en', $ad->getTranslation('description', 'en', false)) }}</textarea>
-            @error('description.en')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div>
-            <label for="description_ar" class="block text-sm font-medium text-gray-700">{{ __('Description (Arabic)') }}</label>
-            <textarea id="description_ar" name="description[ar]" rows="3"
-                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description.ar', $ad->getTranslation('description', 'ar', false)) }}</textarea>
-            @error('description.ar')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-    </div>
+{{--
+    Shared Ad form body. Every input name (`title[en]`, `title[ar]`,
+    `description[en]`, `description[ar]`, `creative`, `duration_seconds`, `status`,
+    `created_by`, `approved_by`, `start_date`, `end_date`, `screens[]`,
+    `play_order[{screen}]`) is emitted verbatim so the existing StoreAdRequest /
+    UpdateAdRequest contract is untouched.
 
-    <div class="grid gap-6 sm:grid-cols-2">
-        <div>
-            <label for="creative" class="block text-sm font-medium text-gray-700">{{ __('Creative file') }}</label>
-            <input id="creative" type="file" name="creative"
-                   class="mt-1 block w-full cursor-pointer rounded-md border border-dashed border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            <p class="mt-2 text-xs text-gray-500">{{ __('Supported images, GIFs, or videos. Leave empty to keep the current creative.') }}</p>
-            @if ($ad->file_path)
-                <p class="mt-2 text-sm">
-                    <a href="{{ $ad->file_url }}" target="_blank" class="text-indigo-600 hover:text-indigo-500">
-                        {{ __('View current file') }}
-                    </a>
-                </p>
-            @endif
-            @error('creative')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div class="grid gap-6 sm:grid-cols-2">
-            <div>
-                <label for="duration_seconds" class="block text-sm font-medium text-gray-700">{{ __('Duration (seconds)') }}</label>
-                <input id="duration_seconds" type="number" name="duration_seconds" min="0"
-                       value="{{ old('duration_seconds', $ad->duration_seconds) }}"
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                @error('duration_seconds')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-            <div>
-                <label for="status" class="block text-sm font-medium text-gray-700">{{ __('Status') }}</label>
-                <select id="status" name="status"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    @foreach ($statuses as $value => $label)
-                        <option value="{{ $value }}" @selected(old('status', optional($ad->status)->value ?? array_key_first($statuses)) === $value)>
-                            {{ ucfirst(__($label)) }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('status')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
-    </div>
+    `creativeRequired` mirrors the request rules: required on store, nullable on
+    update. The `accept` attribute is a browser hint only — server-side mimetype
+    validation is unchanged and is still the authority.
+--}}
+@php
+    $creativeRequired = $creativeRequired ?? false;
 
-    <div class="grid gap-6 sm:grid-cols-2">
-        <div>
-            <label for="created_by" class="block text-sm font-medium text-gray-700">{{ __('Owner') }}</label>
-            <select id="created_by" name="created_by"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                @foreach ($owners as $owner)
-                    <option value="{{ $owner->id }}" @selected(old('created_by', $ad->created_by) == $owner->id)>{{ $owner->name }}</option>
-                @endforeach
-            </select>
-            @error('created_by')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div>
-            <label for="approved_by" class="block text-sm font-medium text-gray-700">{{ __('Approved by (optional)') }}</label>
-            <select id="approved_by" name="approved_by"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="">-- {{ __('Not set') }} --</option>
-                @foreach ($owners as $owner)
-                    <option value="{{ $owner->id }}" @selected(old('approved_by', $ad->approved_by) == $owner->id)>{{ $owner->name }}</option>
-                @endforeach
-            </select>
-            @error('approved_by')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-    </div>
+    $titleTranslations = $ad->getTranslations('title');
+    $descriptionTranslations = $ad->getTranslations('description');
 
-    <div class="grid gap-6 sm:grid-cols-3">
-        <div>
-            <label for="start_date" class="block text-sm font-medium text-gray-700">{{ __('Start date') }}</label>
-            <input id="start_date" type="date" name="start_date"
-                   value="{{ old('start_date', optional($ad->start_date)->format('Y-m-d')) }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            @error('start_date')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div>
-            <label for="end_date" class="block text-sm font-medium text-gray-700">{{ __('End date') }}</label>
-            <input id="end_date" type="date" name="end_date"
-                   value="{{ old('end_date', optional($ad->end_date)->format('Y-m-d')) }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            @error('end_date')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div class="sm:col-span-1">
-            @php($selectedScreens = collect(old('screens', $ad->screens?->pluck('id')->all() ?? [])))
-            <label for="screens" class="block text-sm font-medium text-gray-700">{{ __('Screens') }}</label>
-            <select id="screens" name="screens[]" multiple size="6"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                @foreach ($screens as $screen)
-                    <option value="{{ $screen->id }}" @selected($selectedScreens->contains($screen->id))>
-                        {{ $screen->code }}
-                        @if ($screen->place)
-                            — {{ $screen->place->getTranslation('name', app()->getLocale()) }}
+    // Mirrors the `mimetypes:` rule in Store/UpdateAdRequest. Hint only.
+    $creativeAccept = 'video/mp4,video/x-m4v,video/quicktime,video/x-msvideo,'
+        . 'video/x-ms-wmv,video/mpeg,video/webm,image/jpeg,image/png,image/gif';
+
+    $selectedScreens = collect(old('screens', $ad->screens?->pluck('id')->all() ?? []));
+
+    $screenLabel = function ($screen) {
+        $label = $screen->code;
+
+        if ($screen->place) {
+            $placeName = data_get($screen->place->getTranslations('name'), app()->getLocale());
+
+            if ($placeName) {
+                $label .= ' — ' . $placeName;
+            }
+        }
+
+        return $label;
+    };
+@endphp
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title mb-0">{{ __('admin.ads.form.content_heading') }}</h2>
+    </div>
+    <div class="card-body">
+        {{-- Arabic inputs stay dir="rtl" and English dir="ltr" regardless of dashboard locale. --}}
+        <x-admin.translatable-field
+            label-key="admin.ads.form.title_locale"
+            id-prefix="ad_title"
+            :help="__('admin.ads.form.title_help')"
+            :names="['en' => 'title[en]', 'ar' => 'title[ar]']"
+            :values="[
+                'en' => old('title.en', data_get($titleTranslations, 'en')),
+                'ar' => old('title.ar', data_get($titleTranslations, 'ar')),
+            ]" />
+
+        <x-admin.translatable-field
+            type="textarea"
+            :rows="4"
+            label-key="admin.ads.form.description_locale"
+            id-prefix="ad_description"
+            :names="['en' => 'description[en]', 'ar' => 'description[ar]']"
+            :values="[
+                'en' => old('description.en', data_get($descriptionTranslations, 'en')),
+                'ar' => old('description.ar', data_get($descriptionTranslations, 'ar')),
+            ]" />
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title mb-0">{{ __('admin.ads.form.creative_heading') }}</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="creative">
+                        {{ __('admin.ads.form.creative') }}
+                        @if ($creativeRequired)
+                            <span class="text-danger" aria-hidden="true">*</span>
                         @endif
-                    </option>
-                @endforeach
-            </select>
-            <p class="mt-2 text-xs text-gray-500">{{ __('Hold CTRL (or CMD on macOS) to select multiple screens.') }}</p>
-            @error('screens')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
+                    </label>
+
+                    @if ($ad->file_path)
+                        <div class="mb-2">
+                            @include('admin.ads.partials.creative-preview', [
+                                'ad' => $ad,
+                                'caption' => __('admin.ads.form.current_creative'),
+                            ])
+                        </div>
+                    @endif
+
+                    <input type="file"
+                           id="creative"
+                           name="creative"
+                           accept="{{ $creativeAccept }}"
+                           aria-describedby="creative_help"
+                           @if ($creativeRequired) required @endif
+                           @class(['form-control-file', 'is-invalid' => $errors->has('creative')])>
+                    @error('creative')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
+                    <small id="creative_help" class="form-text text-muted">
+                        {{ __('admin.ads.form.creative_help') }}
+                        @if (!$creativeRequired)
+                            {{ __('admin.ads.form.creative_help_edit') }}
+                        @endif
+                    </small>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="duration_seconds">{{ __('admin.ads.form.duration_seconds') }}</label>
+                    <input type="number"
+                           id="duration_seconds"
+                           name="duration_seconds"
+                           min="0"
+                           dir="ltr"
+                           aria-describedby="duration_seconds_help"
+                           value="{{ old('duration_seconds', $ad->duration_seconds) }}"
+                           @class(['form-control', 'is-invalid' => $errors->has('duration_seconds')])>
+                    @error('duration_seconds')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <small id="duration_seconds_help" class="form-text text-muted">
+                        {{ __('admin.ads.form.duration_help') }}
+                    </small>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="status">{{ __('admin.ads.form.status') }}</label>
+                    <select id="status"
+                            name="status"
+                            @class(['form-control', 'is-invalid' => $errors->has('status')])>
+                        @foreach ($statuses as $value => $label)
+                            <option value="{{ $value }}"
+                                @selected(old('status', optional($ad->status)->value ?? array_key_first($statuses)) === $value)>
+                                {{ \App\Support\Lang::t('admin.ads.statuses.' . $value, $label) }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('status')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="space-y-4">
-        <div>
-            <h3 class="text-lg font-semibold text-gray-900">{{ __('Playback order per screen') }}</h3>
-            <p class="mt-1 text-sm text-gray-500">{{ __('Optional: set the play order for each attached screen. Lower numbers play earlier.') }}</p>
-        </div>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            @foreach ($screens as $screen)
-                @php($pivot = $ad->screens?->firstWhere('id', $screen->id))
-                <div class="rounded-lg border border-dashed border-gray-200 p-4">
-                    <label for="play_order_{{ $screen->id }}" class="block text-sm font-medium text-gray-700">{{ $screen->code }}</label>
-                    <input id="play_order_{{ $screen->id }}" type="number" min="0" name="play_order[{{ $screen->id }}]"
-                           value="{{ old('play_order.' . $screen->id, optional($pivot?->pivot)->play_order ?? 0) }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title mb-0">{{ __('admin.ads.form.ownership_heading') }}</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="created_by">
+                        {{ __('admin.ads.form.owner') }}
+                        <span class="text-danger" aria-hidden="true">*</span>
+                    </label>
+                    <select id="created_by"
+                            name="created_by"
+                            required
+                            @class(['form-control', 'is-invalid' => $errors->has('created_by')])>
+                        @foreach ($owners as $owner)
+                            <option value="{{ $owner->id }}" @selected(old('created_by', $ad->created_by) == $owner->id)>
+                                {{ $owner->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('created_by')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
-            @endforeach
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="approved_by">{{ __('admin.ads.form.approved_by') }}</label>
+                    <select id="approved_by"
+                            name="approved_by"
+                            @class(['form-control', 'is-invalid' => $errors->has('approved_by')])>
+                        <option value="">{{ __('admin.ads.form.not_set') }}</option>
+                        @foreach ($owners as $owner)
+                            <option value="{{ $owner->id }}" @selected(old('approved_by', $ad->approved_by) == $owner->id)>
+                                {{ $owner->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('approved_by')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
         </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title mb-0">{{ __('admin.ads.form.schedule_heading') }}</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="start_date">{{ __('admin.ads.form.start_date') }}</label>
+                    <input type="date"
+                           id="start_date"
+                           name="start_date"
+                           dir="ltr"
+                           value="{{ old('start_date', optional($ad->start_date)->format('Y-m-d')) }}"
+                           @class(['form-control', 'is-invalid' => $errors->has('start_date')])>
+                    @error('start_date')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="end_date">{{ __('admin.ads.form.end_date') }}</label>
+                    <input type="date"
+                           id="end_date"
+                           name="end_date"
+                           dir="ltr"
+                           value="{{ old('end_date', optional($ad->end_date)->format('Y-m-d')) }}"
+                           @class(['form-control', 'is-invalid' => $errors->has('end_date')])>
+                    @error('end_date')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title mb-0">{{ __('admin.ads.form.assignment_heading') }}</h2>
+    </div>
+    <div class="card-body">
+        @if ($screens->isEmpty())
+            <p class="text-muted mb-0">{{ __('admin.ads.form.no_screens') }}</p>
+        @else
+            <div class="row">
+                <div class="col-lg-5">
+                    <div class="form-group">
+                        <label for="screens">{{ __('admin.ads.form.screens') }}</label>
+                        {{-- Native multi-select: no Select2 is loaded for this module. --}}
+                        <select id="screens"
+                                name="screens[]"
+                                multiple
+                                size="8"
+                                aria-describedby="screens_help"
+                                @class(['form-control', 'is-invalid' => $errors->has('screens')])>
+                            @foreach ($screens as $screen)
+                                <option value="{{ $screen->id }}" @selected($selectedScreens->contains($screen->id))>
+                                    {{ $screenLabel($screen) }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('screens')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                        <small id="screens_help" class="form-text text-muted">
+                            {{ __('admin.ads.form.screens_help') }}
+                        </small>
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <h3 class="admin-section-title">{{ __('admin.ads.form.play_order_heading') }}</h3>
+                    <p class="text-muted small">{{ __('admin.ads.form.play_order_help') }}</p>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0 admin-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{ __('admin.ads.form.screens') }}</th>
+                                    <th scope="col">{{ __('admin.ads.show.play_order') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($screens as $screen)
+                                    @php($pivot = $ad->screens?->firstWhere('id', $screen->id))
+                                    <tr>
+                                        <td>
+                                            <label class="mb-0" for="play_order_{{ $screen->id }}">
+                                                {{ $screenLabel($screen) }}
+                                            </label>
+                                        </td>
+                                        <td>
+                                            <input type="number"
+                                                   id="play_order_{{ $screen->id }}"
+                                                   name="play_order[{{ $screen->id }}]"
+                                                   min="0"
+                                                   dir="ltr"
+                                                   value="{{ old('play_order.' . $screen->id, optional($pivot?->pivot)->play_order ?? 0) }}"
+                                                   class="form-control form-control-sm">
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 </div>

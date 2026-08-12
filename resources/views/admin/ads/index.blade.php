@@ -1,185 +1,268 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900">{{ __('Ads') }}</h1>
-                <p class="mt-1 text-sm text-gray-500">{{ __('Review, filter, and manage advertising creatives across all screens.') }}</p>
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
+@section('content')
+    @php
+        $indexUrl = route('admin.ads.index', ['lang' => $lang]);
+
+        // Spatie returns an empty string (not null) for a missing translation, so
+        // `?:` is required for the placeholder to actually appear.
+        $adTitle = fn ($ad) => data_get($ad->getTranslations('title'), app()->getLocale())
+            ?: __('admin.ads.untitled', ['id' => $ad->id]);
+
+        $screenLabel = function ($screen) {
+            $label = $screen->code;
+
+            if ($screen->place) {
+                $placeName = data_get($screen->place->getTranslations('name'), app()->getLocale());
+
+                if ($placeName) {
+                    $label .= ' — ' . $placeName;
+                }
+            }
+
+            return $label;
+        };
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'subtitle' => __('admin.ads.subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.ads_system')],
+                ['label' => __('admin.sidebar.ads_system_all_ads')],
+            ],
+            'primaryAction' => auth('admin')->user()?->can('ads.create')
+                ? [
+                    'href' => route('admin.ads.create', ['lang' => $lang]),
+                    'label' => __('admin.buttons.new'),
+                    'icon' => 'plus',
+                ]
+                : null,
+        ])
+
+        {{-- Filter card: query parameter names (`search`, `status`, `screen_id`,
+             `from_date`, `to_date`) are preserved verbatim. No filter that the
+             controller does not already support is offered. --}}
+        <div class="card admin-filter-card mb-4">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ __('admin.ads.filters.heading') }}</h2>
             </div>
-            @can('ads.create')
-                <a href="{{ route('admin.ads.create', ['lang' => $lang]) }}"
-                   class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    {{ __('admin.buttons.new') }}
-                </a>
-            @endcan
-        </div>
-    </x-slot>
-
-    <div class="py-8">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="space-y-8">
-                @include('admin.layouts.legacy.alerts')
-
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                        <h2 class="text-lg font-semibold text-gray-900">{{ __('Filters') }}</h2>
-                    </div>
-                    <div class="px-6 py-6">
-                        <form method="GET" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-                            <div class="lg:col-span-2">
-                                <label for="search" class="block text-sm font-medium text-gray-700">{{ __('Search') }}</label>
-                                <input id="search" name="search" type="text" value="{{ $filters['search'] ?? '' }}"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                       placeholder="{{ __('Search by title or ID') }}">
+            <div class="card-body">
+                <form method="GET" action="{{ $indexUrl }}">
+                    <div class="row">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="form-group">
+                                <label for="search">{{ __('admin.ads.filters.search') }}</label>
+                                <input type="text"
+                                       id="search"
+                                       name="search"
+                                       class="form-control"
+                                       placeholder="{{ __('admin.ads.filters.search_placeholder') }}"
+                                       value="{{ $filters['search'] ?? '' }}">
                             </div>
-                            <div>
-                                <label for="status" class="block text-sm font-medium text-gray-700">{{ __('Status') }}</label>
-                                <select id="status" name="status"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">-- {{ __('All statuses') }} --</option>
+                        </div>
+                        <div class="col-md-6 col-lg-2">
+                            <div class="form-group">
+                                <label for="status">{{ __('admin.ads.filters.status') }}</label>
+                                <select id="status" name="status" class="form-control">
+                                    <option value="">{{ __('admin.ads.filters.all_statuses') }}</option>
                                     @foreach ($statuses as $value => $label)
-                                        <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>{{ ucfirst(__($label)) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="lg:col-span-2">
-                                <label for="screen_id" class="block text-sm font-medium text-gray-700">{{ __('Screen') }}</label>
-                                <select id="screen_id" name="screen_id"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">-- {{ __('All screens') }} --</option>
-                                    @foreach ($screens as $screen)
-                                        <option value="{{ $screen->id }}" @selected(($filters['screen_id'] ?? '') == $screen->id)>
-                                            {{ $screen->code }}
-                                            @if ($screen->place)
-                                                — {{ $screen->place->getTranslation('name', app()->getLocale()) }}
-                                            @endif
+                                        <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>
+                                            {{ \App\Support\Lang::t('admin.ads.statuses.' . $value, $label) }}
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div>
-                                <label for="from_date" class="block text-sm font-medium text-gray-700">{{ __('From date') }}</label>
-                                <input id="from_date" name="from_date" type="date" value="{{ $filters['from_date'] ?? '' }}"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="form-group">
+                                <label for="screen_id">{{ __('admin.ads.filters.screen') }}</label>
+                                <select id="screen_id" name="screen_id" class="form-control">
+                                    <option value="">{{ __('admin.ads.filters.all_screens') }}</option>
+                                    @foreach ($screens as $screen)
+                                        <option value="{{ $screen->id }}"
+                                            @selected(($filters['screen_id'] ?? '') == $screen->id)>
+                                            {{ $screenLabel($screen) }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
-                            <div>
-                                <label for="to_date" class="block text-sm font-medium text-gray-700">{{ __('To date') }}</label>
-                                <input id="to_date" name="to_date" type="date" value="{{ $filters['to_date'] ?? '' }}"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="form-group">
+                                <label for="from_date">{{ __('admin.ads.filters.from_date') }}</label>
+                                <input type="date"
+                                       id="from_date"
+                                       name="from_date"
+                                       class="form-control"
+                                       value="{{ $filters['from_date'] ?? '' }}">
                             </div>
-                            <div class="sm:col-span-2 lg:col-span-6 flex flex-wrap items-center justify-end gap-3 pt-2">
-                                <button type="submit"
-                                        class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="form-group">
+                                <label for="to_date">{{ __('admin.ads.filters.to_date') }}</label>
+                                <input type="date"
+                                       id="to_date"
+                                       name="to_date"
+                                       class="form-control"
+                                       value="{{ $filters['to_date'] ?? '' }}">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <x-admin.group-btn class="justify-content-end">
+                                <x-admin.btn type="submit" variant="primary" icon="filter">
                                     {{ __('admin.buttons.filter') }}
-                                </button>
-                                <a href="{{ route('admin.ads.index', ['lang' => $lang]) }}"
-                                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                </x-admin.btn>
+                                <x-admin.btn :href="$indexUrl" variant="light" icon="rotate-ccw">
                                     {{ __('admin.buttons.reset') }}
-                                </a>
-                            </div>
-                        </form>
+                                </x-admin.btn>
+                            </x-admin.group-btn>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- Counters come straight from the controller; nothing is recalculated here. --}}
+        <div class="row">
+            <div class="col-sm-6 col-lg-3">
+                <div class="card admin-stat-card mb-4">
+                    <div class="card-body">
+                        <span class="admin-stat-label">{{ __('admin.ads.stats.total') }}</span>
+                        <span class="admin-stat-value">{{ $stats['total'] ?? 0 }}</span>
                     </div>
                 </div>
-
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <dt class="text-sm font-medium text-gray-500">{{ __('Total ads') }}</dt>
-                        <dd class="mt-2 text-2xl font-semibold text-gray-900">{{ $stats['total'] }}</dd>
-                    </div>
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <dt class="text-sm font-medium text-gray-500">{{ __('Active') }}</dt>
-                        <dd class="mt-2 text-2xl font-semibold text-emerald-600">{{ $stats['active'] }}</dd>
-                    </div>
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <dt class="text-sm font-medium text-gray-500">{{ __('Pending') }}</dt>
-                        <dd class="mt-2 text-2xl font-semibold text-amber-600">{{ $stats['pending'] }}</dd>
-                    </div>
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <dt class="text-sm font-medium text-gray-500">{{ __('Expired') }}</dt>
-                        <dd class="mt-2 text-2xl font-semibold text-rose-600">{{ $stats['expired'] }}</dd>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="card admin-stat-card mb-4">
+                    <div class="card-body">
+                        <span class="admin-stat-label">{{ __('admin.ads.stats.active') }}</span>
+                        <span class="admin-stat-value text-success">{{ $stats['active'] ?? 0 }}</span>
                     </div>
                 </div>
-
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                <tr>
-                                    <th scope="col" class="px-4 py-3 text-left">#</th>
-                                    <th scope="col" class="px-4 py-3 text-left">{{ __('Title') }}</th>
-                                    <th scope="col" class="px-4 py-3 text-left">{{ __('Status') }}</th>
-                                    <th scope="col" class="px-4 py-3 text-left">{{ __('Screens') }}</th>
-                                    <th scope="col" class="px-4 py-3 text-left">{{ __('Schedules') }}</th>
-                                    <th scope="col" class="px-4 py-3 text-left">{{ __('Start date') }}</th>
-                                    <th scope="col" class="px-4 py-3 text-left">{{ __('End date') }}</th>
-                                    <th scope="col" class="px-4 py-3 text-left">{{ __('Owner') }}</th>
-                                    <th scope="col" class="px-4 py-3 text-left">{{ __('admin.table.options') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                @forelse ($ads as $ad)
-                                    <tr>
-                                        <td class="px-4 py-3 align-top text-gray-500">
-                                            {{ $loop->iteration + ($ads->currentPage() - 1) * $ads->perPage() }}
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <div class="font-medium text-gray-900">
-                                                {{ $ad->getTranslation('title', app()->getLocale()) ?? __('(No title)') }}
-                                            </div>
-                                            <div class="mt-1 text-xs text-gray-500">{{ __('ID:') }} {{ $ad->id }}</div>
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <span class="inline-flex rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">
-                                                {{ ucfirst($ad->status->value) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3 text-gray-700">{{ $ad->screens->count() }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ $ad->schedules->count() }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ optional($ad->start_date)->format('Y-m-d') ?? '—' }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ optional($ad->end_date)->format('Y-m-d') ?? '—' }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ optional($ad->creator)->name ?? '—' }}</td>
-                                        <td class="px-4 py-3">
-                                            <div class="flex flex-wrap gap-2">
-                                                @can('ads.view')
-                                                    <a href="{{ route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id]) }}"
-                                                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                                        {{ __('View') }}
-                                                    </a>
-                                                @endcan
-                                                @can('ads.edit')
-                                                    <a href="{{ route('admin.ads.edit', ['lang' => $lang, 'ad' => $ad->id]) }}"
-                                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                                                        {{ __('Edit') }}
-                                                    </a>
-                                                @endcan
-                                                @can('ads.delete')
-                                                    <form method="POST" action="{{ route('admin.ads.destroy', ['lang' => $lang, 'ad' => $ad->id]) }}"
-                                                          onsubmit="return confirm('{{ __('Are you sure?') }}');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit"
-                                                                class="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-500">
-                                                            {{ __('Delete') }}
-                                                        </button>
-                                                    </form>
-                                                @endcan
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="9" class="px-4 py-6 text-center text-sm text-gray-500">
-                                            {{ __('No ads found for the current filters.') }}
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="card admin-stat-card mb-4">
+                    <div class="card-body">
+                        <span class="admin-stat-label">{{ __('admin.ads.stats.pending') }}</span>
+                        <span class="admin-stat-value text-warning">{{ $stats['pending'] ?? 0 }}</span>
                     </div>
-                    <div class="border-t border-gray-200 px-6 py-4">
-                        @include('admin.partials.pagination', ['data' => $ads])
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="card admin-stat-card mb-4">
+                    <div class="card-body">
+                        <span class="admin-stat-label">{{ __('admin.ads.stats.expired') }}</span>
+                        <span class="admin-stat-value text-danger">{{ $stats['expired'] ?? 0 }}</span>
                     </div>
                 </div>
             </div>
         </div>
+
+        @include('admin.partials.results-summary', [
+            'data' => $ads,
+            'label' => __('admin.ads.results_label'),
+        ])
+
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">{{ __('admin.ads.table.title') }}</th>
+                                <th scope="col">{{ __('admin.ads.table.status') }}</th>
+                                <th scope="col">{{ __('admin.ads.table.media') }}</th>
+                                <th scope="col">{{ __('admin.ads.table.screens') }}</th>
+                                <th scope="col">{{ __('admin.ads.table.schedules') }}</th>
+                                <th scope="col">{{ __('admin.ads.table.start_date') }}</th>
+                                <th scope="col">{{ __('admin.ads.table.end_date') }}</th>
+                                <th scope="col">{{ __('admin.ads.table.owner') }}</th>
+                                <th scope="col">{{ __('admin.table.options') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($ads as $ad)
+                                <tr>
+                                    <th scope="row">{{ ($ads->firstItem() ?? 1) + $loop->index }}</th>
+                                    <td>
+                                        <span class="d-block font-weight-bold">{{ $adTitle($ad) }}</span>
+                                        <small class="text-muted">{{ __('admin.ads.table.id') }}: {{ $ad->id }}</small>
+                                    </td>
+                                    <td>
+                                        @include('admin.ads.partials.status-badge', ['status' => $ad->status])
+                                    </td>
+                                    <td>
+                                        <x-admin.badge variant="light">
+                                            {{ \App\Support\Lang::t('admin.ads.file_types.' . $ad->file_type, ucfirst((string) $ad->file_type)) }}
+                                        </x-admin.badge>
+                                    </td>
+                                    <td>
+                                        <x-admin.badge :variant="$ad->screens->count() > 0 ? 'primary' : 'secondary'" pill>
+                                            {{ $ad->screens->count() }}
+                                        </x-admin.badge>
+                                    </td>
+                                    {{-- NOTE: `schedules` is not eager-loaded by AdController::index.
+                                         The original view read the same relation, so the existing
+                                         query behaviour is preserved verbatim here and the N+1 is
+                                         reported under BACKEND DEFECTS DEFERRED rather than fixed. --}}
+                                    <td>{{ $ad->schedules->count() }}</td>
+                                    <td>{{ optional($ad->start_date)->format('Y-m-d') ?? '—' }}</td>
+                                    <td>{{ optional($ad->end_date)->format('Y-m-d') ?? '—' }}</td>
+                                    <td>{{ $ad->creator?->name ?? '—' }}</td>
+                                    <td>
+                                        <x-admin.group-btn>
+                                            @can('ads.view')
+                                                <x-admin.btn
+                                                    :href="route('admin.ads.show', ['lang' => $lang, 'ad' => $ad->id])"
+                                                    variant="outline-secondary"
+                                                    size="sm"
+                                                    icon="eye">
+                                                    {{ __('admin.ads.actions.view') }}
+                                                </x-admin.btn>
+                                            @endcan
+                                            @can('ads.edit')
+                                                <x-admin.btn
+                                                    :href="route('admin.ads.edit', ['lang' => $lang, 'ad' => $ad->id])"
+                                                    variant="outline-primary"
+                                                    size="sm"
+                                                    icon="edit-2">
+                                                    {{ __('admin.ads.actions.edit') }}
+                                                </x-admin.btn>
+                                            @endcan
+                                            @can('ads.delete')
+                                                <x-admin.btn
+                                                    :href="route('admin.ads.destroy', ['lang' => $lang, 'ad' => $ad->id])"
+                                                    method="DELETE"
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    icon="trash-2"
+                                                    :confirm="__('admin.ads.actions.delete_confirm')">
+                                                    {{ __('admin.ads.actions.delete') }}
+                                                </x-admin.btn>
+                                            @endcan
+                                        </x-admin.group-btn>
+                                    </td>
+                                </tr>
+                            @empty
+                                @include('admin.partials.empty-state', [
+                                    'colspan' => 10,
+                                    'message' => __('admin.ads.table.empty'),
+                                    'icon' => 'film',
+                                ])
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                @include('admin.partials.pagination', ['data' => $ads, 'variant' => 'static'])
+            </div>
+        </div>
     </div>
-</x-app-layout>
+@endsection
