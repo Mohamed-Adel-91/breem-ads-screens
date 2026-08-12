@@ -44,8 +44,23 @@ list is fine; `foreach` over rows that each hit the database is not.
 Filter, sort, group and aggregate **in SQL**. Pulling a table into a collection to
 `->filter()` it does not scale.
 
-Known offender, deliberately unchanged: `ReportController` loads every matching log
-with `->get()` and groups in PHP.
+Worked example, fixed in Phase 14: report generation used to run
+`PlaybackLog::with(['ad','screen'])->get()` and `ScreenLog::with(['screen.place'])->get()`
+and group the results in PHP — every log row in the period hydrated as a model, with its
+relations, to produce a handful of totals. A week of a 50-screen fleet is ~500k
+`screen_logs` rows.
+
+`ReportGenerationService` now aggregates playback in SQL (`COUNT`, `SUM`, `GROUP BY`),
+and `ReportGenerationTest` asserts the query count for 2000 log rows equals the count
+for 20 — the property that matters, and one that stays stable across environments in a
+way a memory figure would not.
+
+The screen-uptime report is the exception that proves the rule: availability is a
+**timeline** calculation over segments of online/offline/maintenance/unknown time, and
+no `COUNT(*)` is equivalent to it. It therefore still reads log rows — but per screen,
+chunked 100 screens at a time, delegating to the one authoritative
+`ScreenAvailabilityService`. "Aggregate in SQL when equivalent" does not mean
+"reimplement a duration measurement as a count".
 
 ## Pagination
 
@@ -79,13 +94,27 @@ Existing indexes match the real query patterns:
 | `ads` | `(status, start_date, end_date)` |
 | `ad_schedules` | `(screen_id, start_time, end_time)` |
 | `ad_screen` | unique `(ad_id, screen_id)` |
-| `screen_logs` | `(screen_id, reported_at)` |
-| `playback_logs` | `(screen_id, played_at)` |
-| `reports` | `type`, `generated_by` |
+| `screen_logs` | `(screen_id, reported_at)`, `reported_at` |
+| `playback_logs` | `(screen_id, played_at)`, `played_at`, `(ad_id, played_at)` |
+| `reports` | `type`, `generated_by`, `created_at` |
 
 **Do not add indexes speculatively.** Add one only when a real query pattern
 clearly justifies it, in an additive migration, with the justification recorded.
 Otherwise report it as a recommendation.
+
+The four single-column entries above were added in Phase 14, each for a query with no
+usable index. The existing composites lead with `screen_id`, so a query that does not
+filter by screen cannot use them at all:
+
+| Index | Query it supports |
+|---|---|
+| `screen_logs.reported_at` | `ScreenLog::prunable()` — fleet-wide `reported_at < cutoff` |
+| `playback_logs.played_at` | `PlaybackLog::prunable()` — fleet-wide `played_at < cutoff` |
+| `playback_logs.(ad_id, played_at)` | the playback report's `where ad_id = ?` plus period filter, and its `group by ad_id`. `ad_id` had no index at all |
+| `reports.created_at` | the reports index `latest('created_at')` with pagination, and `Report::prunable()` |
+
+A scheduled fleet-wide prune with no supporting index is a nightly full table scan of
+the two largest tables in the schema.
 
 ## Transactions
 

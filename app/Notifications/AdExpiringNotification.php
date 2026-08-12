@@ -3,16 +3,34 @@
 namespace App\Notifications;
 
 use App\Models\Ad;
+use App\Support\AdValidity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Messages\SlackMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Http;
 
+/**
+ * An advertisement is about to stop being valid.
+ *
+ * Queued, with the same conservative retry policy as the offline alert. Reports the
+ * EFFECTIVE end from App\Support\AdValidity, not the raw `end_date`: a date-only end
+ * of Aug 31 runs through the whole of Aug 31, and quoting `2026-08-31 00:00` in the
+ * email would tell an operator the campaign stops a day before it does.
+ */
 class AdExpiringNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    /**
+     * @var array<int, int>
+     */
+    public array $backoff = [60, 300];
+
+    public int $timeout = 30;
 
     /**
      * Create a new notification instance.
@@ -23,6 +41,9 @@ class AdExpiringNotification extends Notification implements ShouldQueue
 
     /**
      * Get the notification's delivery channels.
+     *
+     * See ScreenOfflineNotification::via() — `slack` is a real channel now rather
+     * than an Http::post() hidden inside toArray().
      */
     public function via(object $notifiable): array
     {
@@ -32,9 +53,21 @@ class AdExpiringNotification extends Notification implements ShouldQueue
             $channels[] = 'mail';
         }
 
+        if ($notifiable->routeNotificationFor('slack', $this)) {
+            $channels[] = 'slack';
+        }
+
         $channels[] = 'log';
 
         return $channels;
+    }
+
+    /**
+     * The instant this ad actually stops being valid.
+     */
+    protected function effectiveEnd(Ad $ad): ?Carbon
+    {
+        return AdValidity::endsBefore($ad->end_date);
     }
 
     /**
@@ -46,7 +79,8 @@ class AdExpiringNotification extends Notification implements ShouldQueue
         $ad->loadMissing('screens');
 
         $title = $this->title($ad);
-        $endDate = $ad->end_date;
+        // The instant playback genuinely stops, not the raw stored date.
+        $endDate = $this->effectiveEnd($ad);
 
         $message = (new MailMessage())
             ->subject(__('Ad expiring soon: :title', ['title' => $title]))
@@ -72,97 +106,43 @@ class AdExpiringNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Determine if Slack notifications should be attempted.
+     * The Slack representation, delivered by the installed package's channel.
      */
-    protected function shouldSendSlack(object $notifiable): bool
-    {
-        return filled($this->slackWebhookUrl($notifiable));
-    }
-
-    /**
-     * Post the notification payload to the configured Slack webhook.
-     */
-    protected function sendSlackWebhook(object $notifiable): void
-    {
-        $webhookUrl = $this->slackWebhookUrl($notifiable);
-
-        if (! $webhookUrl) {
-            return;
-        }
-
-        try {
-            Http::post($webhookUrl, $this->slackWebhookPayload());
-        } catch (\Throwable $exception) {
-            report($exception);
-        }
-    }
-
-    /**
-     * Build the payload that will be sent to Slack.
-     */
-    protected function slackWebhookPayload(): array
+    public function toSlack(object $notifiable): SlackMessage
     {
         $ad = $this->ad->fresh(['screens']) ?? $this->ad;
         $ad->loadMissing('screens');
-        $endDate = $ad->end_date;
+        $endDate = $this->effectiveEnd($ad);
+        $detailsUrl = $ad->exists
+            ? route('admin.ads.show', ['lang' => app()->getLocale(), 'ad' => $ad])
+            : null;
 
-        $attachment = [
-            'color' => 'warning',
-            'title' => $this->title($ad),
-            'fields' => [
-                [
-                    'title' => __('Ad ID'),
-                    'value' => (string) $ad->id,
-                    'short' => true,
-                ],
-                [
-                    'title' => __('Ends at'),
-                    'value' => $endDate instanceof Carbon
-                        ? $endDate->toDateTimeString().' ('.$endDate->diffForHumans().')'
-                        : __('Not set'),
-                    'short' => true,
-                ],
-                [
-                    'title' => __('Screens'),
-                    'value' => (string) $ad->screens->count(),
-                    'short' => true,
-                ],
-            ],
-        ];
-
-        if ($ad->exists) {
-            $attachment['title_link'] = route('admin.ads.show', ['lang' => app()->getLocale(), 'ad' => $ad]);
-        }
-
-        return [
-            'text' => ':hourglass_flowing_sand: '.__('Ad expiring soon'),
-            'attachments' => [$attachment],
-        ];
-    }
-
-    /**
-     * Resolve the Slack webhook URL for the notification.
-     */
-    protected function slackWebhookUrl(object $notifiable): ?string
-    {
-        $url = $notifiable->routeNotificationFor('slack', $this)
-            ?? config('services.slack.webhook_url');
-
-        return is_string($url) && filled($url) ? $url : null;
+        return (new SlackMessage())
+            ->warning()
+            ->content(':hourglass_flowing_sand: '.__('Ad expiring soon'))
+            ->attachment(function ($attachment) use ($ad, $endDate, $detailsUrl): void {
+                $attachment->title($this->title($ad), $detailsUrl)
+                    ->fields([
+                        __('Ad ID') => (string) $ad->id,
+                        __('Ends at') => $endDate instanceof Carbon
+                            ? $endDate->toDateTimeString().' ('.$endDate->diffForHumans().')'
+                            : __('Not set'),
+                        __('Screens') => (string) $ad->screens->count(),
+                    ]);
+            });
     }
 
     /**
      * Get the array representation of the notification for the log channel.
+     *
+     * A pure representation — the Http::post() side effect that used to live here is
+     * gone; see via().
      */
     public function toArray(object $notifiable): array
     {
-        if ($this->shouldSendSlack($notifiable)) {
-            $this->sendSlackWebhook($notifiable);
-        }
-
         $ad = $this->ad->fresh(['screens']) ?? $this->ad;
         $ad->loadMissing('screens');
-        $endDate = $ad->end_date;
+        $endDate = $this->effectiveEnd($ad);
 
         return [
             'message' => __('Ad expiring soon'),

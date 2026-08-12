@@ -28,8 +28,31 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+     * Slack delivery for operational alerts, via the installed
+     * laravel/slack-notification-channel package.
+     *
+     * Two routes, both optional and both unset by default:
+     *
+     *   - `webhook_url` — an Incoming Webhook. The package's router sends any
+     *     `slack` route that looks like a URL through SlackWebhookChannel.
+     *   - `notifications.*` — a bot token plus default channel, for the Slack Web
+     *     API. These are the package's own documented config keys. The operational
+     *     jobs already read them, but they were **missing from this file**, so that
+     *     branch could never be true and the token/channel path was permanently
+     *     dead. Declaring them here makes the absence honest configuration rather
+     *     than a phantom code path.
+     *
+     * With none of these set, Slack is simply not a channel; mail and the log
+     * channel still run.
+     */
     'slack' => [
         'webhook_url' => env('SLACK_WEBHOOK_URL'),
+
+        'notifications' => [
+            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+        ],
     ],
 
     'screens' => [

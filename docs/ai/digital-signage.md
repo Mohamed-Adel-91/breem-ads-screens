@@ -477,6 +477,125 @@ The old figure was `online log rows / total log rows`, an event ratio: a screen
 that reported online once and then died for six days scored 100%. If you ever
 need that number again, label it "reports", not "uptime".
 
+**Reports use this same service.** The `screen-uptime` report used to count online
+and offline *events* — the identical event-ratio mistake — so Monitoring and the
+report could disagree about the same screen and window. There must never be a second
+availability calculation; `ReportGenerationTest` asserts the two agree figure for
+figure.
+
+## Reports
+
+Two types, and `App\Support\ReportType` is the only list. There used to be three
+disagreeing lists — the Form Request accepted `playback` / `screen-uptime`, the seeder
+wrote `performance` / `availability`, and the generator's `match` fell through to the
+playback builder for anything unrecognised, so a report could claim one thing and
+contain another.
+
+| Type | Content | Generation |
+|---|---|---|
+| `playback` | plays, total duration and screens reached per advertisement | SQL aggregation: `COUNT`, `SUM`, `GROUP BY` |
+| `screen-uptime` | time-based availability per screen | `ScreenAvailabilityService`, per screen, chunked |
+
+`performance` and `availability` are **legacy values on existing rows**, mapped by
+`ReportType::canonical()` to the types they always meant. They render and export with
+the correct columns but are not offered for new generation, and no historical row is
+rewritten. `reports.type` is a plain string, not an enum cast, precisely so reading a
+legacy row cannot throw.
+
+Unsupported types are **refused**, not substituted — `ReportGenerationService::build()`
+throws rather than quietly building something else.
+
+### Snapshot contract
+
+A report is an **immutable aggregate snapshot**. `reports.data` holds `rows`
+(aggregates — one per advertisement or per screen, never raw log rows), `summary`,
+`period` and `schema_version`. The show page renders from that payload and runs no log
+queries, so a report's figures never change afterwards and survive retention pruning.
+
+The trade-off is explicit: **once source logs are pruned there is no drill-down from a
+report to individual log rows.** The summary is permanent; the detail is not.
+
+Generation is synchronous and should stay that way while it is bounded — playback
+aggregation is flat in the number of log rows. It previously ran
+`PlaybackLog::with(['ad','screen'])->get()` and `ScreenLog::with(['screen.place'])->get()`
+and grouped in PHP, hydrating every row in the period with its relations to produce a
+handful of totals.
+
+### Period semantics
+
+UTC calendar days. `from_date` is inclusive from its start of day; `to_date` is
+inclusive of the **whole** day, so the exclusive upper bound is the following midnight
+— the same shape as `AdValidity`. `endOfDay()` would drop the final second; a bare
+midnight bound drops the entire final day.
+
+Export is CSV, streamed row by row, never assembled in memory.
+
+## Operational data retention
+
+`screen_logs` grows at roughly `fleet size × 1440` rows a day (one per heartbeat plus
+one per transition) and `playback_logs` can grow faster. **That volume is intentional
+telemetry — do not reduce the writes.** Retention is what bounds it.
+
+Mechanism: Laravel's `Prunable` contract (`MassPrunable`) on `ScreenLog`,
+`PlaybackLog` and `Report`, driven by `config/retention.php` through
+`App\Support\Retention`, executed by a nightly `model:prune` scheduler entry.
+
+**Disabled by default, and that is a decision rather than an oversight.** No
+authoritative retention period is recorded anywhere in this repository, and
+`playback_logs` is proof-of-play evidence, so the mechanism ships and the values are
+the operator's. `Retention::days()` treats null, empty, zero, negative and non-numeric
+alike: **disabled**, never "0 days". A disabled policy's `prunable()` query matches no
+rows.
+
+Safety: the cutoff comparison is `<`, so a row exactly at the boundary is kept;
+deletes use the indexed time column; chunks are bounded; the operation is idempotent;
+and it never touches `screens`, `ads`, assignments or schedules.
+
+`php artisan model:prune --pretend` previews. `php artisan ops:status` reports what is
+active. Full procedure: [`docs/operations-runbook.md`](../operations-runbook.md).
+
+## Operational notifications
+
+One resolver, `App\Support\OperationsRecipients`. It replaced an `adminNotifiable()`
+method **duplicated verbatim** in both scheduled jobs.
+
+Recipient: `notifications.operations.email` (`OPS_NOTIFICATION_EMAIL`), falling back at
+read time to `admin.email` (`ADMIN_EMAIL`). Deliberately one mailbox, not every admin
+account — the `admins` table is an authentication list, not a distribution list.
+
+**A missing recipient logs a clear warning and returns null. It never throws**, because
+an alerting misconfiguration must not roll back a screen's offline transition: the
+state change is already committed by the time delivery is attempted. It previously
+returned silently, so a screen went offline correctly and nobody was told, with nothing
+in the log to say so.
+
+Channels are `mail` (when routed), `slack` (when routed) and always `log`. Slack was
+previously **never** in `via()`: it was posted from inside `toArray()` — the log
+channel's payload builder — as an `Http::post()` side effect whose failures were
+swallowed by `report()`, bypassing the installed
+`laravel/slack-notification-channel` entirely. `toArray()` is now a pure
+representation.
+
+Both notifications are queued with `tries = 3` and `[60, 300]` backoff, then land in
+`failed_jobs`. Retries are finite on purpose.
+
+Dedup: the offline alert is idempotent because the sweep only selects screens still
+`online`. The expiring-ad warning is deduplicated by a cache key including the
+**effective** end date, so extending a campaign warns again for the new end.
+
+There is no recovery ("back online") notification, and none was invented.
+
+### Expiring advertisements
+
+`CheckExpiringAdsJob` both retires finished ads and warns about imminent ones, and
+**both halves use `AdValidity::endsBefore()`**. Comparing the raw `end_date` retired a
+date-only campaign at `Aug 31 00:00` — a full day of paid airtime lost — and warned a
+day early. `Ad::scopeExpiringSoon()` is now documented as a **superset** for narrowing
+the candidate set, never as the answer.
+
+The automatic retirement goes through the Phase 13 transition map
+(`active --expire--> expired`), so a system action can only produce a declared state.
+
 ## Deferred functional defects
 
 Documented, deliberately unfixed. Do not "fix" these as a side effect of another
@@ -593,10 +712,31 @@ contract. What remains:
 - There is no per-advertiser identity: `created_by` points at a `users` row, but there
   is no advertiser, campaign or billing domain and none was invented.
 
-**Reports**
-- Seeded types (`performance`, `availability`) are not producible by
-  `GenerateReportRequest::TYPES` (`playback`, `screen-uptime`) and fall through to
-  the playback builder and playback CSV headers.
-- Generation loads every matching log into memory with no chunking or queue.
-- Whole result sets are stored as JSON in `reports.data`, and the index hydrates
-  every blob it lists.
+**Reports** — the type mismatch, the in-memory generation and the unbounded payload
+were all fixed in Phase 14; see the Reports section above. What remains:
+
+- The reports index selects whole rows, so listing hydrates each `data` blob even
+  though the index renders none of it. Bounded by page size (20) and by the payload
+  now being aggregates rather than raw rows, so it is no longer a scaling risk — but a
+  `select` list excluding `data` would still be tidier.
+- `screen-uptime` walks the log timeline per screen. That is inherent to a duration
+  measurement, not an N+1, but generation time grows with fleet size × logs in the
+  window. There is no upper bound on the requested period.
+- No drill-down from a report to the underlying log rows, by design — see the snapshot
+  contract above.
+- Generation is synchronous. Fine while bounded; if a very large fleet or a very long
+  period ever exceeds the request budget, move it to a queued job then.
+
+**Operational logging / notifications** — Phase 14 fixed the silent notification drop,
+the dead Slack config branch, the `toArray()` delivery side effect, expiring-ad spam and
+the one-day expiry error. What remains:
+
+- A screen still logs an entry on **every** heartbeat, not only on transitions. That is
+  intentional telemetry; retention bounds it.
+- Retention ships disabled, so an operator who never configures it gets unbounded
+  growth. `ops:status` warns; Phase 15 must set real values.
+- `MAIL_MAILER` defaults to `log`, so alerts go nowhere real until a transport is
+  configured.
+- No queue worker supervision, and no alerting on `failed_jobs` depth — Phase 15.
+- `CheckScreenHealthJob` loads all stale screens in one query with no chunking. Fine at
+  current fleet sizes; revisit for thousands of screens.

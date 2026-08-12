@@ -285,15 +285,25 @@ class Ad extends Model
     }
 
     /**
-     * Scope ads that are expiring within the provided threshold.
+     * Scope ads whose RAW end date falls at or before the threshold.
+     *
+     * A SUPERSET, not an answer. The effective end of a date-only `end_date` is the
+     * following midnight (see App\Support\AdValidity), and that `+1 day` rule cannot
+     * be expressed in SQL without reinterpreting stored values — so this narrows the
+     * table to candidates and the caller decides, per ad, using AdValidity. Because
+     * the effective bound is never *earlier* than the raw value, nothing eligible is
+     * filtered out here.
+     *
+     * Comparing the raw column alone is what made CheckExpiringAdsJob warn about — and
+     * retire — a date-only ad a full day early. Do not treat this scope's result as
+     * "these ads are expiring".
      */
     public function scopeExpiringSoon(Builder $query, Carbon|DateTimeInterface|string|null $threshold = null): Builder
     {
-        $now = now();
-        $expiresBy = $threshold ? Carbon::parse($threshold) : (clone $now)->addDay();
+        $expiresBy = $threshold ? Carbon::parse($threshold) : now()->addDay();
 
         return $query->where('status', AdStatus::Active->value)
             ->whereNotNull('end_date')
-            ->whereBetween('end_date', [$now, $expiresBy]);
+            ->where('end_date', '<=', $expiresBy);
     }
 }

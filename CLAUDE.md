@@ -55,6 +55,7 @@ application.
 | Validation, authorization, uploads, escaping, secrets | [`docs/ai/security.md`](docs/ai/security.md) |
 | What to run and how to report it | [`docs/ai/testing.md`](docs/ai/testing.md) |
 | The order of operations for any task | [`docs/ai/workflow.md`](docs/ai/workflow.md) |
+| Scheduler, queue worker, retention, alert recipients, pruning | [`docs/operations-runbook.md`](docs/operations-runbook.md) |
 
 Agent entry point: [`AGENTS.md`](AGENTS.md).
 

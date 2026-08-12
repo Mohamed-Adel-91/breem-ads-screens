@@ -13,6 +13,8 @@ use App\Models\Report;
 use App\Models\Screen;
 use App\Models\ScreenLog;
 use App\Models\User;
+use App\Services\Reports\ReportGenerationService;
+use App\Support\ReportType;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
@@ -113,48 +115,75 @@ class ReportsAndLogsSeeder extends Seeder
         $payloads = [
             'daily_playback' => [
                 'name' => 'Daily Playback Overview',
-                'type' => 'playback',
+                'type' => ReportType::PLAYBACK,
+                // Filter keys match GenerateReportRequest, so a seeded report's stored
+                // filters describe a period the generator could actually reproduce.
                 'filters' => [
-                    'range' => [
-                        'from' => $today->copy()->subDay()->toDateString(),
-                        'to' => $today->toDateString(),
-                    ],
-                    'screens' => ['SCR-INSIGHTS-001'],
+                    'from_date' => $today->copy()->subDay()->toDateString(),
+                    'to_date' => $today->toDateString(),
                 ],
                 'data' => [
-                    'total_playbacks' => 156,
-                    'unique_screens' => 4,
-                    'average_duration' => 32,
+                    'schema_version' => ReportGenerationService::SCHEMA_VERSION,
+                    'rows' => [
+                        ['ad_id' => null, 'ad_title' => 'Metrics Loop', 'plays' => 156, 'total_duration' => 4992, 'screens' => ['SCR-INSIGHTS-001']],
+                    ],
+                    'summary' => ['advertisements' => 1, 'plays' => 156, 'total_duration' => 4992],
+                    'total_logs' => 156,
                 ],
             ],
+            // Types below were `performance` and `availability`, neither of which
+            // GenerateReportRequest accepted or the generator could produce — a seeded
+            // report stored under a type nothing could make. They now use the
+            // canonical values from App\Support\ReportType, which mean the same
+            // things, and their payloads use the `rows` shape the show page and CSV
+            // export actually read. Existing rows carrying the old values are left
+            // alone and still render, via ReportType::canonical().
             'top_ads' => [
                 'name' => 'Top Performing Ads',
-                'type' => 'performance',
+                'type' => ReportType::PLAYBACK,
                 'filters' => [
-                    'limit' => 5,
-                    'metric' => 'playbacks',
+                    'from_date' => $today->copy()->subDays(7)->toDateString(),
+                    'to_date' => $today->toDateString(),
                 ],
                 'data' => [
-                    'entries' => [
-                        ['title' => 'Metrics Loop', 'plays' => 92],
-                        ['title' => 'City Snapshot', 'plays' => 58],
-                        ['title' => 'Promo Minute', 'plays' => 41],
+                    'schema_version' => ReportGenerationService::SCHEMA_VERSION,
+                    'rows' => [
+                        ['ad_id' => null, 'ad_title' => 'Metrics Loop', 'plays' => 92, 'total_duration' => 2760, 'screens' => ['SCR-INSIGHTS-001']],
+                        ['ad_id' => null, 'ad_title' => 'City Snapshot', 'plays' => 58, 'total_duration' => 1740, 'screens' => ['SCR-INSIGHTS-001']],
+                        ['ad_id' => null, 'ad_title' => 'Promo Minute', 'plays' => 41, 'total_duration' => 1230, 'screens' => ['SCR-INSIGHTS-001']],
                     ],
+                    'summary' => ['advertisements' => 3, 'plays' => 191, 'total_duration' => 5730],
+                    'total_logs' => 191,
                 ],
             ],
             'screen_uptime' => [
                 'name' => 'Screen Availability Snapshot',
-                'type' => 'availability',
+                'type' => ReportType::SCREEN_UPTIME,
                 'filters' => [
-                    'range' => [
-                        'from' => $today->copy()->subDays(7)->toDateString(),
-                        'to' => $today->toDateString(),
-                    ],
+                    'from_date' => $today->copy()->subDays(7)->toDateString(),
+                    'to_date' => $today->toDateString(),
                 ],
                 'data' => [
-                    'uptime_percentage' => 99.2,
-                    'downtime_minutes' => 12,
-                    'incidents' => 1,
+                    'schema_version' => ReportGenerationService::SCHEMA_VERSION,
+                    'rows' => [
+                        [
+                            'screen_id' => null,
+                            'screen_code' => 'SCR-INSIGHTS-001',
+                            'place' => 'Insights Plaza',
+                            'availability' => 99.2,
+                            'online_seconds' => 600_048,
+                            'offline_seconds' => 4_752,
+                            'maintenance_seconds' => 0,
+                            'unknown_seconds' => 0,
+                            'measured_seconds' => 604_800,
+                        ],
+                    ],
+                    'summary' => [
+                        'screens' => 1,
+                        'measured_screens' => 1,
+                        'average_availability' => 99.2,
+                        'offline_seconds' => 4_752,
+                    ],
                 ],
             ],
         ];

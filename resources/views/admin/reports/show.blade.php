@@ -11,11 +11,12 @@
             ucfirst(str_replace('-', ' ', (string) $report->type))
         );
 
-        // Row layout follows the stored type. `screen-uptime` has its own columns;
-        // everything else uses the playback layout — the same fallback the CSV
-        // export and the pre-migration view already applied.
-        $isScreenUptime = $report->type === 'screen-uptime';
-        $isKnownType = in_array($report->type, \App\Http\Requests\Admin\Reports\GenerateReportRequest::TYPES, true);
+        // Row layout follows the CANONICAL type, resolved by the controller through
+        // App\Support\ReportType. Legacy rows stored as `availability` therefore render
+        // with the screen-uptime columns instead of silently falling through to the
+        // playback layout, which is what happened before the registry existed.
+        $isScreenUptime = $canonicalType === \App\Support\ReportType::SCREEN_UPTIME;
+        $isKnownType = $isPresentable;
 
         // Filters are stored JSON; render them defensively without executing anything.
         $formatFilterValue = function ($value) use (&$formatFilterValue) {

@@ -61,6 +61,24 @@ uploads with `$this->uploadPath($relative)`, never `public_path($relative)`.
 4. **Distinguish baseline from regression.** Measure the suite before you start,
    compare failure *sets* afterwards, and state that the set is unchanged.
 5. **Name every failure you did not fix, with its reason.**
+6. **Assert the implementation property, not an environment-dependent number.**
+   Peak memory and wall-clock timings vary by machine and PHP build, so a threshold on
+   them is a flaky test dressed up as a performance guarantee. Assert the thing that
+   actually holds: that the query count for 2000 rows equals the count for 20, that a
+   chunked path was taken, that the stored payload is bounded by entity count rather
+   than row count. See `ReportGenerationTest` and `PlaylistEligibilityTest`.
+
+## Destructive operations
+
+Retention pruning deletes rows irreversibly. Test it against the isolated test
+database only — **never** run `model:prune` without `--pretend` against the development
+database, and never against anything production-like unless explicitly asked.
+
+`--pretend` reports counts and deletes nothing; use it to verify a retention change.
+
+Managed uploads already land in a per-test temporary root (`Tests\TestCase` overrides
+`media.upload_root`), so a full suite run must leave `git status --short` free of
+generated media. Check it.
 
 ## Verification checklist
 

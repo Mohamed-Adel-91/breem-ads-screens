@@ -234,10 +234,14 @@ class ReportsAdminViewsTest extends TestCase
         $response->assertDontSee(__('admin.reports.columns.total_duration', [], 'en'), false);
     }
 
-    public function test_a_stored_report_with_an_unsupported_type_still_renders_safely(): void
+    /**
+     * UPDATED in Phase 14. `performance` and `availability` are no longer "unknown":
+     * App\Support\ReportType maps them to the canonical types they always meant, so a
+     * legacy row renders with the right layout instead of being flagged as
+     * unrecognised. The stored value is still never rewritten.
+     */
+    public function test_a_stored_report_with_a_legacy_type_renders_with_its_canonical_layout(): void
     {
-        // The seeder persists `performance` / `availability`, which the current
-        // generator no longer produces. The page must not break on them.
         $report = Report::create([
             'name' => 'Legacy Performance Report',
             'type' => 'performance',
@@ -252,11 +256,37 @@ class ReportsAdminViewsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Legacy Row', false);
-        $response->assertSee(__('admin.reports.show.unknown_type_notice', [], 'en'), false);
         $response->assertSee(__('admin.reports.system', [], 'en'), false);
 
-        // The stored type is never rewritten by rendering.
+        // Recognised, so no unknown-type warning.
+        $response->assertDontSee(__('admin.reports.show.unknown_type_notice', [], 'en'), false);
+
+        // Rendering never rewrites the stored value.
         $this->assertSame('performance', $report->fresh()->type);
+    }
+
+    /**
+     * The safety net still has to hold for a value the registry does not know at all.
+     */
+    public function test_a_stored_report_with_an_unrecognised_type_still_renders_safely(): void
+    {
+        $report = Report::create([
+            'name' => 'Mystery Report',
+            'type' => 'some-retired-format',
+            'filters' => [],
+            'data' => ['rows' => [['ad_title' => 'Mystery Row', 'plays' => 7]]],
+            'generated_by' => null,
+        ]);
+
+        $response = $this->actingAsAdmin()->get(
+            route('admin.reports.show', ['lang' => 'en', 'report' => $report->id])
+        );
+
+        $response->assertOk();
+        $response->assertSee('Mystery Row', false);
+        $response->assertSee(__('admin.reports.show.unknown_type_notice', [], 'en'), false);
+
+        $this->assertSame('some-retired-format', $report->fresh()->type);
     }
 
     public function test_a_report_with_no_rows_renders_the_empty_state(): void
