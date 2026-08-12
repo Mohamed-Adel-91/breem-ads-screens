@@ -14,7 +14,9 @@ class VideoProbe
             return null;
         }
 
-        $absolutePath = public_path(ltrim($filePath, '/'));
+        // Same physical root the uploader wrote to, so a freshly stored creative
+        // is probed where it actually landed. Production default is unchanged.
+        $absolutePath = UploadPath::to($filePath);
 
         if (!$absolutePath || !is_file($absolutePath)) {
             return null;

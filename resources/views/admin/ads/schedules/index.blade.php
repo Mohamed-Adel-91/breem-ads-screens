@@ -214,13 +214,19 @@
                             </div>
                             <div class="col-md-6 col-lg-2">
                                 <div class="form-group">
+                                    {{-- Standard checkbox boolean submission: the hidden field
+                                         guarantees `is_active=0` reaches the controller when the
+                                         box is unchecked. Without it the browser sends nothing
+                                         and StoreScheduleRequest's `?? true` fallback made an
+                                         inactive schedule impossible to create. --}}
+                                    <input type="hidden" name="is_active" value="0">
                                     <div class="custom-control custom-checkbox">
                                         <input type="checkbox"
                                                class="custom-control-input"
                                                id="create_is_active"
                                                name="is_active"
                                                value="1"
-                                               checked>
+                                               @checked(old('is_active', true))>
                                         <label class="custom-control-label" for="create_is_active">
                                             {{ __('admin.schedules.form.is_active') }}
                                         </label>
@@ -374,6 +380,10 @@
                                                             </div>
                                                             <div class="col-md-6 col-lg-2">
                                                                 <div class="form-group">
+                                                                    {{-- Same checkbox boolean pattern as the create form:
+                                                                         unchecking now submits `is_active=0` instead of
+                                                                         nothing, so a schedule can actually be deactivated. --}}
+                                                                    <input type="hidden" name="is_active" value="0">
                                                                     <div class="custom-control custom-checkbox">
                                                                         <input type="checkbox"
                                                                                class="custom-control-input"

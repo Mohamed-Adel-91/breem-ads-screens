@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\FileServiceInterface;
+use App\Support\UploadPath;
 use App\Traits\DeleteFileTrait;
 use App\Traits\FileUploadTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +19,7 @@ class FileService implements FileServiceInterface
      */
     private function buildModelFolder(string $baseFolder): string
     {
-        $folder = public_path(trim($baseFolder, '/'));
+        $folder = UploadPath::to($baseFolder);
         if (!is_dir($folder)) {
             @mkdir($folder, 0775, true);
         }
@@ -227,7 +228,7 @@ class FileService implements FileServiceInterface
 
         // basename() alone would match a same-named file in a different
         // directory, so compare the resolved directories too.
-        $existingDirectory = public_path(trim(dirname(ltrim($existing, '/')), '/'));
+        $existingDirectory = UploadPath::to(dirname(ltrim($existing, '/')));
 
         if (realpath($existingDirectory) !== realpath($folder)) {
             return null;

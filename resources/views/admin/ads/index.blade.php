@@ -207,11 +207,8 @@
                                             {{ $ad->screens->count() }}
                                         </x-admin.badge>
                                     </td>
-                                    {{-- NOTE: `schedules` is not eager-loaded by AdController::index.
-                                         The original view read the same relation, so the existing
-                                         query behaviour is preserved verbatim here and the N+1 is
-                                         reported under BACKEND DEFECTS DEFERRED rather than fixed. --}}
-                                    <td>{{ $ad->schedules->count() }}</td>
+                                    {{-- Counted in SQL via withCount('schedules') — no lazy query per row. --}}
+                                    <td>{{ $ad->schedules_count }}</td>
                                     <td>{{ optional($ad->start_date)->format('Y-m-d') ?? '—' }}</td>
                                     <td>{{ optional($ad->end_date)->format('Y-m-d') ?? '—' }}</td>
                                     <td>{{ $ad->creator?->name ?? '—' }}</td>

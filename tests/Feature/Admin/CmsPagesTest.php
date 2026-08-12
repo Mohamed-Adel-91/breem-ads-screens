@@ -180,7 +180,7 @@ class CmsPagesTest extends TestCase
         $bannerSection = PageSection::where('type', 'banner')->first();
         $bannerData = $bannerSection->getTranslation('section_data', 'en', true);
         $this->assertStringContainsString('cms/home/banner', $bannerData['video_path'] ?? '');
-        $this->assertFileExists(public_path($bannerData['video_path']));
+        $this->assertFileExists($this->uploadPath($bannerData['video_path']));
         $this->assertTrue((bool) ($bannerData['autoplay'] ?? false));
         $this->assertTrue((bool) ($bannerData['controls'] ?? false));
 
@@ -200,14 +200,14 @@ class CmsPagesTest extends TestCase
         $whereData = $whereSection->getTranslation('section_data', 'en', true);
         $this->assertEquals('Where EN', $whereData['title']);
         $this->assertStringContainsString('cms/home/where-us', $whereData['brochure']['icon_path'] ?? '');
-        $this->assertFileExists(public_path($whereData['brochure']['icon_path']));
-        $this->assertFileExists(public_path($whereData['brochure']['brochure_path']));
+        $this->assertFileExists($this->uploadPath($whereData['brochure']['icon_path']));
+        $this->assertFileExists($this->uploadPath($whereData['brochure']['brochure_path']));
 
         $ctaSection = PageSection::where('type', 'cta')->first();
         $ctaData = $ctaSection->getTranslation('section_data', 'en', true);
         $this->assertEquals('CTA EN', $ctaData['title']);
-        $this->assertFileExists(public_path($ctaData['image_path']));
-        $this->assertFileExists(public_path($ctaData['overlay_image_path']));
+        $this->assertFileExists($this->uploadPath($ctaData['image_path']));
+        $this->assertFileExists($this->uploadPath($ctaData['overlay_image_path']));
     }
 
     public function test_whoweare_page_can_be_updated(): void
@@ -258,7 +258,7 @@ class CmsPagesTest extends TestCase
 
         $bannerSection = PageSection::where('type', 'second_banner')->first();
         $bannerData = $bannerSection->getTranslation('section_data', 'en', true);
-        $this->assertFileExists(public_path($bannerData['image_path']));
+        $this->assertFileExists($this->uploadPath($bannerData['image_path']));
 
         $featuresSection->refresh();
         $featuresData = $featuresSection->getTranslation('section_data', 'en', true);
@@ -270,7 +270,7 @@ class CmsPagesTest extends TestCase
 
         $portSection = PageSection::where('type', 'port_image')->first();
         $portData = $portSection->getTranslation('section_data', 'en', true);
-        $this->assertFileExists(public_path($portData['image_path']));
+        $this->assertFileExists($this->uploadPath($portData['image_path']));
     }
 
     public function test_contact_page_can_be_updated(): void
@@ -370,18 +370,18 @@ class CmsPagesTest extends TestCase
 
         $bannerSection = PageSection::where('type', 'second_banner')->first();
         $bannerData = $bannerSection->getTranslation('section_data', 'en', true);
-        $this->assertFileExists(public_path($bannerData['image_path']));
+        $this->assertFileExists($this->uploadPath($bannerData['image_path']));
 
         $mapSection = PageSection::where('type', 'map')->first();
         $mapData = $mapSection->getTranslation('section_data', 'en', true);
         $this->assertEquals('Map EN', $mapData['title']);
-        $this->assertFileExists(public_path($mapData['background_image_path']));
+        $this->assertFileExists($this->uploadPath($mapData['background_image_path']));
 
         $adsSection = $forms['ads']->fresh();
         $adsData = $adsSection->getTranslation('section_data', 'en', true);
         $this->assertEquals('Updated EN ads', $adsData['card_text']);
-        $this->assertFileExists(public_path($adsData['card_image1']));
-        $this->assertFileExists(public_path($adsData['card_image2']));
+        $this->assertFileExists($this->uploadPath($adsData['card_image1']));
+        $this->assertFileExists($this->uploadPath($adsData['card_image2']));
 
         $faqSection = $forms['faq']->fresh();
         $faqData = $faqSection->getTranslation('section_data', 'en', true);

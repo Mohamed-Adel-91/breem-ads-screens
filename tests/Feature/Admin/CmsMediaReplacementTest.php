@@ -20,7 +20,7 @@ class CmsMediaReplacementTest extends TestCase
 
     protected function tearDown(): void
     {
-        $absolute = public_path($this->folder);
+        $absolute = $this->uploadPath($this->folder);
 
         if (is_dir($absolute)) {
             foreach (glob($absolute . '/*') ?: [] as $file) {
@@ -55,7 +55,7 @@ class CmsMediaReplacementTest extends TestCase
         $service->commitReplacedFiles();
 
         $this->assertNotNull($path);
-        $this->assertFileExists(public_path($path));
+        $this->assertFileExists($this->uploadPath($path));
 
         return $path;
     }
@@ -87,13 +87,13 @@ class CmsMediaReplacementTest extends TestCase
         $this->assertNotSame($old, $new);
 
         // Before commit both files still exist: the database may still roll back.
-        $this->assertFileExists(public_path($old));
-        $this->assertFileExists(public_path($new));
+        $this->assertFileExists($this->uploadPath($old));
+        $this->assertFileExists($this->uploadPath($new));
 
         $service->commitReplacedFiles();
 
-        $this->assertFileDoesNotExist(public_path($old));
-        $this->assertFileExists(public_path($new));
+        $this->assertFileDoesNotExist($this->uploadPath($old));
+        $this->assertFileExists($this->uploadPath($new));
     }
 
     public function test_failed_database_work_discards_the_new_file_and_keeps_the_old_one(): void
@@ -110,13 +110,13 @@ class CmsMediaReplacementTest extends TestCase
 
         $service->discardUploadedFiles();
 
-        $this->assertFileDoesNotExist(public_path($new), 'The orphaned upload should be removed.');
-        $this->assertFileExists(public_path($old), 'The previous media must survive a failed save.');
+        $this->assertFileDoesNotExist($this->uploadPath($new), 'The orphaned upload should be removed.');
+        $this->assertFileExists($this->uploadPath($old), 'The previous media must survive a failed save.');
     }
 
     public function test_shared_assets_outside_the_target_folder_are_never_deleted(): void
     {
-        $sharedDirectory = public_path('cms/phpunit-shared');
+        $sharedDirectory = $this->uploadPath('cms/phpunit-shared');
         @mkdir($sharedDirectory, 0775, true);
         $sharedFile = $sharedDirectory . '/shared.png';
         file_put_contents($sharedFile, 'shared');
@@ -171,6 +171,6 @@ class CmsMediaReplacementTest extends TestCase
         $service->commitReplacedFiles();
         $service->commitReplacedFiles();
 
-        $this->assertFileDoesNotExist(public_path($old));
+        $this->assertFileDoesNotExist($this->uploadPath($old));
     }
 }

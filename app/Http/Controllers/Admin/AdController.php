@@ -33,6 +33,10 @@ class AdController extends Controller
     {
         $query = Ad::query()
             ->with(['screens.place', 'creator'])
+            // The index renders a schedule count per row. Counting in SQL avoids
+            // one lazy-loaded schedules query per ad; the rendered value is
+            // identical to the previous $ad->schedules->count().
+            ->withCount('schedules')
             ->latest('created_at');
 
         if ($search = trim((string) $request->input('search'))) {
