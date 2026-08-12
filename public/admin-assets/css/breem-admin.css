@@ -506,6 +506,30 @@ body.breem-admin .nav-pills .nav-link.active {
     margin-bottom: 0.75rem;
 }
 
+/* ---------- Phase 5: counter tiles (Places / Screens indexes) ---------- */
+
+.breem-admin .admin-stat-card {
+    height: 100%;
+}
+
+.breem-admin .admin-stat-label {
+    display: block;
+    color: var(--breem-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.breem-admin .admin-stat-value {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--breem-heading);
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
 .breem-admin .dashboard-welcome {
     position: relative;
     overflow: hidden;

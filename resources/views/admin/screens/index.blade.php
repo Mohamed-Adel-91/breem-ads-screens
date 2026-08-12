@@ -1,150 +1,211 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900">{{ __('Screens') }}</h1>
-                <p class="mt-1 text-sm text-gray-500">{{ __('Monitor the deployment status of screens and access quick diagnostics.') }}</p>
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
+@section('content')
+    @php
+        $indexUrl = route('admin.screens.index', ['lang' => $lang]);
+
+        $placeName = fn ($place) => $place
+            ? (data_get($place->getTranslations('name'), app()->getLocale())
+                ?: __('admin.screens.unnamed_place', ['id' => $place->id]))
+            : null;
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'subtitle' => __('admin.screens.subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.ads_system')],
+                ['label' => __('admin.sidebar.screens')],
+            ],
+            'primaryAction' => auth('admin')->user()?->can('screens.create')
+                ? [
+                    'href' => route('admin.screens.create', ['lang' => $lang]),
+                    'label' => __('admin.table.new'),
+                    'icon' => 'plus',
+                ]
+                : null,
+        ])
+
+        {{-- Filter card: query parameter names (`search`, `status`, `place_id`) preserved verbatim. --}}
+        <div class="card admin-filter-card mb-4">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ __('admin.screens.filters.heading') }}</h2>
             </div>
-            @can('screens.create')
-                <a href="{{ route('admin.screens.create', ['lang' => $lang]) }}"
-                   class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    {{ __('Create screen') }}
-                </a>
-            @endcan
-        </div>
-    </x-slot>
-
-    <div class="py-8">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="space-y-8">
-                @include('admin.layouts.legacy.alerts')
-
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                        <h2 class="text-lg font-semibold text-gray-900">{{ __('Filters') }}</h2>
-                    </div>
-                    <div class="px-6 py-6">
-                        <form method="GET" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            <div class="lg:col-span-2">
-                                <label for="search" class="block text-sm font-medium text-gray-700">{{ __('Search') }}</label>
-                                <input id="search" type="text" name="search" value="{{ $filters['search'] ?? '' }}"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                       placeholder="{{ __('Search code or device UID') }}">
+            <div class="card-body">
+                <form method="GET" action="{{ $indexUrl }}">
+                    <div class="row">
+                        <div class="col-md-6 col-lg-6">
+                            <div class="form-group">
+                                <label for="search">{{ __('admin.screens.filters.search') }}</label>
+                                <input type="text"
+                                       id="search"
+                                       name="search"
+                                       class="form-control"
+                                       placeholder="{{ __('admin.screens.filters.search_placeholder') }}"
+                                       value="{{ $filters['search'] ?? '' }}">
                             </div>
-                            <div>
-                                <label for="status" class="block text-sm font-medium text-gray-700">{{ __('Status') }}</label>
-                                <select id="status" name="status"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">-- {{ __('All statuses') }} --</option>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="form-group">
+                                <label for="status">{{ __('admin.screens.filters.status') }}</label>
+                                <select id="status" name="status" class="form-control">
+                                    <option value="">{{ __('admin.screens.filters.all_statuses') }}</option>
                                     @foreach ($statuses as $value => $label)
-                                        <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>{{ ucfirst(__($label)) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label for="place_id" class="block text-sm font-medium text-gray-700">{{ __('Place') }}</label>
-                                <select id="place_id" name="place_id"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">-- {{ __('All places') }} --</option>
-                                    @foreach ($places as $place)
-                                        <option value="{{ $place->id }}" @selected(($filters['place_id'] ?? '') == $place->id)>
-                                            {{ $place->getTranslation('name', app()->getLocale()) ?? __('Place #:id', ['id' => $place->id]) }}
+                                        <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>
+                                            {{ \App\Support\Lang::t('admin.screens.statuses.' . $value, $label) }}
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="sm:col-span-2 lg:col-span-4 flex flex-wrap items-center justify-end gap-3 pt-2">
-                                <button type="submit"
-                                        class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                    {{ __('admin.buttons.filter') }}
-                                </button>
-                                <a href="{{ route('admin.screens.index', ['lang' => $lang]) }}"
-                                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                    {{ __('admin.buttons.reset') }}
-                                </a>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="form-group">
+                                <label for="place_id">{{ __('admin.screens.filters.place') }}</label>
+                                {{-- Native Bootstrap select: the place list is modest, so no Select2 is loaded. --}}
+                                <select id="place_id" name="place_id" class="form-control">
+                                    <option value="">{{ __('admin.screens.filters.all_places') }}</option>
+                                    @foreach ($places as $place)
+                                        <option value="{{ $place->id }}"
+                                            @selected(($filters['place_id'] ?? '') == $place->id)>
+                                            {{ $placeName($place) }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
-                        </form>
+                        </div>
+
+                        <div class="col-12">
+                            <x-admin.group-btn class="justify-content-end">
+                                <x-admin.btn type="submit" variant="primary" icon="filter">
+                                    {{ __('admin.buttons.filter') }}
+                                </x-admin.btn>
+                                <x-admin.btn :href="$indexUrl" variant="light" icon="rotate-ccw">
+                                    {{ __('admin.buttons.reset') }}
+                                </x-admin.btn>
+                            </x-admin.group-btn>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- Counters come straight from the controller; nothing is recalculated in Blade. --}}
+        <div class="row">
+            <div class="col-sm-6 col-lg-3">
+                <div class="card admin-stat-card mb-4">
+                    <div class="card-body">
+                        <span class="admin-stat-label">{{ __('admin.screens.stats.total') }}</span>
+                        <span class="admin-stat-value">{{ $stats['total'] ?? 0 }}</span>
                     </div>
                 </div>
-
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <dt class="text-sm font-medium text-gray-500">{{ __('Total') }}</dt>
-                        <dd class="mt-2 text-2xl font-semibold text-gray-900">{{ $stats['total'] }}</dd>
-                    </div>
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <dt class="text-sm font-medium text-gray-500">{{ __('Online') }}</dt>
-                        <dd class="mt-2 text-2xl font-semibold text-emerald-600">{{ $stats['online'] ?? 0 }}</dd>
-                    </div>
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <dt class="text-sm font-medium text-gray-500">{{ __('Offline') }}</dt>
-                        <dd class="mt-2 text-2xl font-semibold text-rose-600">{{ $stats['offline'] ?? 0 }}</dd>
-                    </div>
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <dt class="text-sm font-medium text-gray-500">{{ __('Maintenance') }}</dt>
-                        <dd class="mt-2 text-2xl font-semibold text-amber-600">{{ $stats['maintenance'] ?? 0 }}</dd>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="card admin-stat-card mb-4">
+                    <div class="card-body">
+                        <span class="admin-stat-label">{{ __('admin.screens.stats.online') }}</span>
+                        <span class="admin-stat-value text-success">{{ $stats['online'] ?? 0 }}</span>
                     </div>
                 </div>
-
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">#</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Code') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Place') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Status') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Active schedules') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Last heartbeat') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('admin.table.options') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                @forelse ($screens as $screen)
-                                    <tr>
-                                        <td class="px-4 py-3 text-gray-500">
-                                            {{ $loop->iteration + ($screens->currentPage() - 1) * $screens->perPage() }}
-                                        </td>
-                                        <td class="px-4 py-3 font-medium text-gray-900">{{ $screen->code }}</td>
-                                        <td class="px-4 py-3 text-gray-700">
-                                            {{ $screen->place?->getTranslation('name', app()->getLocale()) ?? '—' }}
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <span class="inline-flex rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">{{ ucfirst($screen->status->value) }}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-gray-700">{{ $screen->active_schedule_count }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ optional($screen->last_heartbeat)->format('Y-m-d H:i') ?? '—' }}</td>
-                                        <td class="px-4 py-3">
-                                            <div class="flex flex-wrap gap-2">
-                                                @can('screens.view')
-                                                    <a href="{{ route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id]) }}"
-                                                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                                        {{ __('View') }}
-                                                    </a>
-                                                @endcan
-                                                @can('screens.edit')
-                                                    <a href="{{ route('admin.screens.edit', ['lang' => $lang, 'screen' => $screen->id]) }}"
-                                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                                                        {{ __('Edit') }}
-                                                    </a>
-                                                @endcan
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="px-4 py-6 text-center text-sm text-gray-500">{{ __('No screens match the selected filters.') }}</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="card admin-stat-card mb-4">
+                    <div class="card-body">
+                        <span class="admin-stat-label">{{ __('admin.screens.stats.offline') }}</span>
+                        <span class="admin-stat-value text-danger">{{ $stats['offline'] ?? 0 }}</span>
                     </div>
-                    <div class="border-t border-gray-200 px-6 py-4">
-                        @include('admin.partials.pagination', ['data' => $screens])
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="card admin-stat-card mb-4">
+                    <div class="card-body">
+                        <span class="admin-stat-label">{{ __('admin.screens.stats.maintenance') }}</span>
+                        <span class="admin-stat-value text-warning">{{ $stats['maintenance'] ?? 0 }}</span>
                     </div>
                 </div>
             </div>
         </div>
+
+        @include('admin.partials.results-summary', [
+            'data' => $screens,
+            'label' => __('admin.screens.results_label'),
+        ])
+
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">{{ __('admin.screens.table.code') }}</th>
+                                <th scope="col">{{ __('admin.screens.table.place') }}</th>
+                                <th scope="col">{{ __('admin.screens.table.status') }}</th>
+                                <th scope="col">{{ __('admin.screens.table.device_uid') }}</th>
+                                <th scope="col">{{ __('admin.screens.table.active_schedules') }}</th>
+                                <th scope="col">{{ __('admin.screens.table.last_heartbeat') }}</th>
+                                <th scope="col">{{ __('admin.table.options') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($screens as $screen)
+                                <tr>
+                                    <th scope="row">{{ ($screens->firstItem() ?? 1) + $loop->index }}</th>
+                                    <td><code>{{ $screen->code }}</code></td>
+                                    <td>{{ $placeName($screen->place) ?? '—' }}</td>
+                                    <td>
+                                        @include('admin.screens.partials.status-badge', ['status' => $screen->status])
+                                    </td>
+                                    <td>
+                                        @if ($screen->device_uid)
+                                            <code>{{ $screen->device_uid }}</code>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $screen->active_schedule_count }}</td>
+                                    <td>
+                                        @include('admin.screens.partials.heartbeat', ['heartbeat' => $screen->last_heartbeat])
+                                    </td>
+                                    <td>
+                                        <x-admin.group-btn>
+                                            @can('screens.view')
+                                                <x-admin.btn
+                                                    :href="route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id])"
+                                                    variant="outline-secondary"
+                                                    size="sm"
+                                                    icon="eye">
+                                                    {{ __('admin.screens.actions.view') }}
+                                                </x-admin.btn>
+                                            @endcan
+                                            @can('screens.edit')
+                                                <x-admin.btn
+                                                    :href="route('admin.screens.edit', ['lang' => $lang, 'screen' => $screen->id])"
+                                                    variant="outline-primary"
+                                                    size="sm"
+                                                    icon="edit-2">
+                                                    {{ __('admin.screens.actions.edit') }}
+                                                </x-admin.btn>
+                                            @endcan
+                                        </x-admin.group-btn>
+                                    </td>
+                                </tr>
+                            @empty
+                                @include('admin.partials.empty-state', [
+                                    'colspan' => 8,
+                                    'message' => __('admin.screens.table.empty'),
+                                    'icon' => 'monitor',
+                                ])
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                @include('admin.partials.pagination', ['data' => $screens, 'variant' => 'static'])
+            </div>
+        </div>
     </div>
-</x-app-layout>
+@endsection

@@ -1,49 +1,62 @@
-<div class="space-y-8">
-    <div class="grid gap-6 sm:grid-cols-2">
-        <div>
-            <label for="name_en" class="block text-sm font-medium text-gray-700">{{ __('Name (English)') }}</label>
-            <input id="name_en" type="text" name="name[en]" value="{{ old('name.en', data_get($place->getTranslations('name'), 'en')) }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            @error('name.en')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div>
-            <label for="name_ar" class="block text-sm font-medium text-gray-700">{{ __('Name (Arabic)') }}</label>
-            <input id="name_ar" type="text" name="name[ar]" value="{{ old('name.ar', data_get($place->getTranslations('name'), 'ar')) }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            @error('name.ar')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div>
-            <label for="address_en" class="block text-sm font-medium text-gray-700">{{ __('Address (English)') }}</label>
-            <input id="address_en" type="text" name="address[en]" value="{{ old('address.en', data_get($place->getTranslations('address'), 'en')) }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            @error('address.en')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-        <div>
-            <label for="address_ar" class="block text-sm font-medium text-gray-700">{{ __('Address (Arabic)') }}</label>
-            <input id="address_ar" type="text" name="address[ar]" value="{{ old('address.ar', data_get($place->getTranslations('address'), 'ar')) }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            @error('address.ar')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-    </div>
+{{--
+    Shared Place form body. Every input name (`name[en]`, `name[ar]`, `address[en]`,
+    `address[ar]`, `type`) is emitted verbatim so the existing StorePlaceRequest /
+    UpdatePlaceRequest contract is untouched.
+--}}
+@php
+    $nameTranslations = $place->getTranslations('name');
+    $addressTranslations = $place->getTranslations('address');
+@endphp
 
-    <div>
-        <label for="type" class="block text-sm font-medium text-gray-700">{{ __('Type') }}</label>
-        <select id="type" name="type"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:max-w-xs">
-            @foreach ($types as $value => $label)
-                <option value="{{ $value }}" @selected(old('type', $place->type?->value ?? 'cafe') === $value)>{{ ucfirst(__($label)) }}</option>
-            @endforeach
-        </select>
-        @error('type')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-        @enderror
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title mb-0">{{ __('admin.places.form.heading') }}</h2>
+    </div>
+    <div class="card-body">
+        {{-- Arabic inputs stay dir="rtl" and English dir="ltr" regardless of dashboard locale. --}}
+        <x-admin.translatable-field
+            label-key="admin.places.form.name_locale"
+            id-prefix="place_name"
+            :help="__('admin.places.form.name_help')"
+            :names="['en' => 'name[en]', 'ar' => 'name[ar]']"
+            :values="[
+                'en' => old('name.en', data_get($nameTranslations, 'en')),
+                'ar' => old('name.ar', data_get($nameTranslations, 'ar')),
+            ]" />
+
+        <x-admin.translatable-field
+            label-key="admin.places.form.address_locale"
+            id-prefix="place_address"
+            :help="__('admin.places.form.address_help')"
+            :names="['en' => 'address[en]', 'ar' => 'address[ar]']"
+            :values="[
+                'en' => old('address.en', data_get($addressTranslations, 'en')),
+                'ar' => old('address.ar', data_get($addressTranslations, 'ar')),
+            ]" />
+
+        <div class="form-row">
+            <div class="col-12 col-lg-6">
+                <div class="form-group">
+                    <label for="type">
+                        {{ __('admin.places.form.type') }}
+                        <span class="text-danger" aria-hidden="true">*</span>
+                    </label>
+                    <select id="type"
+                            name="type"
+                            required
+                            @class(['form-control', 'is-invalid' => $errors->has('type')])>
+                        @foreach ($types as $value => $label)
+                            <option value="{{ $value }}"
+                                @selected(old('type', $place->type?->value ?? 'cafe') === $value)>
+                                {{ \App\Support\Lang::t('admin.places.types.' . $value, $label) }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('type')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+        </div>
     </div>
 </div>

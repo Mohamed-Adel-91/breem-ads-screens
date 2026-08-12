@@ -1,40 +1,47 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900">{{ __('Edit place') }}</h1>
-                <p class="mt-1 text-sm text-gray-500">{{ __('Update translations, addresses, or type classifications.') }}</p>
-            </div>
-            @can('places.view')
-                <a href="{{ route('admin.places.show', ['lang' => $lang, 'place' => $place->id]) }}"
-                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                    {{ __('Back to details') }}
-                </a>
-            @endcan
-        </div>
-    </x-slot>
+@extends('admin.layouts.master')
 
-    <div class="py-8">
-        <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-            <div class="space-y-6">
-                @include('admin.layouts.legacy.alerts')
+@section('title', $pageName)
 
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <form method="POST" action="{{ route('admin.places.update', ['lang' => $lang, 'place' => $place->id]) }}">
-                        @csrf
-                        @method('PUT')
-                        <div class="px-6 py-8">
-                            @include('admin.places.partials.form')
-                        </div>
-                        <div class="flex justify-end border-t border-gray-200 bg-gray-50 px-6 py-4">
-                            <button type="submit"
-                                    class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                                {{ __('Update place') }}
-                            </button>
-                        </div>
-                    </form>
+@section('content')
+    @php
+        $indexUrl = route('admin.places.index', ['lang' => $lang]);
+        $showUrl = route('admin.places.show', ['lang' => $lang, 'place' => $place->id]);
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'subtitle' => __('admin.places.edit_subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.ads_system')],
+                ['label' => __('admin.sidebar.places'), 'url' => $indexUrl],
+                ['label' => __('admin.forms.edit')],
+            ],
+            'secondaryAction' => [
+                'href' => $showUrl,
+                'label' => __('admin.places.actions.back_to_details'),
+                'icon' => 'arrow-left',
+            ],
+        ])
+
+        <form method="POST" action="{{ route('admin.places.update', ['lang' => $lang, 'place' => $place->id]) }}">
+            @csrf
+            @method('PUT')
+
+            @include('admin.places.partials.form')
+
+            <div class="card">
+                <div class="card-body">
+                    <x-admin.group-btn class="justify-content-end">
+                        <x-admin.btn :href="$showUrl" variant="light" icon="x">
+                            {{ __('admin.buttons.close') }}
+                        </x-admin.btn>
+                        <x-admin.btn type="submit" icon="save">
+                            {{ __('admin.forms.save_button') }}
+                        </x-admin.btn>
+                    </x-admin.group-btn>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
-</x-app-layout>
+@endsection

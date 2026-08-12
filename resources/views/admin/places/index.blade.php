@@ -1,122 +1,186 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900">{{ __('Places') }}</h1>
-                <p class="mt-1 text-sm text-gray-500">{{ __('Manage venues and see which screens are attached to each location.') }}</p>
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
+@section('content')
+    @php
+        $indexUrl = route('admin.places.index', ['lang' => $lang]);
+
+        // Same fallback idiom as the migrated logs module: Spatie returns an empty
+        // string (not null) for a missing translation, so `?:` is required for the
+        // placeholder to actually appear.
+        $placeName = fn ($place) => data_get($place->getTranslations('name'), app()->getLocale())
+            ?: __('admin.places.unnamed', ['id' => $place->id]);
+
+        $placeAddress = fn ($place) => data_get($place->getTranslations('address'), app()->getLocale()) ?: null;
+
+        // The view maps the stored value to a label; the stored enum values themselves
+        // are never rewritten, and an unknown value still renders safely.
+        $typeLabel = fn (?string $type) => $type
+            ? \App\Support\Lang::t('admin.places.types.' . $type, ucfirst($type))
+            : null;
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'subtitle' => __('admin.places.subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.ads_system')],
+                ['label' => __('admin.sidebar.places')],
+            ],
+            'primaryAction' => auth('admin')->user()?->can('places.create')
+                ? [
+                    'href' => route('admin.places.create', ['lang' => $lang]),
+                    'label' => __('admin.table.new'),
+                    'icon' => 'plus',
+                ]
+                : null,
+        ])
+
+        {{-- Filter card: query parameter names (`search`, `type`) are preserved verbatim. --}}
+        <div class="card admin-filter-card mb-4">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ __('admin.places.filters.heading') }}</h2>
             </div>
-            @can('places.create')
-                <a href="{{ route('admin.places.create', ['lang' => $lang]) }}"
-                   class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                    {{ __('Create place') }}
-                </a>
-            @endcan
-        </div>
-    </x-slot>
-
-    <div class="py-8">
-        <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div class="space-y-8">
-                @include('admin.layouts.legacy.alerts')
-
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                        <h2 class="text-lg font-semibold text-gray-900">{{ __('Filters') }}</h2>
-                    </div>
-                    <div class="px-6 py-6">
-                        <form method="GET" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            <div class="lg:col-span-2">
-                                <label for="search" class="block text-sm font-medium text-gray-700">{{ __('Search') }}</label>
-                                <input id="search" type="text" name="search" value="{{ $filters['search'] ?? '' }}"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                       placeholder="{{ __('Search by name or address') }}">
+            <div class="card-body">
+                <form method="GET" action="{{ $indexUrl }}">
+                    <div class="row">
+                        <div class="col-md-8 col-lg-6">
+                            <div class="form-group">
+                                <label for="search">{{ __('admin.places.filters.search') }}</label>
+                                <input type="text"
+                                       id="search"
+                                       name="search"
+                                       class="form-control"
+                                       placeholder="{{ __('admin.places.filters.search_placeholder') }}"
+                                       value="{{ $filters['search'] ?? '' }}">
                             </div>
-                            <div>
-                                <label for="type" class="block text-sm font-medium text-gray-700">{{ __('Type') }}</label>
-                                <select id="type" name="type"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">-- {{ __('All types') }} --</option>
+                        </div>
+                        <div class="col-md-4 col-lg-3">
+                            <div class="form-group">
+                                <label for="type">{{ __('admin.places.filters.type') }}</label>
+                                <select id="type" name="type" class="form-control">
+                                    <option value="">{{ __('admin.places.filters.all_types') }}</option>
                                     @foreach ($types as $value => $label)
-                                        <option value="{{ $value }}" @selected(($filters['type'] ?? '') === $value)>{{ ucfirst(__($label)) }}</option>
+                                        <option value="{{ $value }}" @selected(($filters['type'] ?? '') === $value)>
+                                            {{ \App\Support\Lang::t('admin.places.types.' . $value, $label) }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center justify-end gap-3 pt-2">
-                                <button type="submit"
-                                        class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
+                        </div>
+
+                        <div class="col-12">
+                            <x-admin.group-btn class="justify-content-end">
+                                <x-admin.btn type="submit" variant="primary" icon="filter">
                                     {{ __('admin.buttons.filter') }}
-                                </button>
-                                <a href="{{ route('admin.places.index', ['lang' => $lang]) }}"
-                                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                                </x-admin.btn>
+                                <x-admin.btn :href="$indexUrl" variant="light" icon="rotate-ccw">
                                     {{ __('admin.buttons.reset') }}
-                                </a>
-                            </div>
-                        </form>
+                                </x-admin.btn>
+                            </x-admin.group-btn>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="card admin-stat-card mb-4">
+                    <div class="card-body">
+                        <span class="admin-stat-label">{{ __('admin.places.stats.total') }}</span>
+                        <span class="admin-stat-value">{{ $stats['total'] }}</span>
                     </div>
                 </div>
-
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <dt class="text-sm font-medium text-gray-500">{{ __('Total places') }}</dt>
-                        <dd class="mt-2 text-2xl font-semibold text-gray-900">{{ $stats['total'] }}</dd>
-                    </div>
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <dt class="text-sm font-medium text-gray-500">{{ __('With screens attached') }}</dt>
-                        <dd class="mt-2 text-2xl font-semibold text-indigo-600">{{ $stats['with_screens'] }}</dd>
-                    </div>
-                </div>
-
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">#</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Name') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Type') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Address') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Screens attached') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('admin.table.options') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                @forelse ($places as $place)
-                                    <tr>
-                                        <td class="px-4 py-3 text-gray-500">{{ $loop->iteration + ($places->currentPage() - 1) * $places->perPage() }}</td>
-                                        <td class="px-4 py-3 font-medium text-gray-900">{{ $place->getTranslation('name', app()->getLocale()) ?? __('Place #:id', ['id' => $place->id]) }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ ucfirst($place->type->value) }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ $place->getTranslation('address', app()->getLocale()) ?? '—' }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ $place->screens_count }}</td>
-                                        <td class="px-4 py-3">
-                                            <div class="flex flex-wrap gap-2">
-                                                @can('places.view')
-                                                    <a href="{{ route('admin.places.show', ['lang' => $lang, 'place' => $place->id]) }}"
-                                                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                                        {{ __('View') }}
-                                                    </a>
-                                                @endcan
-                                                @can('places.edit')
-                                                    <a href="{{ route('admin.places.edit', ['lang' => $lang, 'place' => $place->id]) }}"
-                                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                                                        {{ __('Edit') }}
-                                                    </a>
-                                                @endcan
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500">{{ __('No places found for the selected filters.') }}</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="border-t border-gray-200 px-6 py-4">
-                        @include('admin.partials.pagination', ['data' => $places])
+            </div>
+            <div class="col-sm-6">
+                <div class="card admin-stat-card mb-4">
+                    <div class="card-body">
+                        <span class="admin-stat-label">{{ __('admin.places.stats.with_screens') }}</span>
+                        <span class="admin-stat-value text-primary">{{ $stats['with_screens'] }}</span>
                     </div>
                 </div>
             </div>
         </div>
+
+        @include('admin.partials.results-summary', [
+            'data' => $places,
+            'label' => __('admin.places.results_label'),
+        ])
+
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">{{ __('admin.places.table.name') }}</th>
+                                <th scope="col">{{ __('admin.places.table.type') }}</th>
+                                <th scope="col">{{ __('admin.places.table.address') }}</th>
+                                <th scope="col">{{ __('admin.places.table.screens_count') }}</th>
+                                <th scope="col">{{ __('admin.table.options') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($places as $place)
+                                <tr>
+                                    <th scope="row">{{ ($places->firstItem() ?? 1) + $loop->index }}</th>
+                                    <td>{{ $placeName($place) }}</td>
+                                    <td>
+                                        @if ($place->type)
+                                            <x-admin.badge variant="light">
+                                                {{ $typeLabel($place->type->value) }}
+                                            </x-admin.badge>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $placeAddress($place) ?? '—' }}</td>
+                                    <td>
+                                        <x-admin.badge :variant="$place->screens_count > 0 ? 'primary' : 'secondary'" pill>
+                                            {{ $place->screens_count }}
+                                        </x-admin.badge>
+                                    </td>
+                                    <td>
+                                        <x-admin.group-btn>
+                                            @can('places.view')
+                                                <x-admin.btn
+                                                    :href="route('admin.places.show', ['lang' => $lang, 'place' => $place->id])"
+                                                    variant="outline-secondary"
+                                                    size="sm"
+                                                    icon="eye">
+                                                    {{ __('admin.places.actions.view') }}
+                                                </x-admin.btn>
+                                            @endcan
+                                            @can('places.edit')
+                                                <x-admin.btn
+                                                    :href="route('admin.places.edit', ['lang' => $lang, 'place' => $place->id])"
+                                                    variant="outline-primary"
+                                                    size="sm"
+                                                    icon="edit-2">
+                                                    {{ __('admin.places.actions.edit') }}
+                                                </x-admin.btn>
+                                            @endcan
+                                        </x-admin.group-btn>
+                                    </td>
+                                </tr>
+                            @empty
+                                @include('admin.partials.empty-state', [
+                                    'colspan' => 6,
+                                    'message' => __('admin.places.table.empty'),
+                                    'icon' => 'map-pin',
+                                ])
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                @include('admin.partials.pagination', ['data' => $places, 'variant' => 'static'])
+            </div>
+        </div>
     </div>
-</x-app-layout>
+@endsection
