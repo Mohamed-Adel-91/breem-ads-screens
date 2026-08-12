@@ -1,603 +1,599 @@
-@extends('admin.layouts.legacy.master')
+@extends('admin.layouts.master')
+
+@section('title', $page->name)
+
 @section('content')
     @php
+        // Media paths are stored once per section and read from the primary
+        // locale, exactly as the controller writes them.
         $primaryLocale = config('app.locale');
-        $arabicLocale = 'ar';
-        $englishLocale = 'en';
-        $isArabicInterface = app()->getLocale() === 'ar';
-        $checkboxWrapperClass = 'form-check mt-3' . ($isArabicInterface ? ' d-flex align-items-center justify-content-end gap-2 flex-row-reverse text-end' : '');
+        $ar = 'ar';
+        $en = 'en';
     @endphp
-    <div class="page-wrapper">
-        @include('admin.layouts.legacy.sidebar')
-        <div class="page-content">
-            @include('admin.layouts.legacy.page-header', ['pageName' => $page->name])
-            <div class="main-container">
-                @include('admin.layouts.legacy.alerts')
-                <form method="POST" action="{{ route('admin.cms.home.update', ['lang' => app()->getLocale()]) }}" enctype="multipart/form-data">
-                    @csrf
-                    @method('PUT')
 
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">{{ __('admin.sidebar.home_page') }} - @t('admin.cms.home.sections.banner', 'Banner')</h5>
-                        </div>
-                        <div class="card-body">
-                            @include('admin.layouts.components.media-upload', [
-                                'label' => __('admin.forms.video'),
-                                'name' => 'banner[video]',
-                                'inputId' => 'home_banner_video',
-                                'acceptedTypes' => 'video/mp4',
-                                'previewPath' => media_path($bannerData[$primaryLocale]['video_path'] ?? ''),
-                            ])
-                            <div class="row g-3 mt-0">
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $page->name,
+            'subtitle' => __('admin.cms.ui.home_subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.website_cms')],
+                ['label' => __('admin.sidebar.home_page')],
+            ],
+        ])
+
+        <form method="POST"
+              action="{{ route('admin.cms.home.update', ['lang' => app()->getLocale()]) }}"
+              enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+
+            {{-- Banner ------------------------------------------------------ --}}
+            <x-admin.cms-section-card
+                :title="\App\Support\Lang::t('admin.cms.home.sections.banner', 'Banner')"
+                :section-type="$banner?->type"
+                :section-id="$banner?->id"
+                :is-active="$banner?->is_active">
+
+                <div class="form-row">
+                    <div class="col-12 col-lg-6">
+                        <x-admin.file-uploader
+                            name="banner[video]"
+                            :label="__('admin.forms.video')"
+                            input-id="home_banner_video"
+                            kind="video"
+                            accept="video/mp4"
+                            accepted-types-hint="MP4"
+                            max-size-hint="150 MB"
+                            :preview-path="media_path($bannerData[$primaryLocale]['video_path'] ?? '')" />
+                    </div>
+
+                    <div class="col-12 col-lg-6">
+                        <fieldset class="form-group mb-0">
+                            <legend class="col-form-label pt-0 h6">
+                                {{ \App\Support\Lang::t('admin.cms.home.sections.banner', 'Banner') }}
+                            </legend>
+
+                            <div class="form-row">
                                 @foreach (['autoplay', 'loop', 'muted', 'controls', 'playsinline'] as $flag)
-                                    <div class="col-md-4">
-                                        <div class="{{ $checkboxWrapperClass }}">
+                                    <div class="col-12 col-sm-6">
+                                        <div class="form-check mb-2">
                                             <input type="hidden" name="banner[{{ $flag }}]" value="0">
-                                            <input type="checkbox" class="form-check-input" id="banner_{{ $flag }}"
-                                                name="banner[{{ $flag }}]"
-                                                value="1" @checked(old("banner.$flag", $bannerData[$primaryLocale][$flag] ?? false))>
-                                            <label class="form-check-label" for="banner_{{ $flag }}">{{ \App\Support\Lang::t('admin.cms.home.flags.' . $flag, ucfirst($flag)) }}</label>
+                                            <input type="checkbox"
+                                                   class="form-check-input"
+                                                   id="banner_{{ $flag }}"
+                                                   name="banner[{{ $flag }}]"
+                                                   value="1"
+                                                   @checked(old("banner.$flag", $bannerData[$primaryLocale][$flag] ?? false))>
+                                            <label class="form-check-label" for="banner_{{ $flag }}">
+                                                {{ \App\Support\Lang::t('admin.cms.home.flags.' . $flag, ucfirst($flag)) }}
+                                            </label>
                                         </div>
                                     </div>
                                 @endforeach
                             </div>
-                        </div>
+                        </fieldset>
                     </div>
+                </div>
+            </x-admin.cms-section-card>
 
-                    <div class="card mb-4" id="partners-section">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">@t('admin.cms.home.sections.partners_slider', 'Partners Slider')</h5>
-                            <button type="button" class="btn btn-sm btn-primary" id="add-partner-item">{{ __('admin.buttons.new') }}</button>
-                        </div>
-                        <div class="card-body" id="partner-items-container">
-                            @php $partnerIndex = 0; @endphp
-                            @foreach ($partners?->items ?? [] as $item)
-                                @php
-                                    $itemData = $partnerItemData[$item->id] ?? [];
-                                    $currentPath = $itemData[$primaryLocale]['image_path'] ?? '';
-                                @endphp
-                                <div class="card mb-3 partner-item" data-index="{{ $partnerIndex }}">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>#{{ $item->id }}</strong>
-                                        </div>
-                                        <button type="button" class="btn btn-sm btn-outline-danger remove-partner-item">&times;</button>
-                                    </div>
-                                    <div class="card-body">
-                                        <input type="hidden" name="partners[items][{{ $partnerIndex }}][id]" value="{{ $item->id }}">
-                                        <input type="hidden" name="partners[items][{{ $partnerIndex }}][existing_image]" value="{{ $currentPath }}">
-                                        <div class="row g-3">
-                                            <div class="col-md-3">
-                                                <label class="form-label">{{ __('admin.forms.order') }}</label>
-                                                <input type="number" name="partners[items][{{ $partnerIndex }}][order]" class="form-control"
-                                                    value="{{ old("partners.items.$partnerIndex.order", $item->order) }}">
-                                            </div>
-                                            <div class="col-md-9">
-                                                @include('admin.layouts.components.media-upload', [
-                                                    'label' => \App\Support\Lang::t('admin.cms.home.labels.slide_image', 'Slide Image'),
-                                                    'name' => "partners[items][$partnerIndex][image]",
-                                                    'inputId' => "partners_item_{$partnerIndex}_image",
-                                                    'previewPath' => media_path($currentPath),
-                                                ])
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="row g-3 flex-md-row-reverse">
-                                                    <div class="col-12 col-md-6">
-                                                        <label class="form-label">{{ __('admin.cms.shared.alt_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                                        <input type="text" class="form-control" dir="rtl"
-                                                            name="partners[items][{{ $partnerIndex }}][alt][{{ $arabicLocale }}]"
-                                                            value="{{ old("partners.items.$partnerIndex.alt.$arabicLocale", $itemData[$arabicLocale]['alt'] ?? '') }}">
-                                                    </div>
-                                                    <div class="col-12 col-md-6">
-                                                        <label class="form-label">{{ __('admin.cms.shared.alt_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                                        <input type="text" class="form-control"
-                                                            name="partners[items][{{ $partnerIndex }}][alt][{{ $englishLocale }}]"
-                                                            value="{{ old("partners.items.$partnerIndex.alt.$englishLocale", $itemData[$englishLocale]['alt'] ?? '') }}">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                @php $partnerIndex++; @endphp
-                            @endforeach
-                        </div>
-                    </div>
+            {{-- Partners slider --------------------------------------------- --}}
+            @php $partnerItems = $partners?->items ?? []; @endphp
 
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">@t('admin.cms.home.sections.about', 'About Section')</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <div class="row g-3 flex-md-row-reverse">
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                            <input type="text" class="form-control" dir="rtl"
-                                                name="about[{{ $arabicLocale }}][title]"
-                                                value="{{ old("about.$arabicLocale.title", $aboutData[$arabicLocale]['title'] ?? '') }}">
-                                        </div>
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                            <input type="text" class="form-control" name="about[{{ $englishLocale }}][title]"
-                                                value="{{ old("about.$englishLocale.title", $aboutData[$englishLocale]['title'] ?? '') }}">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="row g-3 flex-md-row-reverse">
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.description_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                            <textarea class="form-control" rows="3" dir="rtl"
-                                                name="about[{{ $arabicLocale }}][desc]">{{ old("about.$arabicLocale.desc", $aboutData[$arabicLocale]['desc'] ?? '') }}</textarea>
-                                        </div>
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.description_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                            <textarea class="form-control" rows="3" name="about[{{ $englishLocale }}][desc]">{{ old("about.$englishLocale.desc", $aboutData[$englishLocale]['desc'] ?? '') }}</textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="row g-3 flex-md-row-reverse">
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.read_more_text_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                            <input type="text" class="form-control" dir="rtl"
-                                                name="about[{{ $arabicLocale }}][readmore_text]"
-                                                value="{{ old("about.$arabicLocale.readmore_text", $aboutData[$arabicLocale]['readmore_text'] ?? '') }}">
-                                        </div>
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.read_more_text_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                            <input type="text" class="form-control"
-                                                name="about[{{ $englishLocale }}][readmore_text]"
-                                                value="{{ old("about.$englishLocale.readmore_text", $aboutData[$englishLocale]['readmore_text'] ?? '') }}">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="row g-3 flex-md-row-reverse">
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.read_more_link_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                            <input type="text" class="form-control" dir="rtl"
-                                                name="about[{{ $arabicLocale }}][readmore_link]"
-                                                value="{{ old("about.$arabicLocale.readmore_link", $aboutData[$arabicLocale]['readmore_link'] ?? '') }}">
-                                        </div>
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.read_more_link_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                            <input type="text" class="form-control"
-                                                name="about[{{ $englishLocale }}][readmore_link]"
-                                                value="{{ old("about.$englishLocale.readmore_link", $aboutData[$englishLocale]['readmore_link'] ?? '') }}">
+            <x-admin.cms-section-card
+                id="partners-section"
+                :title="\App\Support\Lang::t('admin.cms.home.sections.partners_slider', 'Partners Slider')"
+                :section-type="$partners?->type"
+                :section-id="$partners?->id"
+                :is-active="$partners?->is_active">
+
+                <x-slot:actions>
+                    <x-admin.badge variant="light">
+                        {{ __('admin.cms.ui.items_count', ['count' => count($partnerItems)]) }}
+                    </x-admin.badge>
+                    <x-admin.btn size="sm" icon="plus" data-repeater-add="partners">
+                        {{ __('admin.cms.ui.add_item') }}
+                    </x-admin.btn>
+                </x-slot:actions>
+
+                <div data-repeater-items="partners">
+                    <p class="text-muted small" data-repeater-empty @if (count($partnerItems)) hidden @endif>
+                        {{ __('admin.cms.ui.no_items_yet') }}
+                    </p>
+
+                    @foreach ($partnerItems as $partnerIndex => $item)
+                        @php
+                            $itemData = $partnerItemData[$item->id] ?? [];
+                            $currentPath = $itemData[$primaryLocale]['image_path'] ?? '';
+                            $base = "partners[items][$partnerIndex]";
+                            $dot = "partners.items.$partnerIndex";
+                        @endphp
+
+                        <div class="card mb-3 bg-light" data-repeater-item>
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <span class="font-weight-bold">
+                                    {{ __('admin.cms.ui.item_reference', ['id' => $item->id]) }}
+                                </span>
+                                @include('admin.cms.partials.repeater-remove')
+                            </div>
+                            <div class="card-body">
+                                <input type="hidden" name="{{ $base }}[id]" value="{{ $item->id }}">
+                                <input type="hidden" name="{{ $base }}[existing_image]" value="{{ $currentPath }}">
+
+                                <div class="form-row">
+                                    <div class="col-12 col-md-4">
+                                        <div class="form-group">
+                                            <label for="partners_item_{{ $partnerIndex }}_order">{{ __('admin.forms.order') }}</label>
+                                            <input type="number"
+                                                   id="partners_item_{{ $partnerIndex }}_order"
+                                                   name="{{ $base }}[order]"
+                                                   class="form-control"
+                                                   min="0"
+                                                   value="{{ old("$dot.order", $item->order) }}">
                                         </div>
                                     </div>
+                                    <div class="col-12 col-md-8">
+                                        <x-admin.file-uploader
+                                            :name="$base . '[image]'"
+                                            :label="\App\Support\Lang::t('admin.cms.home.labels.slide_image', 'Slide Image')"
+                                            :input-id="'partners_item_' . $partnerIndex . '_image'"
+                                            kind="image"
+                                            max-size-hint="10 MB"
+                                            :preview-path="media_path($currentPath)" />
+                                    </div>
                                 </div>
+
+                                <x-admin.translatable-field
+                                    label-key="admin.cms.shared.alt_locale"
+                                    :id-prefix="'partners_alt_' . $partnerIndex"
+                                    :names="['en' => $base . '[alt][' . $en . ']', 'ar' => $base . '[alt][' . $ar . ']']"
+                                    :values="[
+                                        'en' => old($dot . '.alt.' . $en, $itemData[$en]['alt'] ?? ''),
+                                        'ar' => old($dot . '.alt.' . $ar, $itemData[$ar]['alt'] ?? ''),
+                                    ]" />
                             </div>
                         </div>
-                    </div>
+                    @endforeach
+                </div>
 
-                    <div class="card mb-4" id="stats-section">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">@t('admin.cms.home.sections.impact_metrics', 'Impact Metrics')</h5>
-                            <button type="button" class="btn btn-sm btn-primary" id="add-stat-item">{{ __('admin.buttons.new') }}</button>
-                        </div>
-                        <div class="card-body" id="stats-items-container">
-                            @php $statsIndex = 0; @endphp
-                            @foreach ($stats?->items ?? [] as $item)
-                                @php
-                                    $itemData = $statsItemData[$item->id] ?? [];
-                                    $currentIcon = $itemData[$primaryLocale]['icon_path'] ?? '';
-                                @endphp
-                                <div class="card mb-3 stat-item" data-index="{{ $statsIndex }}">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <strong>#{{ $item->id }}</strong>
-                                        <button type="button" class="btn btn-sm btn-outline-danger remove-stat-item">&times;</button>
-                                    </div>
-                                    <div class="card-body">
-                                        <input type="hidden" name="stats[items][{{ $statsIndex }}][id]" value="{{ $item->id }}">
-                                        <input type="hidden" name="stats[items][{{ $statsIndex }}][existing_icon]" value="{{ $currentIcon }}">
-                                        <div class="row g-3">
-                                            <div class="col-md-3">
-                                                <label class="form-label">{{ __('admin.forms.order') }}</label>
-                                                <input type="number" name="stats[items][{{ $statsIndex }}][order]" class="form-control"
-                                                    value="{{ old("stats.items.$statsIndex.order", $item->order) }}">
-                                            </div>
-                                            <div class="col-md-9">
-                                                @include('admin.layouts.components.media-upload', [
-                                                    'label' => __('admin.forms.icon'),
-                                                    'name' => "stats[items][$statsIndex][icon]",
-                                                    'inputId' => "stats_item_{$statsIndex}_icon",
-                                                    'previewPath' => media_path($currentIcon),
-                                                ])
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="row g-3 flex-md-row-reverse">
-                                                    <div class="col-12 col-md-6">
-                                                        <label class="form-label">{{ __('admin.cms.shared.number_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                                        <input type="text" class="form-control" dir="rtl"
-                                                            name="stats[items][{{ $statsIndex }}][number][{{ $arabicLocale }}]"
-                                                            value="{{ old("stats.items.$statsIndex.number.$arabicLocale", $itemData[$arabicLocale]['number'] ?? '') }}">
-                                                    </div>
-                                                    <div class="col-12 col-md-6">
-                                                        <label class="form-label">{{ __('admin.cms.shared.number_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                                        <input type="text" class="form-control"
-                                                            name="stats[items][{{ $statsIndex }}][number][{{ $englishLocale }}]"
-                                                            value="{{ old("stats.items.$statsIndex.number.$englishLocale", $itemData[$englishLocale]['number'] ?? '') }}">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="row g-3 flex-md-row-reverse">
-                                                    <div class="col-12 col-md-6">
-                                                        <label class="form-label">{{ __('admin.cms.shared.label_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                                        <input type="text" class="form-control" dir="rtl"
-                                                            name="stats[items][{{ $statsIndex }}][label][{{ $arabicLocale }}]"
-                                                            value="{{ old("stats.items.$statsIndex.label.$arabicLocale", $itemData[$arabicLocale]['label'] ?? '') }}">
-                                                    </div>
-                                                    <div class="col-12 col-md-6">
-                                                        <label class="form-label">{{ __('admin.cms.shared.label_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                                        <input type="text" class="form-control"
-                                                            name="stats[items][{{ $statsIndex }}][label][{{ $englishLocale }}]"
-                                                            value="{{ old("stats.items.$statsIndex.label.$englishLocale", $itemData[$englishLocale]['label'] ?? '') }}">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                @php $statsIndex++; @endphp
-                            @endforeach
-                        </div>
-                    </div>
+                <small class="form-text text-muted">{{ __('admin.cms.ui.unsaved_items_hint') }}</small>
+            </x-admin.cms-section-card>
 
-                    <div class="card mb-4" id="where-section">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">@t('admin.cms.home.sections.locations', 'Where To Find Us')</h5>
-                            <button type="button" class="btn btn-sm btn-primary" id="add-where-item">{{ __('admin.buttons.new') }}</button>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <div class="row g-3 flex-md-row-reverse">
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                            <input type="text" class="form-control" dir="rtl"
-                                                name="where_us[title][{{ $arabicLocale }}]"
-                                                value="{{ old("where_us.title.$arabicLocale", $whereData[$arabicLocale]['title'] ?? '') }}">
-                                        </div>
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                            <input type="text" class="form-control" name="where_us[title][{{ $englishLocale }}]"
-                                                value="{{ old("where_us.title.$englishLocale", $whereData[$englishLocale]['title'] ?? '') }}">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="row g-3 flex-md-row-reverse">
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.brochure_text_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                            <input type="text" class="form-control" dir="rtl"
-                                                name="where_us[brochure_text][{{ $arabicLocale }}]"
-                                                value="{{ old("where_us.brochure_text.$arabicLocale", $whereData[$arabicLocale]['brochure']['text'] ?? '') }}">
-                                        </div>
-                                        <div class="col-12 col-md-6">
-                                            <label class="form-label">{{ __('admin.cms.shared.brochure_text_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                            <input type="text" class="form-control"
-                                                name="where_us[brochure_text][{{ $englishLocale }}]"
-                                                value="{{ old("where_us.brochure_text.$englishLocale", $whereData[$englishLocale]['brochure']['text'] ?? '') }}">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    @include('admin.layouts.components.media-upload', [
-                                        'label' => \App\Support\Lang::t('admin.cms.home.labels.brochure_icon', 'Brochure Icon'),
-                                        'name' => 'where_us[brochure_icon]',
-                                        'inputId' => 'where_brochure_icon',
-                                        'previewPath' => media_path($whereData[$primaryLocale]['brochure']['icon_path'] ?? ''),
-                                    ])
-                                </div>
-                                <div class="col-md-6">
-                                    @include('admin.layouts.components.media-upload', [
-                                        'label' => \App\Support\Lang::t('admin.cms.home.labels.brochure_file', 'Brochure File (PDF)'),
-                                        'name' => 'where_us[brochure_file]',
-                                        'inputId' => 'where_brochure_file',
-                                        'acceptedTypes' => 'application/pdf',
-                                        'previewPath' => media_path($whereData[$primaryLocale]['brochure']['brochure_path'] ?? ''),
-                                    ])
-                                    <label class="form-label mt-2">@t('admin.cms.home.labels.brochure_external_link', 'Brochure external link')</label>
-                                    <input type="text" class="form-control" name="where_us[brochure_link]"
-                                        value="{{ old('where_us.brochure_link', $whereData[$primaryLocale]['brochure']['brochure_path'] ?? '') }}">
-                                </div>
+            {{-- About -------------------------------------------------------- --}}
+            <x-admin.cms-section-card
+                :title="\App\Support\Lang::t('admin.cms.home.sections.about', 'About Section')"
+                :section-type="$about?->type"
+                :section-id="$about?->id"
+                :is-active="$about?->is_active">
+
+                @foreach ([
+                    'title' => ['key' => 'admin.cms.shared.title_locale', 'type' => 'text'],
+                    'desc' => ['key' => 'admin.cms.shared.description_locale', 'type' => 'textarea'],
+                    'readmore_text' => ['key' => 'admin.cms.shared.read_more_text_locale', 'type' => 'text'],
+                    'readmore_link' => ['key' => 'admin.cms.shared.read_more_link_locale', 'type' => 'text'],
+                ] as $field => $meta)
+                    <x-admin.translatable-field
+                        :type="$meta['type']"
+                        :label-key="$meta['key']"
+                        :id-prefix="'about_' . $field"
+                        :names="['en' => 'about[' . $en . '][' . $field . ']', 'ar' => 'about[' . $ar . '][' . $field . ']']"
+                        :values="[
+                            'en' => old('about.' . $en . '.' . $field, $aboutData[$en][$field] ?? ''),
+                            'ar' => old('about.' . $ar . '.' . $field, $aboutData[$ar][$field] ?? ''),
+                        ]" />
+                @endforeach
+            </x-admin.cms-section-card>
+
+            {{-- Impact metrics ---------------------------------------------- --}}
+            @php $statsItems = $stats?->items ?? []; @endphp
+
+            <x-admin.cms-section-card
+                id="stats-section"
+                :title="\App\Support\Lang::t('admin.cms.home.sections.impact_metrics', 'Impact Metrics')"
+                :section-type="$stats?->type"
+                :section-id="$stats?->id"
+                :is-active="$stats?->is_active">
+
+                <x-slot:actions>
+                    <x-admin.badge variant="light">
+                        {{ __('admin.cms.ui.items_count', ['count' => count($statsItems)]) }}
+                    </x-admin.badge>
+                    <x-admin.btn size="sm" icon="plus" data-repeater-add="stats">
+                        {{ __('admin.cms.ui.add_item') }}
+                    </x-admin.btn>
+                </x-slot:actions>
+
+                <div data-repeater-items="stats">
+                    <p class="text-muted small" data-repeater-empty @if (count($statsItems)) hidden @endif>
+                        {{ __('admin.cms.ui.no_items_yet') }}
+                    </p>
+
+                    @foreach ($statsItems as $statsIndex => $item)
+                        @php
+                            $itemData = $statsItemData[$item->id] ?? [];
+                            $currentIcon = $itemData[$primaryLocale]['icon_path'] ?? '';
+                            $base = "stats[items][$statsIndex]";
+                            $dot = "stats.items.$statsIndex";
+                        @endphp
+
+                        <div class="card mb-3 bg-light" data-repeater-item>
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <span class="font-weight-bold">
+                                    {{ __('admin.cms.ui.item_reference', ['id' => $item->id]) }}
+                                </span>
+                                @include('admin.cms.partials.repeater-remove')
                             </div>
-                            <hr>
-                            <div id="where-items-container">
-                                @php $whereIndex = 0; @endphp
-                                @foreach ($whereUs?->items ?? [] as $item)
-                                    @php
-                                        $itemData = $whereItemsData[$item->id] ?? [];
-                                        $currentImage = $itemData[$primaryLocale]['image_path'] ?? '';
-                                    @endphp
-                                    <div class="card mb-3 where-item" data-index="{{ $whereIndex }}">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <strong>#{{ $item->id }}</strong>
-                                            <button type="button" class="btn btn-sm btn-outline-danger remove-where-item">&times;</button>
-                                        </div>
-                                        <div class="card-body">
-                                            <input type="hidden" name="where_us[items][{{ $whereIndex }}][id]" value="{{ $item->id }}">
-                                            <input type="hidden" name="where_us[items][{{ $whereIndex }}][existing_image]" value="{{ $currentImage }}">
-                                            <div class="row g-3">
-                                                <div class="col-md-3">
-                                                    <label class="form-label">{{ __('admin.forms.order') }}</label>
-                                                    <input type="number" class="form-control" name="where_us[items][{{ $whereIndex }}][order]"
-                                                        value="{{ old("where_us.items.$whereIndex.order", $item->order) }}">
-                                                </div>
-                                                <div class="col-md-9">
-                                                    @include('admin.layouts.components.media-upload', [
-                                                        'label' => __('admin.forms.image'),
-                                                        'name' => "where_us[items][$whereIndex][image]",
-                                                        'inputId' => "where_item_{$whereIndex}_image",
-                                                        'previewPath' => media_path($currentImage),
-                                                    ])
-                                                </div>
-                                                <div class="col-12">
-                                                    <div class="row g-3 flex-md-row-reverse">
-                                                        <div class="col-12 col-md-6">
-                                                            <label class="form-label">{{ __('admin.cms.shared.overlay_text_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                                            <input type="text" class="form-control" dir="rtl"
-                                                                name="where_us[items][{{ $whereIndex }}][overlay][{{ $arabicLocale }}]"
-                                                                value="{{ old("where_us.items.$whereIndex.overlay.$arabicLocale", $itemData[$arabicLocale]['overlay_text'] ?? '') }}">
-                                                        </div>
-                                                        <div class="col-12 col-md-6">
-                                                            <label class="form-label">{{ __('admin.cms.shared.overlay_text_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                                            <input type="text" class="form-control"
-                                                                name="where_us[items][{{ $whereIndex }}][overlay][{{ $englishLocale }}]"
-                                                                value="{{ old("where_us.items.$whereIndex.overlay.$englishLocale", $itemData[$englishLocale]['overlay_text'] ?? '') }}">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                            <div class="card-body">
+                                <input type="hidden" name="{{ $base }}[id]" value="{{ $item->id }}">
+                                <input type="hidden" name="{{ $base }}[existing_icon]" value="{{ $currentIcon }}">
+
+                                <div class="form-row">
+                                    <div class="col-12 col-md-4">
+                                        <div class="form-group">
+                                            <label for="stats_item_{{ $statsIndex }}_order">{{ __('admin.forms.order') }}</label>
+                                            <input type="number"
+                                                   id="stats_item_{{ $statsIndex }}_order"
+                                                   name="{{ $base }}[order]"
+                                                   class="form-control"
+                                                   min="0"
+                                                   value="{{ old("$dot.order", $item->order) }}">
                                         </div>
                                     </div>
-                                    @php $whereIndex++; @endphp
+                                    <div class="col-12 col-md-8">
+                                        <x-admin.file-uploader
+                                            :name="$base . '[icon]'"
+                                            :label="__('admin.forms.icon')"
+                                            :input-id="'stats_item_' . $statsIndex . '_icon'"
+                                            kind="image"
+                                            max-size-hint="5 MB"
+                                            :preview-path="media_path($currentIcon)" />
+                                    </div>
+                                </div>
+
+                                @foreach ([
+                                    'number' => 'admin.cms.shared.number_locale',
+                                    'label' => 'admin.cms.shared.label_locale',
+                                ] as $field => $labelKey)
+                                    <x-admin.translatable-field
+                                        :label-key="$labelKey"
+                                        :id-prefix="'stats_' . $field . '_' . $statsIndex"
+                                        :names="['en' => $base . '[' . $field . '][' . $en . ']', 'ar' => $base . '[' . $field . '][' . $ar . ']']"
+                                        :values="[
+                                            'en' => old($dot . '.' . $field . '.' . $en, $itemData[$en][$field] ?? ''),
+                                            'ar' => old($dot . '.' . $field . '.' . $ar, $itemData[$ar][$field] ?? ''),
+                                        ]" />
                                 @endforeach
                             </div>
                         </div>
-                    </div>
+                    @endforeach
+                </div>
 
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">@t('admin.cms.home.sections.cta', 'CTA Section')</h5>
+                <small class="form-text text-muted">{{ __('admin.cms.ui.unsaved_items_hint') }}</small>
+            </x-admin.cms-section-card>
+
+            {{-- Where to find us -------------------------------------------- --}}
+            @php $whereItems = $whereUs?->items ?? []; @endphp
+
+            <x-admin.cms-section-card
+                id="where-section"
+                :title="\App\Support\Lang::t('admin.cms.home.sections.locations', 'Where To Find Us')"
+                :section-type="$whereUs?->type"
+                :section-id="$whereUs?->id"
+                :is-active="$whereUs?->is_active">
+
+                <x-slot:actions>
+                    <x-admin.badge variant="light">
+                        {{ __('admin.cms.ui.items_count', ['count' => count($whereItems)]) }}
+                    </x-admin.badge>
+                    <x-admin.btn size="sm" icon="plus" data-repeater-add="where">
+                        {{ __('admin.cms.ui.add_item') }}
+                    </x-admin.btn>
+                </x-slot:actions>
+
+                <x-admin.translatable-field
+                    label-key="admin.cms.shared.title_locale"
+                    id-prefix="where_title"
+                    :names="['en' => 'where_us[title][' . $en . ']', 'ar' => 'where_us[title][' . $ar . ']']"
+                    :values="[
+                        'en' => old('where_us.title.' . $en, $whereData[$en]['title'] ?? ''),
+                        'ar' => old('where_us.title.' . $ar, $whereData[$ar]['title'] ?? ''),
+                    ]" />
+
+                <x-admin.translatable-field
+                    label-key="admin.cms.shared.brochure_text_locale"
+                    id-prefix="where_brochure_text"
+                    :names="['en' => 'where_us[brochure_text][' . $en . ']', 'ar' => 'where_us[brochure_text][' . $ar . ']']"
+                    :values="[
+                        'en' => old('where_us.brochure_text.' . $en, $whereData[$en]['brochure']['text'] ?? ''),
+                        'ar' => old('where_us.brochure_text.' . $ar, $whereData[$ar]['brochure']['text'] ?? ''),
+                    ]" />
+
+                <div class="form-row">
+                    <div class="col-12 col-md-6">
+                        <x-admin.file-uploader
+                            name="where_us[brochure_icon]"
+                            :label="\App\Support\Lang::t('admin.cms.home.labels.brochure_icon', 'Brochure Icon')"
+                            input-id="where_brochure_icon"
+                            kind="image"
+                            max-size-hint="5 MB"
+                            :preview-path="media_path($whereData[$primaryLocale]['brochure']['icon_path'] ?? '')" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <x-admin.file-uploader
+                            name="where_us[brochure_file]"
+                            :label="\App\Support\Lang::t('admin.cms.home.labels.brochure_file', 'Brochure File (PDF)')"
+                            input-id="where_brochure_file"
+                            kind="file"
+                            accept="application/pdf"
+                            accepted-types-hint="PDF"
+                            max-size-hint="20 MB"
+                            :preview-path="media_path($whereData[$primaryLocale]['brochure']['brochure_path'] ?? '')" />
+
+                        <div class="form-group">
+                            <label for="where_brochure_link">
+                                {{ \App\Support\Lang::t('admin.cms.home.labels.brochure_external_link', 'Brochure external link') }}
+                            </label>
+                            <input type="text"
+                                   id="where_brochure_link"
+                                   name="where_us[brochure_link]"
+                                   dir="ltr"
+                                   @class(['form-control', 'is-invalid' => $errors->has('where_us.brochure_link')])
+                                   value="{{ old('where_us.brochure_link', $whereData[$primaryLocale]['brochure']['brochure_path'] ?? '') }}">
+                            @error('where_us.brochure_link')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    @include('admin.layouts.components.media-upload', [
-                                        'label' => \App\Support\Lang::t('admin.cms.home.labels.main_image', 'Main Image'),
-                                        'name' => 'cta[image]',
-                                        'inputId' => 'cta_image',
-                                        'previewPath' => media_path($ctaData[$primaryLocale]['image_path'] ?? ''),
-                                    ])
+                    </div>
+                </div>
+
+                <hr>
+
+                <div data-repeater-items="where">
+                    <p class="text-muted small" data-repeater-empty @if (count($whereItems)) hidden @endif>
+                        {{ __('admin.cms.ui.no_items_yet') }}
+                    </p>
+
+                    @foreach ($whereItems as $whereIndex => $item)
+                        @php
+                            $itemData = $whereItemsData[$item->id] ?? [];
+                            $currentImage = $itemData[$primaryLocale]['image_path'] ?? '';
+                            $base = "where_us[items][$whereIndex]";
+                            $dot = "where_us.items.$whereIndex";
+                        @endphp
+
+                        <div class="card mb-3 bg-light" data-repeater-item>
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <span class="font-weight-bold">
+                                    {{ __('admin.cms.ui.item_reference', ['id' => $item->id]) }}
+                                </span>
+                                @include('admin.cms.partials.repeater-remove')
+                            </div>
+                            <div class="card-body">
+                                <input type="hidden" name="{{ $base }}[id]" value="{{ $item->id }}">
+                                <input type="hidden" name="{{ $base }}[existing_image]" value="{{ $currentImage }}">
+
+                                <div class="form-row">
+                                    <div class="col-12 col-md-4">
+                                        <div class="form-group">
+                                            <label for="where_item_{{ $whereIndex }}_order">{{ __('admin.forms.order') }}</label>
+                                            <input type="number"
+                                                   id="where_item_{{ $whereIndex }}_order"
+                                                   name="{{ $base }}[order]"
+                                                   class="form-control"
+                                                   min="0"
+                                                   value="{{ old("$dot.order", $item->order) }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-8">
+                                        <x-admin.file-uploader
+                                            :name="$base . '[image]'"
+                                            :label="__('admin.forms.image')"
+                                            :input-id="'where_item_' . $whereIndex . '_image'"
+                                            kind="image"
+                                            max-size-hint="10 MB"
+                                            :preview-path="media_path($currentImage)" />
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    @include('admin.layouts.components.media-upload', [
-                                        'label' => \App\Support\Lang::t('admin.cms.home.labels.overlay_image', 'Overlay Image'),
-                                        'name' => 'cta[overlay_image]',
-                                        'inputId' => 'cta_overlay_image',
-                                        'previewPath' => media_path($ctaData[$primaryLocale]['overlay_image_path'] ?? ''),
-                                    ])
-                                </div>
-                                @foreach ($locales as $locale)
-                                    <div class="col-md-6">
-                                        <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($locale)]) }}</label>
-                                        <input type="text" class="form-control" name="cta[{{ $locale }}][title]"
-                                            value="{{ old("cta.$locale.title", $ctaData[$locale]['title'] ?? '') }}">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label">{{ __('admin.cms.shared.text_locale', ['locale' => strtoupper($locale)]) }}</label>
-                                        <textarea class="form-control" rows="3" name="cta[{{ $locale }}][text]">{{ old("cta.$locale.text", $ctaData[$locale]['text'] ?? '') }}</textarea>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Link {{ __('admin.cms.shared.text_locale', ['locale' => strtoupper($locale)]) }}</label>
-                                        <input type="text" class="form-control" name="cta[{{ $locale }}][link_text]"
-                                            value="{{ old("cta.$locale.link_text", $ctaData[$locale]['link_text'] ?? '') }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">{{ __('admin.cms.shared.link_url_locale', ['locale' => strtoupper($locale)]) }}</label>
-                                        <input type="text" class="form-control" name="cta[{{ $locale }}][link_url]"
-                                            value="{{ old("cta.$locale.link_url", $ctaData[$locale]['link_url'] ?? '') }}">
-                                    </div>
-                                @endforeach
+
+                                <x-admin.translatable-field
+                                    label-key="admin.cms.shared.overlay_text_locale"
+                                    :id-prefix="'where_overlay_' . $whereIndex"
+                                    :names="['en' => $base . '[overlay][' . $en . ']', 'ar' => $base . '[overlay][' . $ar . ']']"
+                                    :values="[
+                                        'en' => old($dot . '.overlay.' . $en, $itemData[$en]['overlay_text'] ?? ''),
+                                        'ar' => old($dot . '.overlay.' . $ar, $itemData[$ar]['overlay_text'] ?? ''),
+                                    ]" />
                             </div>
                         </div>
-                    </div>
+                    @endforeach
+                </div>
 
-                    <div class="text-end">
-                        <button type="submit" class="btn btn-primary">{{ __('admin.forms.save_button') }}</button>
+                <small class="form-text text-muted">{{ __('admin.cms.ui.unsaved_items_hint') }}</small>
+            </x-admin.cms-section-card>
+
+            {{-- CTA ---------------------------------------------------------- --}}
+            <x-admin.cms-section-card
+                :title="\App\Support\Lang::t('admin.cms.home.sections.cta', 'CTA Section')"
+                :section-type="$cta?->type"
+                :section-id="$cta?->id"
+                :is-active="$cta?->is_active">
+
+                <div class="form-row">
+                    <div class="col-12 col-md-6">
+                        <x-admin.file-uploader
+                            name="cta[image]"
+                            :label="\App\Support\Lang::t('admin.cms.home.labels.main_image', 'Main Image')"
+                            input-id="cta_image"
+                            kind="image"
+                            max-size-hint="10 MB"
+                            :preview-path="media_path($ctaData[$primaryLocale]['image_path'] ?? '')" />
                     </div>
-                </form>
+                    <div class="col-12 col-md-6">
+                        <x-admin.file-uploader
+                            name="cta[overlay_image]"
+                            :label="\App\Support\Lang::t('admin.cms.home.labels.overlay_image', 'Overlay Image')"
+                            input-id="cta_overlay_image"
+                            kind="image"
+                            max-size-hint="10 MB"
+                            :preview-path="media_path($ctaData[$primaryLocale]['overlay_image_path'] ?? '')" />
+                    </div>
+                </div>
+
+                @foreach ([
+                    'title' => ['key' => 'admin.cms.shared.title_locale', 'type' => 'text'],
+                    'text' => ['key' => 'admin.cms.shared.text_locale', 'type' => 'textarea'],
+                    'link_text' => ['key' => 'admin.cms.shared.link_text_locale', 'type' => 'text'],
+                    'link_url' => ['key' => 'admin.cms.shared.link_url_locale', 'type' => 'text'],
+                ] as $field => $meta)
+                    <x-admin.translatable-field
+                        :type="$meta['type']"
+                        :label-key="$meta['key']"
+                        :id-prefix="'cta_' . $field"
+                        :names="['en' => 'cta[' . $en . '][' . $field . ']', 'ar' => 'cta[' . $ar . '][' . $field . ']']"
+                        :values="[
+                            'en' => old('cta.' . $en . '.' . $field, $ctaData[$en][$field] ?? ''),
+                            'ar' => old('cta.' . $ar . '.' . $field, $ctaData[$ar][$field] ?? ''),
+                        ]" />
+                @endforeach
+            </x-admin.cms-section-card>
+
+            <div class="card">
+                <div class="card-body">
+                    <x-admin.group-btn class="justify-content-end">
+                        <x-admin.btn
+                            :href="route('admin.dashboard', ['lang' => app()->getLocale()])"
+                            variant="light"
+                            icon="arrow-left">
+                            {{ __('admin.buttons.back') }}
+                        </x-admin.btn>
+                        <x-admin.btn type="submit" icon="save">
+                            {{ __('admin.forms.save_button') }}
+                        </x-admin.btn>
+                    </x-admin.group-btn>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
-@endsection
 
-@push('custom-js-scripts')
-    <template id="partner-item-template">
-        <div class="card mb-3 partner-item" data-index="__INDEX__">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>{{ __('admin.buttons.new') }}</strong>
-                <button type="button" class="btn btn-sm btn-outline-danger remove-partner-item">&times;</button>
+    {{-- Repeater templates: __INDEX__ is replaced client side with a --}}
+    {{-- timestamp so new rows never collide with the rendered indexes. --}}
+    <template data-repeater-template="partners">
+        <div class="card mb-3 bg-light" data-repeater-item>
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span class="font-weight-bold">{{ __('admin.cms.ui.new_item') }}</span>
+                @include('admin.cms.partials.repeater-remove')
             </div>
             <div class="card-body">
                 <input type="hidden" name="partners[items][__INDEX__][existing_image]">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">{{ __('admin.forms.order') }}</label>
-                        <input type="number" name="partners[items][__INDEX__][order]" class="form-control">
-                    </div>
-                    <div class="col-md-9">
-                        @include('admin.layouts.components.media-upload', [
-                            'label' => \App\Support\Lang::t('admin.cms.home.labels.slide_image', 'Slide Image'),
-                            'name' => 'partners[items][__INDEX__][image]',
-                            'inputId' => 'partners_item___INDEX___image',
-                        ])
-                    </div>
-                    <div class="col-12">
-                        <div class="row g-3 flex-md-row-reverse">
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">{{ __('admin.cms.shared.alt_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                <input type="text" class="form-control" dir="rtl"
-                                    name="partners[items][__INDEX__][alt][{{ $arabicLocale }}]">
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">{{ __('admin.cms.shared.alt_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                <input type="text" class="form-control"
-                                    name="partners[items][__INDEX__][alt][{{ $englishLocale }}]">
-                            </div>
+
+                <div class="form-row">
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="partners_item___INDEX___order">{{ __('admin.forms.order') }}</label>
+                            <input type="number"
+                                   id="partners_item___INDEX___order"
+                                   name="partners[items][__INDEX__][order]"
+                                   class="form-control"
+                                   min="0">
                         </div>
                     </div>
+                    <div class="col-12 col-md-8">
+                        <x-admin.file-uploader
+                            name="partners[items][__INDEX__][image]"
+                            :label="\App\Support\Lang::t('admin.cms.home.labels.slide_image', 'Slide Image')"
+                            input-id="partners_item___INDEX___image"
+                            kind="image"
+                            max-size-hint="10 MB" />
+                    </div>
                 </div>
+
+                <x-admin.translatable-field
+                    label-key="admin.cms.shared.alt_locale"
+                    id-prefix="partners_alt___INDEX__"
+                    :names="['en' => 'partners[items][__INDEX__][alt][' . $en . ']', 'ar' => 'partners[items][__INDEX__][alt][' . $ar . ']']" />
             </div>
         </div>
     </template>
-    <template id="stat-item-template">
-        <div class="card mb-3 stat-item" data-index="__INDEX__">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>{{ __('admin.buttons.new') }}</strong>
-                <button type="button" class="btn btn-sm btn-outline-danger remove-stat-item">&times;</button>
+
+    <template data-repeater-template="stats">
+        <div class="card mb-3 bg-light" data-repeater-item>
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span class="font-weight-bold">{{ __('admin.cms.ui.new_item') }}</span>
+                @include('admin.cms.partials.repeater-remove')
             </div>
             <div class="card-body">
                 <input type="hidden" name="stats[items][__INDEX__][existing_icon]">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">{{ __('admin.forms.order') }}</label>
-                        <input type="number" name="stats[items][__INDEX__][order]" class="form-control">
-                    </div>
-                    <div class="col-md-9">
-                        @include('admin.layouts.components.media-upload', [
-                            'label' => __('admin.forms.icon'),
-                            'name' => 'stats[items][__INDEX__][icon]',
-                            'inputId' => 'stats_item___INDEX___icon',
-                        ])
-                    </div>
-                    <div class="col-12">
-                        <div class="row g-3 flex-md-row-reverse">
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">{{ __('admin.cms.shared.number_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                <input type="text" class="form-control" dir="rtl"
-                                    name="stats[items][__INDEX__][number][{{ $arabicLocale }}]">
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">{{ __('admin.cms.shared.number_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                <input type="text" class="form-control"
-                                    name="stats[items][__INDEX__][number][{{ $englishLocale }}]">
-                            </div>
+
+                <div class="form-row">
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="stats_item___INDEX___order">{{ __('admin.forms.order') }}</label>
+                            <input type="number"
+                                   id="stats_item___INDEX___order"
+                                   name="stats[items][__INDEX__][order]"
+                                   class="form-control"
+                                   min="0">
                         </div>
                     </div>
-                    <div class="col-12">
-                        <div class="row g-3 flex-md-row-reverse">
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">{{ __('admin.cms.shared.label_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                <input type="text" class="form-control" dir="rtl"
-                                    name="stats[items][__INDEX__][label][{{ $arabicLocale }}]">
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">{{ __('admin.cms.shared.label_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                <input type="text" class="form-control"
-                                    name="stats[items][__INDEX__][label][{{ $englishLocale }}]">
-                            </div>
-                        </div>
+                    <div class="col-12 col-md-8">
+                        <x-admin.file-uploader
+                            name="stats[items][__INDEX__][icon]"
+                            :label="__('admin.forms.icon')"
+                            input-id="stats_item___INDEX___icon"
+                            kind="image"
+                            max-size-hint="5 MB" />
                     </div>
                 </div>
+
+                <x-admin.translatable-field
+                    label-key="admin.cms.shared.number_locale"
+                    id-prefix="stats_number___INDEX__"
+                    :names="['en' => 'stats[items][__INDEX__][number][' . $en . ']', 'ar' => 'stats[items][__INDEX__][number][' . $ar . ']']" />
+
+                <x-admin.translatable-field
+                    label-key="admin.cms.shared.label_locale"
+                    id-prefix="stats_label___INDEX__"
+                    :names="['en' => 'stats[items][__INDEX__][label][' . $en . ']', 'ar' => 'stats[items][__INDEX__][label][' . $ar . ']']" />
             </div>
         </div>
     </template>
-    <template id="where-item-template">
-        <div class="card mb-3 where-item" data-index="__INDEX__">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>{{ __('admin.buttons.new') }}</strong>
-                <button type="button" class="btn btn-sm btn-outline-danger remove-where-item">&times;</button>
+
+    <template data-repeater-template="where">
+        <div class="card mb-3 bg-light" data-repeater-item>
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span class="font-weight-bold">{{ __('admin.cms.ui.new_item') }}</span>
+                @include('admin.cms.partials.repeater-remove')
             </div>
             <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">{{ __('admin.forms.order') }}</label>
-                        <input type="number" name="where_us[items][__INDEX__][order]" class="form-control">
-                    </div>
-                    <div class="col-md-9">
-                        @include('admin.layouts.components.media-upload', [
-                            'label' => __('admin.forms.image'),
-                            'name' => 'where_us[items][__INDEX__][image]',
-                            'inputId' => 'where_item___INDEX___image',
-                        ])
-                    </div>
-                    <div class="col-12">
-                        <div class="row g-3 flex-md-row-reverse">
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">{{ __('admin.cms.shared.overlay_text_locale', ['locale' => strtoupper($arabicLocale)]) }}</label>
-                                <input type="text" class="form-control" dir="rtl"
-                                    name="where_us[items][__INDEX__][overlay][{{ $arabicLocale }}]">
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">{{ __('admin.cms.shared.overlay_text_locale', ['locale' => strtoupper($englishLocale)]) }}</label>
-                                <input type="text" class="form-control"
-                                    name="where_us[items][__INDEX__][overlay][{{ $englishLocale }}]">
-                            </div>
+                <div class="form-row">
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="where_item___INDEX___order">{{ __('admin.forms.order') }}</label>
+                            <input type="number"
+                                   id="where_item___INDEX___order"
+                                   name="where_us[items][__INDEX__][order]"
+                                   class="form-control"
+                                   min="0">
                         </div>
                     </div>
+                    <div class="col-12 col-md-8">
+                        <x-admin.file-uploader
+                            name="where_us[items][__INDEX__][image]"
+                            :label="__('admin.forms.image')"
+                            input-id="where_item___INDEX___image"
+                            kind="image"
+                            max-size-hint="10 MB" />
+                    </div>
                 </div>
+
+                <x-admin.translatable-field
+                    label-key="admin.cms.shared.overlay_text_locale"
+                    id-prefix="where_overlay___INDEX__"
+                    :names="['en' => 'where_us[items][__INDEX__][overlay][' . $en . ']', 'ar' => 'where_us[items][__INDEX__][overlay][' . $ar . ']']" />
             </div>
         </div>
     </template>
-    <script>
-        function initializeDynamicUpload(container) {
-            container.querySelectorAll('[data-media-upload]').forEach(function (input) {
-                window.registerMediaUpload(input.getAttribute('id'));
-            });
-        }
+@endsection
 
-        function addItem(buttonId, templateId, containerId) {
-            const button = document.getElementById(buttonId);
-            const template = document.getElementById(templateId);
-            const container = document.getElementById(containerId);
-
-            if (!button || !template || !container) {
-                return;
-            }
-
-            button.addEventListener('click', function () {
-                const index = Date.now();
-                let html = template.innerHTML.replace(/__INDEX__/g, index);
-                const wrapper = document.createElement('div');
-                wrapper.innerHTML = html.trim();
-                const element = wrapper.firstElementChild;
-                container.appendChild(element);
-                initializeDynamicUpload(element);
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            addItem('add-partner-item', 'partner-item-template', 'partner-items-container');
-            addItem('add-stat-item', 'stat-item-template', 'stats-items-container');
-            addItem('add-where-item', 'where-item-template', 'where-items-container');
-
-            document.getElementById('partner-items-container').addEventListener('click', function (event) {
-                if (event.target.classList.contains('remove-partner-item')) {
-                    event.target.closest('.partner-item').remove();
-                }
-            });
-
-            document.getElementById('stats-items-container').addEventListener('click', function (event) {
-                if (event.target.classList.contains('remove-stat-item')) {
-                    event.target.closest('.stat-item').remove();
-                }
-            });
-
-            document.getElementById('where-items-container').addEventListener('click', function (event) {
-                if (event.target.classList.contains('remove-where-item')) {
-                    event.target.closest('.where-item').remove();
-                }
-            });
-
-            document.querySelectorAll('.partner-item, .stat-item, .where-item').forEach(initializeDynamicUpload);
-        });
-    </script>
+@push('scripts')
+    <script src="{{ asset('admin-assets/js/cms-admin.js') }}"></script>
 @endpush

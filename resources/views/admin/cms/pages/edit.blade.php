@@ -1,373 +1,319 @@
-@extends('admin.layouts.legacy.master')
+@extends('admin.layouts.master')
+
+@section('title', $page->name)
+
 @section('content')
-    <div class="page-wrapper">
-        @include('admin.layouts.legacy.sidebar')
-        <div class="page-content">
-            @include('admin.layouts.legacy.page-header', ['pageName' => $page->name])
-            <div class="main-container">
-                @include('admin.layouts.legacy.alerts')
+    @php
+        $locale = app()->getLocale();
 
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title mb-0">{{ __('admin.cms.page_details', ['name' => $page->name, 'slug' => $page->slug]) }}</h5>
-                            </div>
-                        </div>
-                    </div>
+        // URL templates are built from the route definitions themselves so the
+        // AJAX endpoints stay in step with routes/admin.php.
+        $sectionUrl = route('admin.cms.sections.update', ['lang' => $locale, 'section' => '__ID__']);
+        $sectionToggleUrl = route('admin.cms.sections.toggle', ['lang' => $locale, 'section' => '__ID__']);
+        $itemUrl = route('admin.cms.items.update', ['lang' => $locale, 'item' => '__ID__']);
+        $itemToggleUrl = route('admin.cms.items.toggle', ['lang' => $locale, 'item' => '__ID__']);
 
-                    <div class="col-12">
-                        @foreach ($page->sections as $section)
-                            <div class="card mb-3" id="section_{{ $section->id }}">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <strong>#{{ $section->id }}</strong>
-                                        <span class="badge bg-secondary">{{ __('admin.cms.type') }}: {{ $section->type ?? '-' }}</span>
-                                        <span class="badge bg-info">{{ __('admin.cms.order') }}: <span
-                                                class="sec-order">{{ $section->order }}</span></span>
-                                        <span class="badge bg-{{ $section->is_active ? 'success' : 'danger' }} sec-active">
-                                            {{ $section->is_active ? __('admin.forms.active') : __('admin.cms.inactive') }}
-                                        </span>
-                                    </div>
-                                    <div class="btn-group">
-                                        <button class="btn btn-sm btn-outline-primary"
-                                            onclick="updateSectionOrder({{ $section->id }})">{{ __('admin.cms.update_order') }}</button>
-                                        <button class="btn btn-sm btn-outline-warning"
-                                            onclick="toggleSection({{ $section->id }})">{{ __('admin.cms.toggle') }}</button>
-                                        <button class="btn btn-sm btn-outline-danger"
-                                            onclick="deleteSection({{ $section->id }})">{{ __('admin.cms.delete') }}</button>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        @php
-                                            $secData = is_array($section->section_data)
-                                                ? $section->section_data
-                                                : (array) ($section->section_data ?? []);
-                                        @endphp
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-2">{{ __('admin.cms.section_data', ['locale' => app()->getLocale()]) }}</h6>
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-secondary"
-                                                    onclick="formatSectionData({{ $section->id }})">{{ __('admin.cms.format') }}</button>
-                                                <button class="btn btn-outline-danger"
-                                                    onclick="clearSectionData({{ $section->id }})">{{ __('admin.cms.clear') }}</button>
-                                                <button class="btn btn-primary"
-                                                    onclick="saveSectionData({{ $section->id }})">{{ __('admin.forms.save_button') }}</button>
-                                            </div>
-                                        </div>
+        $jsMessages = [
+            'active' => __('admin.forms.active'),
+            'inactive' => __('admin.cms.inactive'),
+            'close' => __('admin.sweet_alert.cancel_button'),
+            'orderPrompt' => __('admin.cms.ui.order_prompt'),
+            'invalidOrder' => __('admin.cms.ui.invalid_order'),
+            'orderUpdated' => __('admin.cms.ui.order_updated'),
+            'sectionDeleted' => __('admin.cms.ui.section_deleted'),
+            'itemDeleted' => __('admin.cms.ui.item_deleted'),
+            'deleteSectionConfirm' => __('admin.cms.delete_section_confirm'),
+            'deleteItemConfirm' => __('admin.cms.delete_item_confirm'),
+            'sectionToggleFailed' => __('admin.cms.section_toggle_failed'),
+            'itemToggleFailed' => __('admin.cms.item_toggle_failed'),
+            'deleteFailed' => __('admin.cms.delete_failed'),
+            'saveFailed' => __('admin.cms.section_data_save_failed'),
+            'sectionDataUpdated' => __('admin.cms.section_data_updated'),
+            'sectionDataSaveFailed' => __('admin.cms.section_data_save_failed'),
+            'invalidJsonFix' => __('admin.cms.invalid_json_fix'),
+            'clearDataConfirm' => __('admin.cms.clear_data_confirm') . ' ' . __('admin.cms.clear_data_warning'),
+        ];
+    @endphp
 
-                                        @if (empty($secData))
-                                            <div class="alert alert-light border">{{ __('admin.cms.no_section_data') }}</div>
-                                        @else
-                                            <form id="secform_{{ $section->id }}" class="row g-3">
-                                                @foreach ($secData as $key => $value)
-                                                    @php
-                                                        $label = \Illuminate\Support\Str::headline($key);
-                                                        $isBool =
-                                                            is_bool($value) ||
-                                                            $value === 1 ||
-                                                            $value === 0 ||
-                                                            $value === '1' ||
-                                                            $value === '0' ||
-                                                            (is_string($value) &&
-                                                                in_array(strtolower($value), ['true', 'false']));
-                                                        $boolChecked = is_bool($value)
-                                                            ? $value
-                                                            : in_array($value, [1, '1', 'true', 'TRUE', true], true);
-                                                    @endphp
+    <div class="container-fluid"
+         data-cms-page-editor
+         data-section-url="{{ $sectionUrl }}"
+         data-section-toggle-url="{{ $sectionToggleUrl }}"
+         data-item-url="{{ $itemUrl }}"
+         data-item-toggle-url="{{ $itemToggleUrl }}"
+         data-messages="{{ json_encode($jsMessages, JSON_UNESCAPED_UNICODE) }}">
 
-                                                    @if ($isBool)
-                                                        <div class="col-12">
-                                                            <div class="form-check">
-                                                                <input type="checkbox" class="form-check-input sec-checkbox"
-                                                                    id="sec_{{ $section->id }}_{{ $key }}"
-                                                                    data-key="{{ $key }}"
-                                                                    @checked($boolChecked)>
-                                                                <label for="sec_{{ $section->id }}_{{ $key }}"
-                                                                    class="form-check-label">{{ $label }}</label>
-                                                            </div>
-                                                        </div>
-                                                    @elseif (\Illuminate\Support\Str::contains($key, ['_url']))
-                                                        <div class="col-12">
-                                                            <label for="sec_{{ $section->id }}_{{ $key }}"
-                                                                class="form-check-label">{{ $label }}</label>
-                                                            <input type="text" class="form-control"
-                                                                id="url_input_{{ $section->id }}_{{ $key }}"
-                                                                data-key="{{ $key }}">
-                                                        </div>
-                                                    @elseif (\Illuminate\Support\Str::contains($key, ['_path']))
-                                                        <div class="col-12">
-                                                            @include(
-                                                                'admin.layouts.components.media-upload',
-                                                                [
-                                                                    'label' => $label,
-                                                                    'name' => "uploads[$key]",
-                                                                    'inputId' => "upload_{$section->id}_{$key}",
-                                                                    'previewPath' => media_path($value),
-                                                                ]
-                                                            )
-                                                            <input type="hidden" class="sec-current-value"
-                                                                data-key="{{ $key }}"
-                                                                value="{{ $value }}">
-                                                        </div>
-                                                    @elseif (is_string($value))
-                                                        <div class="col-12">
-                                                            <label class="form-label"
-                                                                for="sec_{{ $section->id }}_{{ $key }}">{{ $label }}</label>
-                                                            <textarea id="sec_{{ $section->id }}_{{ $key }}" class="form-control sec-text"
-                                                                data-key="{{ $key }}" rows="3">{{ $value }}</textarea>
-                                                        </div>
-                                                    @else
-                                                        <div class="col-12">
-                                                            <label class="form-label">{{ $label }}</label>
-                                                            <pre class="bg-light border rounded p-2 mb-0">{{ json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) }}</pre>
-                                                        </div>
-                                                    @endif
-                                                @endforeach
-                                            </form>
-                                        @endif
+        @include('admin.layouts.page-header', [
+            'title' => $page->name,
+            'subtitle' => __('admin.cms.ui.pages_subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.website_cms')],
+                ['label' => $page->name],
+            ],
+        ])
 
-                                        <textarea id="secdata_{{ $section->id }}" class="form-control font-monospace mt-3" rows="8"
-                                            style="display:none;">@json($section->section_data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)</textarea>
-                                        <small class="text-muted">{{ __('admin.cms.edit_json_hint') }}</small>
-                                    </div>
+        <div aria-live="polite" data-cms-notifications></div>
 
-                                    @if ($section->items->count())
-                                        <div class="table-responsive">
-                                            <table class="table table-sm align-middle mb-0">
-                                                <thead>
-                                                    <tr>
-                                                        <th>{{ __('admin.cms.id') }}</th>
-                                                        <th>{{ __('admin.cms.order') }}</th>
-                                                        <th>{{ __('admin.forms.active') }}</th>
-                                                        <th style="width: 240px;">{{ __('admin.cms.actions') }}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($section->items as $item)
-                                                        @php
-                                                            $itemActive = isset($item->is_active)
-                                                                ? (bool) $item->is_active
-                                                                : (bool) ($item->data['is_active'] ?? true);
-                                                        @endphp
-                                                        <tr id="item_{{ $item->id }}">
-                                                            <td>{{ $item->id }}</td>
-                                                            <td><span class="itm-order">{{ $item->order }}</span></td>
-                                                            <td><span
-                                                                    class="badge bg-{{ $itemActive ? 'success' : 'danger' }} itm-active">{{ $itemActive ? __('admin.forms.active') : __('admin.cms.inactive') }}</span>
-                                                            </td>
-                                                            <td>
-                                                                <div class="btn-group btn-group-sm">
-                                                                    <button class="btn btn-outline-primary"
-                                                                        onclick="updateItemOrder({{ $item->id }})">{{ __('admin.cms.update_order') }}</button>
-                                                                    <button class="btn btn-outline-warning"
-                                                                        onclick="toggleItem({{ $item->id }})">{{ __('admin.cms.toggle') }}</button>
-                                                                    <button class="btn btn-outline-danger"
-                                                                        onclick="deleteItem({{ $item->id }})">{{ __('admin.cms.delete') }}</button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    @else
-                                        <em class="text-muted">{{ __('admin.cms.no_items') }}</em>
-                                    @endif
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title mb-2">
+                    {{ __('admin.cms.page_details', ['name' => $page->name, 'slug' => $page->slug]) }}
+                </h2>
+
+                {{-- Documented limitations of this screen. Both are backend --}}
+                {{-- issues that Phase 4 deliberately leaves untouched. --}}
+                <div class="alert alert-warning mb-0" role="alert">
+                    <p class="mb-1">{{ __('admin.cms.ui.section_unreachable') }}</p>
+                    <p class="mb-0">{{ __('admin.cms.ui.section_upload_defect') }}</p>
                 </div>
             </div>
         </div>
+
+        @forelse ($page->sections as $section)
+            @php
+                $sectionData = is_array($section->section_data)
+                    ? $section->section_data
+                    : (array) ($section->section_data ?? []);
+            @endphp
+
+            <div class="card mb-4" id="section_{{ $section->id }}">
+                <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                    <div class="mr-auto">
+                        <h2 class="card-title mb-0 d-inline-block">#{{ $section->id }}</h2>
+                        <x-admin.badge variant="light" class="ml-2">
+                            {{ __('admin.cms.type') }}: <code>{{ $section->type ?? '-' }}</code>
+                        </x-admin.badge>
+                        <x-admin.badge variant="info" class="ml-1">
+                            {{ __('admin.cms.order') }}: <span data-section-order>{{ $section->order }}</span>
+                        </x-admin.badge>
+                        <x-admin.badge :variant="$section->is_active ? 'success' : 'danger'"
+                                       class="ml-1"
+                                       data-section-active>
+                            {{ $section->is_active ? __('admin.forms.active') : __('admin.cms.inactive') }}
+                        </x-admin.badge>
+                    </div>
+
+                    <x-admin.group-btn class="mt-2 mt-sm-0">
+                        <x-admin.btn variant="outline-primary"
+                                     size="sm"
+                                     icon="hash"
+                                     data-cms-action="order-section"
+                                     :data-cms-id="$section->id">
+                            {{ __('admin.cms.update_order') }}
+                        </x-admin.btn>
+                        <x-admin.btn variant="outline-warning"
+                                     size="sm"
+                                     icon="power"
+                                     data-cms-action="toggle-section"
+                                     :data-cms-id="$section->id">
+                            {{ __('admin.cms.toggle') }}
+                        </x-admin.btn>
+                        <x-admin.btn variant="outline-danger"
+                                     size="sm"
+                                     icon="trash-2"
+                                     data-cms-action="delete-section"
+                                     :data-cms-id="$section->id">
+                            {{ __('admin.cms.delete') }}
+                        </x-admin.btn>
+                    </x-admin.group-btn>
+                </div>
+
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
+                        <h3 class="h6 mb-0">
+                            {{ __('admin.cms.section_data', ['locale' => strtoupper($locale)]) }}
+                        </h3>
+
+                        <x-admin.group-btn>
+                            <x-admin.btn variant="outline-secondary"
+                                         size="sm"
+                                         data-cms-action="format-section"
+                                         :data-cms-id="$section->id">
+                                {{ __('admin.cms.format') }}
+                            </x-admin.btn>
+                            <x-admin.btn variant="outline-danger"
+                                         size="sm"
+                                         data-cms-action="clear-section"
+                                         :data-cms-id="$section->id">
+                                {{ __('admin.cms.clear') }}
+                            </x-admin.btn>
+                            <x-admin.btn size="sm"
+                                         icon="save"
+                                         data-cms-action="save-section"
+                                         :data-cms-id="$section->id">
+                                {{ __('admin.forms.save_button') }}
+                            </x-admin.btn>
+                        </x-admin.group-btn>
+                    </div>
+
+                    @if (empty($sectionData))
+                        <div class="alert alert-light border">{{ __('admin.cms.no_section_data') }}</div>
+                    @else
+                        {{-- A bare div, not a <form>: the payload is assembled and --}}
+                        {{-- sent by cms-admin.js, and nesting forms is invalid. --}}
+                        <div id="secform_{{ $section->id }}" class="row">
+                            @foreach ($sectionData as $key => $value)
+                                @php
+                                    $label = \Illuminate\Support\Str::headline($key);
+                                    $fieldId = 'sec_' . $section->id . '_' . $key;
+                                    $isBool = is_bool($value)
+                                        || in_array($value, [1, 0, '1', '0'], true)
+                                        || (is_string($value) && in_array(strtolower($value), ['true', 'false'], true));
+                                    $boolChecked = is_bool($value)
+                                        ? $value
+                                        : in_array($value, [1, '1', 'true', 'TRUE', true], true);
+                                @endphp
+
+                                @if ($isBool)
+                                    <div class="col-12">
+                                        <div class="form-check mb-3">
+                                            <input type="checkbox"
+                                                   class="form-check-input"
+                                                   id="{{ $fieldId }}"
+                                                   data-sec-checkbox
+                                                   data-key="{{ $key }}"
+                                                   @checked($boolChecked)>
+                                            <label for="{{ $fieldId }}" class="form-check-label">{{ $label }}</label>
+                                        </div>
+                                    </div>
+                                @elseif (\Illuminate\Support\Str::contains($key, '_url'))
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label for="{{ $fieldId }}">{{ $label }}</label>
+                                            <input type="text"
+                                                   class="form-control"
+                                                   id="{{ $fieldId }}"
+                                                   dir="ltr"
+                                                   data-sec-text
+                                                   data-key="{{ $key }}"
+                                                   value="{{ is_string($value) ? $value : '' }}">
+                                        </div>
+                                    </div>
+                                @elseif (\Illuminate\Support\Str::contains($key, '_path'))
+                                    <div class="col-12">
+                                        <x-admin.file-uploader
+                                            :name="'uploads[' . $key . ']'"
+                                            :label="$label"
+                                            :input-id="'upload_' . $section->id . '_' . $key"
+                                            :preview-path="media_path(is_string($value) ? $value : '')" />
+                                        <input type="hidden"
+                                               data-sec-current-value
+                                               data-key="{{ $key }}"
+                                               value="{{ is_string($value) ? $value : '' }}">
+                                    </div>
+                                @elseif (is_string($value))
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label for="{{ $fieldId }}">{{ $label }}</label>
+                                            <textarea id="{{ $fieldId }}"
+                                                      class="form-control"
+                                                      rows="3"
+                                                      data-sec-text
+                                                      data-key="{{ $key }}">{{ $value }}</textarea>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label>{{ $label }}</label>
+                                            <pre class="bg-light border rounded p-2 mb-0" style="overflow-x: auto;">{{ json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) }}</pre>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div class="form-group mt-3">
+                        <label class="sr-only" for="secdata_{{ $section->id }}">
+                            {{ __('admin.cms.section_data', ['locale' => strtoupper($locale)]) }}
+                        </label>
+                        <textarea id="secdata_{{ $section->id }}"
+                                  class="form-control text-monospace"
+                                  rows="8"
+                                  dir="ltr"
+                                  spellcheck="false"
+                                  @if (!empty($sectionData)) hidden @endif>@json($section->section_data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)</textarea>
+                        <small class="form-text text-muted">{{ __('admin.cms.edit_json_hint') }}</small>
+                    </div>
+
+                    <h3 class="h6 mt-4">{{ __('admin.cms.actions') }}</h3>
+
+                    @if ($section->items->count())
+                        <p class="text-muted small">{{ __('admin.cms.ui.item_activation_defect') }}</p>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ __('admin.cms.id') }}</th>
+                                        <th scope="col">{{ __('admin.cms.order') }}</th>
+                                        <th scope="col">{{ __('admin.cms.ui.section_status') }}</th>
+                                        <th scope="col">{{ __('admin.cms.actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($section->items as $item)
+                                        @php
+                                            // section_items has no is_active column; the flag lives
+                                            // inside the translated data payload.
+                                            $itemActive = is_array($item->data)
+                                                ? (bool) ($item->data['is_active'] ?? true)
+                                                : true;
+                                        @endphp
+                                        <tr id="item_{{ $item->id }}">
+                                            <td>{{ $item->id }}</td>
+                                            <td><span data-item-order>{{ $item->order }}</span></td>
+                                            <td>
+                                                <x-admin.badge :variant="$itemActive ? 'success' : 'danger'" data-item-active>
+                                                    {{ $itemActive ? __('admin.forms.active') : __('admin.cms.inactive') }}
+                                                </x-admin.badge>
+                                            </td>
+                                            <td>
+                                                <x-admin.group-btn>
+                                                    <x-admin.btn variant="outline-primary"
+                                                                 size="sm"
+                                                                 data-cms-action="order-item"
+                                                                 :data-cms-id="$item->id">
+                                                        {{ __('admin.cms.update_order') }}
+                                                    </x-admin.btn>
+                                                    <x-admin.btn variant="outline-warning"
+                                                                 size="sm"
+                                                                 data-cms-action="toggle-item"
+                                                                 :data-cms-id="$item->id">
+                                                        {{ __('admin.cms.toggle') }}
+                                                    </x-admin.btn>
+                                                    <x-admin.btn variant="outline-danger"
+                                                                 size="sm"
+                                                                 data-cms-action="delete-item"
+                                                                 :data-cms-id="$item->id">
+                                                        {{ __('admin.cms.delete') }}
+                                                    </x-admin.btn>
+                                                </x-admin.group-btn>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="text-muted mb-0">{{ __('admin.cms.no_items') }}</p>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="card">
+                <div class="card-body">
+                    <div class="admin-empty-state">
+                        <i class="fe fe-layers" aria-hidden="true"></i>
+                        <span>{{ __('admin.cms.no_items') }}</span>
+                    </div>
+                </div>
+            </div>
+        @endforelse
     </div>
 @endsection
 
-@push('custom-js-scripts')
-    <script>
-        function toggleSection(id) {
-            axios.patch(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/sections/${id}/toggle`)
-                .then(({
-                    data
-                }) => {
-                    const card = document.getElementById(`section_${id}`);
-                    const badge = card.querySelector('.sec-active');
-                    badge.classList.remove('bg-success', 'bg-danger');
-                    badge.classList.add(data.is_active ? 'bg-success' : 'bg-danger');
-                    badge.innerText = data.is_active ? '{{ __('admin.forms.active') }}' : '{{ __('admin.cms.inactive') }}';
-                })
-                .catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.section_toggle_failed') }}', 'error'));
-        }
-
-        function updateSectionOrder(id) {
-            Swal.fire({
-                    title: '{{ __('admin.cms.new_order') }}',
-                    input: 'number',
-                    inputAttributes: {
-                        min: 0
-                    },
-                    showCancelButton: true
-                })
-                .then(res => {
-                    if (!res.isConfirmed) return;
-                    return axios.patch(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/sections/${id}`, {
-                        order: parseInt(res.value || 0)
-                    })
-                })
-                .then(res => {
-                    if (!res) return;
-                    const card = document.getElementById(`section_${id}`);
-                    card.querySelector('.sec-order').innerText = res.data.section.order;
-                })
-                .catch(() => {});
-        }
-
-        function deleteSection(id) {
-            Swal.fire({
-                title: '{{ __('admin.cms.delete_section_confirm') }}',
-                icon: 'warning',
-                showCancelButton: true
-            }).then(r => {
-                if (!r.isConfirmed) return;
-                axios.delete(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/sections/${id}`)
-                    .then(() => {
-                        document.getElementById(`section_${id}`).remove();
-                    })
-                    .catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.delete_failed') }}', 'error'));
-            })
-        }
-
-        function saveSectionData(id) {
-            const form = document.getElementById(`secform_${id}`);
-            if (form) {
-                const fd = new FormData();
-                // Text fields
-                form.querySelectorAll('.sec-text').forEach(el => {
-                    const key = el.dataset.key;
-                    fd.append(`section_data[${key}]`, el.value ?? '');
-                });
-                // Checkboxes (always send explicit 1/0)
-                form.querySelectorAll('.sec-checkbox').forEach(el => {
-                    const key = el.dataset.key;
-                    fd.append(`section_data[${key}]`, el.checked ? 1 : 0);
-                });
-                // Existing path values (used when no new file selected)
-                const currentPaths = {};
-                form.querySelectorAll('.sec-current-value').forEach(el => {
-                    currentPaths[el.dataset.key] = el.value || '';
-                });
-                // Files for uploads[...] and fallbacks to current path
-                const uploadInputs = form.querySelectorAll('input[type="file"][name^="uploads["]');
-                uploadInputs.forEach(input => {
-                    // name pattern uploads[key]
-                    const m = input.name.match(/^uploads\[(.+)\]$/);
-                    const key = m ? m[1] : null;
-                    if (!key) return;
-                    if (input.files && input.files[0]) {
-                        fd.append(input.name, input.files[0]);
-                    } else {
-                        // Keep current path as string if no file selected
-                        if (Object.prototype.hasOwnProperty.call(currentPaths, key)) {
-                            fd.append(`section_data[${key}]`, currentPaths[key] ?? '');
-                        }
-                    }
-                });
-
-                axios.patch(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/sections/${id}`, fd)
-                    .then(() => Swal.fire('{{ __('admin.cms.saved') }}', '{{ __('admin.cms.section_data_updated') }}', 'success'))
-                    .catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.section_data_save_failed') }}', 'error'));
-                return;
-            }
-
-            // Fallback: raw JSON textarea
-            const ta = document.getElementById(`secdata_${id}`);
-            let parsed;
-            try {
-                parsed = ta.value.trim() ? JSON.parse(ta.value) : {};
-            } catch (e) {
-                Swal.fire('{{ __('admin.cms.invalid_json') }}', '{{ __('admin.cms.invalid_json_fix') }}', 'error');
-                return;
-            }
-            axios.patch(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/sections/${id}`, {
-                    section_data: parsed
-                })
-                .then(() => Swal.fire('{{ __('admin.cms.saved') }}', '{{ __('admin.cms.section_data_updated') }}', 'success'))
-                .catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.section_data_save_failed') }}', 'error'));
-        }
-
-        function formatSectionData(id) {
-            const ta = document.getElementById(`secdata_${id}`);
-            try {
-                const obj = ta.value.trim() ? JSON.parse(ta.value) : {};
-                ta.value = JSON.stringify(obj, null, 2);
-            } catch (e) {
-                Swal.fire('{{ __('admin.cms.invalid_json') }}', '{{ __('admin.cms.invalid_json_format') }}', 'warning');
-            }
-        }
-
-        function clearSectionData(id) {
-            Swal.fire({
-                    title: '{{ __('admin.cms.clear_data_confirm') }}',
-                    text: '{{ __('admin.cms.clear_data_warning') }}',
-                    icon: 'warning',
-                    showCancelButton: true
-                })
-                .then(r => {
-                    if (!r.isConfirmed) return;
-                    document.getElementById(`secdata_${id}`).value = '{}';
-                });
-        }
-
-        function toggleItem(id) {
-            axios.patch(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/items/${id}/toggle`).then(({
-                data
-            }) => {
-                const row = document.getElementById(`item_${id}`);
-                const b = row.querySelector('.itm-active');
-                b.classList.remove('bg-success', 'bg-danger');
-                b.classList.add(data.is_active ? 'bg-success' : 'bg-danger');
-                b.innerText = data.is_active ? '{{ __('admin.forms.active') }}' : '{{ __('admin.cms.inactive') }}';
-            }).catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.item_toggle_failed') }}', 'error'));
-        }
-
-        function updateItemOrder(id) {
-            Swal.fire({
-                    title: '{{ __('admin.cms.new_order') }}',
-                    input: 'number',
-                    inputAttributes: {
-                        min: 0
-                    },
-                    showCancelButton: true
-                })
-                .then(res => {
-                    if (!res.isConfirmed) return;
-                    return axios.patch(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/items/${id}`, {
-                        order: parseInt(res.value || 0)
-                    })
-                })
-                .then(res => {
-                    if (!res) return;
-                    const row = document.getElementById(`item_${id}`);
-                    row.querySelector('.itm-order').innerText = res.data.item.order;
-                })
-                .catch(() => {});
-        }
-
-        function deleteItem(id) {
-            Swal.fire({
-                title: '{{ __('admin.cms.delete_item_confirm') }}',
-                icon: 'warning',
-                showCancelButton: true
-            }).then(r => {
-                if (!r.isConfirmed) return;
-                axios.delete(`/${'{{ app()->getLocale() }}'}/admin-panel/cms/items/${id}`)
-                    .then(() => {
-                        document.getElementById(`item_${id}`).remove();
-                    })
-                    .catch(() => Swal.fire('{{ __('admin.cms.error') }}', '{{ __('admin.cms.delete_failed') }}', 'error'));
-            })
-        }
-    </script>
+@push('scripts')
+    <script src="{{ asset('admin-assets/js/cms-admin.js') }}"></script>
 @endpush

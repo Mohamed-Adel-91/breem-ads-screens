@@ -1,366 +1,291 @@
-@extends('admin.layouts.legacy.master')
+@extends('admin.layouts.master')
+
+@section('title', $page->name)
+
 @section('content')
     @php
+        // Media paths are stored once per section and read from the primary
+        // locale, exactly as the controller writes them.
         $primaryLocale = config('app.locale');
-        $arLocale = 'ar';
-        $enLocale = 'en';
+        $ar = 'ar';
+        $en = 'en';
+
+        // The four enquiry forms share one editing shape. Their label / radio /
+        // option keys are discovered from the stored data plus any old() input,
+        // exactly as the legacy view did — no keys are invented here.
+        $forms = [
+            'ads' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.ads', 'Ads Subscription Form'), 'data' => $adsData, 'section' => $adsForm],
+            'screens' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.screens', 'Screens Subscription Form'), 'data' => $screensData, 'section' => $screensForm],
+            'create' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.create', 'Ad Creation Request'), 'data' => $createData, 'section' => $createForm],
+            'faq' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.faq', 'FAQs Form'), 'data' => $faqData, 'section' => $faqForm],
+        ];
+
+        $mergeKeys = function (array $arData, array $enData, string $group, string $key) use ($ar, $en) {
+            $keys = array_keys($arData[$group] ?? []);
+
+            foreach (array_keys($enData[$group] ?? []) as $candidate) {
+                if (!in_array($candidate, $keys, true)) {
+                    $keys[] = $candidate;
+                }
+            }
+
+            foreach ([$ar, $en] as $locale) {
+                $old = old("contact_forms.$key.$locale.$group", []);
+
+                if (is_array($old)) {
+                    foreach (array_keys($old) as $candidate) {
+                        if (!in_array($candidate, $keys, true)) {
+                            $keys[] = $candidate;
+                        }
+                    }
+                }
+            }
+
+            return $keys;
+        };
     @endphp
-    <div class="page-wrapper">
-        @include('admin.layouts.legacy.sidebar')
-        <div class="page-content">
-            @include('admin.layouts.legacy.page-header', ['pageName' => $page->name])
-            <div class="main-container">
-                @include('admin.layouts.legacy.alerts')
-                <form method="POST" action="{{ route('admin.cms.contact.update', ['lang' => app()->getLocale()]) }}" enctype="multipart/form-data">
-                    @csrf
-                    @method('PUT')
 
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">@t('admin.cms.contact.sections.top_banner', 'Top Banner')</h5>
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $page->name,
+            'subtitle' => __('admin.cms.ui.contact_subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.website_cms')],
+                ['label' => __('admin.sidebar.contact_us')],
+            ],
+        ])
+
+        <form method="POST"
+              action="{{ route('admin.cms.contact.update', ['lang' => app()->getLocale()]) }}"
+              enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+
+            {{-- Top banner --------------------------------------------------- --}}
+            <x-admin.cms-section-card
+                :title="\App\Support\Lang::t('admin.cms.contact.sections.top_banner', 'Top Banner')"
+                :section-type="$banner?->type"
+                :section-id="$banner?->id"
+                :is-active="$banner?->is_active">
+
+                <div class="form-row">
+                    <div class="col-12 col-md-6">
+                        <x-admin.file-uploader
+                            name="banner[image]"
+                            :label="\App\Support\Lang::t('admin.cms.contact.labels.banner_image', 'Banner Image')"
+                            input-id="contact_banner_image"
+                            kind="image"
+                            max-size-hint="20 MB"
+                            :preview-path="media_path($bannerData[$primaryLocale]['image_path'] ?? '')" />
+                    </div>
+                </div>
+            </x-admin.cms-section-card>
+
+            {{-- Contact heading ---------------------------------------------- --}}
+            <x-admin.cms-section-card
+                :title="\App\Support\Lang::t('admin.cms.contact.sections.contact_heading', 'Contact Heading')"
+                :section-type="$contact?->type"
+                :section-id="$contact?->id"
+                :is-active="$contact?->is_active">
+
+                @foreach ([
+                    'title' => ['key' => 'admin.cms.shared.title_locale', 'type' => 'text'],
+                    'subtitle' => ['key' => 'admin.cms.shared.subtitle_locale', 'type' => 'text'],
+                ] as $field => $meta)
+                    <x-admin.translatable-field
+                        :type="$meta['type']"
+                        :label-key="$meta['key']"
+                        :id-prefix="'contact_' . $field"
+                        :names="['en' => 'contact[' . $en . '][' . $field . ']', 'ar' => 'contact[' . $ar . '][' . $field . ']']"
+                        :values="[
+                            'en' => old('contact.' . $en . '.' . $field, $contactData[$en][$field] ?? ''),
+                            'ar' => old('contact.' . $ar . '.' . $field, $contactData[$ar][$field] ?? ''),
+                        ]" />
+                @endforeach
+            </x-admin.cms-section-card>
+
+            {{-- Map & location ------------------------------------------------ --}}
+            <x-admin.cms-section-card
+                :title="\App\Support\Lang::t('admin.cms.contact.sections.map_location', 'Map & Location')"
+                :section-type="$map?->type"
+                :section-id="$map?->id"
+                :is-active="$map?->is_active">
+
+                <div class="form-row">
+                    <div class="col-12 col-md-6">
+                        <x-admin.file-uploader
+                            name="map[background_image]"
+                            :label="\App\Support\Lang::t('admin.cms.contact.labels.background_image', 'Background Image')"
+                            input-id="contact_map_background"
+                            kind="image"
+                            max-size-hint="20 MB"
+                            :preview-path="media_path($mapData[$primaryLocale]['background_image_path'] ?? '')" />
+                    </div>
+                </div>
+
+                @foreach ([
+                    'title' => ['key' => 'admin.cms.shared.title_locale', 'type' => 'text'],
+                    'address' => ['key' => 'admin.cms.shared.address_locale', 'type' => 'textarea'],
+                    'phone_label' => ['key' => 'admin.cms.shared.phone_label_locale', 'type' => 'text'],
+                    'whatsapp_label' => ['key' => 'admin.cms.shared.whatsapp_label_locale', 'type' => 'text'],
+                ] as $field => $meta)
+                    <x-admin.translatable-field
+                        :type="$meta['type']"
+                        :label-key="$meta['key']"
+                        :id-prefix="'map_' . $field"
+                        :names="['en' => 'map[' . $en . '][' . $field . ']', 'ar' => 'map[' . $ar . '][' . $field . ']']"
+                        :values="[
+                            'en' => old('map.' . $en . '.' . $field, $mapData[$en][$field] ?? ''),
+                            'ar' => old('map.' . $ar . '.' . $field, $mapData[$ar][$field] ?? ''),
+                        ]" />
+                @endforeach
+            </x-admin.cms-section-card>
+
+            {{-- Bottom banner ------------------------------------------------- --}}
+            <x-admin.cms-section-card
+                :title="\App\Support\Lang::t('admin.cms.contact.sections.bottom_banner', 'Bottom Banner')"
+                :section-type="$bottom?->type"
+                :section-id="$bottom?->id"
+                :is-active="$bottom?->is_active">
+
+                <div class="form-row">
+                    <div class="col-12 col-md-6">
+                        <x-admin.file-uploader
+                            name="bottom[image]"
+                            :label="\App\Support\Lang::t('admin.cms.contact.labels.banner_image', 'Banner Image')"
+                            input-id="contact_bottom_image"
+                            kind="image"
+                            max-size-hint="20 MB"
+                            :preview-path="media_path($bottomData[$primaryLocale]['image_path'] ?? '')" />
+                    </div>
+                </div>
+            </x-admin.cms-section-card>
+
+            {{-- Enquiry forms -------------------------------------------------- --}}
+            @foreach ($forms as $key => $payload)
+                @php
+                    $sectionData = $payload['data'];
+                    $sectionAr = $sectionData[$ar] ?? [];
+                    $sectionEn = $sectionData[$en] ?? [];
+
+                    $labelKeys = $mergeKeys($sectionAr, $sectionEn, 'labels', $key);
+                    $radioKeys = $mergeKeys($sectionAr, $sectionEn, 'radio', $key);
+                    $optionKeys = $mergeKeys($sectionAr, $sectionEn, 'options', $key);
+
+                    $base = "contact_forms[$key]";
+                    $dot = "contact_forms.$key";
+                @endphp
+
+                <x-admin.cms-section-card
+                    :title="$payload['title']"
+                    :section-type="$payload['section']?->type"
+                    :section-id="$payload['section']?->id"
+                    :is-active="$payload['section']?->is_active">
+
+                    <div class="form-row">
+                        <div class="col-12 col-md-6">
+                            <x-admin.file-uploader
+                                :name="$base . '[card_image1]'"
+                                :label="\App\Support\Lang::t('admin.cms.contact.labels.card_image1', 'Card Image 1')"
+                                :input-id="'contact_' . $key . '_image1'"
+                                kind="image"
+                                max-size-hint="20 MB"
+                                :preview-path="media_path($sectionData[$primaryLocale]['card_image1'] ?? '')" />
                         </div>
-                        <div class="card-body">
-                            @include('admin.layouts.components.media-upload', [
-                                'label' => \App\Support\Lang::t('admin.cms.contact.labels.banner_image', 'Banner Image'),
-                                'name' => 'banner[image]',
-                                'inputId' => 'contact_banner_image',
-                                'previewPath' => media_path($bannerData[$primaryLocale]['image_path'] ?? ''),
-                            ])
+                        <div class="col-12 col-md-6">
+                            <x-admin.file-uploader
+                                :name="$base . '[card_image2]'"
+                                :label="\App\Support\Lang::t('admin.cms.contact.labels.card_image2', 'Card Image 2')"
+                                :input-id="'contact_' . $key . '_image2'"
+                                kind="image"
+                                max-size-hint="20 MB"
+                                :preview-path="media_path($sectionData[$primaryLocale]['card_image2'] ?? '')" />
                         </div>
                     </div>
 
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">@t('admin.cms.contact.sections.contact_heading', 'Contact Heading')</h5>
-                        </div>
-                        <div class="card-body">
-                            @php
-                                $contactAr = $contactData[$arLocale] ?? [];
-                                $contactEn = $contactData[$enLocale] ?? [];
-                            @endphp
-                            <div class="row g-3 flex-md-row-reverse">
-                                <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($arLocale)]) }}</label>
-                                    <input type="text" class="form-control" dir="rtl"
-                                        name="contact[{{ $arLocale }}][title]"
-                                        value="{{ old("contact.$arLocale.title", $contactAr['title'] ?? '') }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($enLocale)]) }}</label>
-                                    <input type="text" class="form-control" name="contact[{{ $enLocale }}][title]"
-                                        value="{{ old("contact.$enLocale.title", $contactEn['title'] ?? '') }}">
-                                </div>
-                            </div>
-                            <div class="row g-3 flex-md-row-reverse">
-                                <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.subtitle_locale', ['locale' => strtoupper($arLocale)]) }}</label>
-                                    <input type="text" class="form-control" dir="rtl"
-                                        name="contact[{{ $arLocale }}][subtitle]"
-                                        value="{{ old("contact.$arLocale.subtitle", $contactAr['subtitle'] ?? '') }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ __('admin.cms.shared.subtitle_locale', ['locale' => strtoupper($enLocale)]) }}</label>
-                                    <input type="text" class="form-control" name="contact[{{ $enLocale }}][subtitle]"
-                                        value="{{ old("contact.$enLocale.subtitle", $contactEn['subtitle'] ?? '') }}">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">@t('admin.cms.contact.sections.map_location', 'Map & Location')</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    @include('admin.layouts.components.media-upload', [
-                                        'label' => \App\Support\Lang::t('admin.cms.contact.labels.background_image', 'Background Image'),
-                                        'name' => 'map[background_image]',
-                                        'inputId' => 'contact_map_background',
-                                        'previewPath' => media_path($mapData[$primaryLocale]['background_image_path'] ?? ''),
-                                    ])
-                                </div>
-                            </div>
-                            @php
-                                $mapAr = $mapData[$arLocale] ?? [];
-                                $mapEn = $mapData[$enLocale] ?? [];
-                            @endphp
-                            <div class="row g-3 flex-md-row-reverse">
-                                <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($arLocale)]) }}</label>
-                                    <input type="text" class="form-control" dir="rtl" name="map[{{ $arLocale }}][title]"
-                                        value="{{ old("map.$arLocale.title", $mapAr['title'] ?? '') }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ __('admin.cms.shared.title_locale', ['locale' => strtoupper($enLocale)]) }}</label>
-                                    <input type="text" class="form-control" name="map[{{ $enLocale }}][title]"
-                                        value="{{ old("map.$enLocale.title", $mapEn['title'] ?? '') }}">
-                                </div>
-                            </div>
-                            <div class="row g-3 flex-md-row-reverse">
-                                <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.address_locale', ['locale' => strtoupper($arLocale)]) }}</label>
-                                    <textarea class="form-control" rows="3" dir="rtl" name="map[{{ $arLocale }}][address]">{{ old("map.$arLocale.address", $mapAr['address'] ?? '') }}</textarea>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ __('admin.cms.shared.address_locale', ['locale' => strtoupper($enLocale)]) }}</label>
-                                    <textarea class="form-control" rows="3" name="map[{{ $enLocale }}][address]">{{ old("map.$enLocale.address", $mapEn['address'] ?? '') }}</textarea>
-                                </div>
-                            </div>
-                            <div class="row g-3 flex-md-row-reverse">
-                                <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.phone_label_locale', ['locale' => strtoupper($arLocale)]) }}</label>
-                                    <input type="text" class="form-control" dir="rtl"
-                                        name="map[{{ $arLocale }}][phone_label]"
-                                        value="{{ old("map.$arLocale.phone_label", $mapAr['phone_label'] ?? '') }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ __('admin.cms.shared.phone_label_locale', ['locale' => strtoupper($enLocale)]) }}</label>
-                                    <input type="text" class="form-control" name="map[{{ $enLocale }}][phone_label]"
-                                        value="{{ old("map.$enLocale.phone_label", $mapEn['phone_label'] ?? '') }}">
-                                </div>
-                            </div>
-                            <div class="row g-3 flex-md-row-reverse">
-                                <div class="col-md-6 text-md-end">
-                                    <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.whatsapp_label_locale', ['locale' => strtoupper($arLocale)]) }}</label>
-                                    <input type="text" class="form-control" dir="rtl"
-                                        name="map[{{ $arLocale }}][whatsapp_label]"
-                                        value="{{ old("map.$arLocale.whatsapp_label", $mapAr['whatsapp_label'] ?? '') }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ __('admin.cms.shared.whatsapp_label_locale', ['locale' => strtoupper($enLocale)]) }}</label>
-                                    <input type="text" class="form-control" name="map[{{ $enLocale }}][whatsapp_label]"
-                                        value="{{ old("map.$enLocale.whatsapp_label", $mapEn['whatsapp_label'] ?? '') }}">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">@t('admin.cms.contact.sections.bottom_banner', 'Bottom Banner')</h5>
-                        </div>
-                        <div class="card-body">
-                            @include('admin.layouts.components.media-upload', [
-                                'label' => \App\Support\Lang::t('admin.cms.contact.labels.banner_image', 'Banner Image'),
-                                'name' => 'bottom[image]',
-                                'inputId' => 'contact_bottom_image',
-                                'previewPath' => media_path($bottomData[$primaryLocale]['image_path'] ?? ''),
-                            ])
-                        </div>
-                    </div>
-
-                    @php
-                        $forms = [
-                            'ads' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.ads', 'Ads Subscription Form'), 'data' => $adsData, 'form' => $adsForm],
-                            'screens' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.screens', 'Screens Subscription Form'), 'data' => $screensData, 'form' => $screensForm],
-                            'create' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.create', 'Ad Creation Request'), 'data' => $createData, 'form' => $createForm],
-                            'faq' => ['title' => \App\Support\Lang::t('admin.cms.contact.forms.faq', 'FAQs Form'), 'data' => $faqData, 'form' => $faqForm],
-                        ];
-                    @endphp
-
-                    @foreach ($forms as $key => $payload)
-                        @php $sectionData = $payload['data']; @endphp
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">{{ $payload['title'] }}</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        @include('admin.layouts.components.media-upload', [
-                                            'label' => \App\Support\Lang::t('admin.cms.contact.labels.card_image1', 'Card Image 1'),
-                                            'name' => "contact_forms[$key][card_image1]",
-                                            'inputId' => "contact_{$key}_image1",
-                                            'previewPath' => media_path($sectionData[$primaryLocale]['card_image1'] ?? ''),
-                                        ])
-                                    </div>
-                                    <div class="col-md-6">
-                                        @include('admin.layouts.components.media-upload', [
-                                            'label' => \App\Support\Lang::t('admin.cms.contact.labels.card_image2', 'Card Image 2'),
-                                            'name' => "contact_forms[$key][card_image2]",
-                                            'inputId' => "contact_{$key}_image2",
-                                            'previewPath' => media_path($sectionData[$primaryLocale]['card_image2'] ?? ''),
-                                        ])
-                                    </div>
-                                </div>
-                                @php
-                                    $sectionAr = $sectionData[$arLocale] ?? [];
-                                    $sectionEn = $sectionData[$enLocale] ?? [];
-
-                                    $labelKeys = array_keys($sectionAr['labels'] ?? []);
-                                    foreach (array_keys($sectionEn['labels'] ?? []) as $labelKey) {
-                                        if (!in_array($labelKey, $labelKeys, true)) {
-                                            $labelKeys[] = $labelKey;
-                                        }
-                                    }
-                                    $oldLabelsAr = old("contact_forms.$key.$arLocale.labels", []);
-                                    if (is_array($oldLabelsAr)) {
-                                        foreach (array_keys($oldLabelsAr) as $labelKey) {
-                                            if (!in_array($labelKey, $labelKeys, true)) {
-                                                $labelKeys[] = $labelKey;
-                                            }
-                                        }
-                                    }
-                                    $oldLabelsEn = old("contact_forms.$key.$enLocale.labels", []);
-                                    if (is_array($oldLabelsEn)) {
-                                        foreach (array_keys($oldLabelsEn) as $labelKey) {
-                                            if (!in_array($labelKey, $labelKeys, true)) {
-                                                $labelKeys[] = $labelKey;
-                                            }
-                                        }
-                                    }
-
-                                    $radioKeys = array_keys($sectionAr['radio'] ?? []);
-                                    foreach (array_keys($sectionEn['radio'] ?? []) as $radioKey) {
-                                        if (!in_array($radioKey, $radioKeys, true)) {
-                                            $radioKeys[] = $radioKey;
-                                        }
-                                    }
-                                    $oldRadioAr = old("contact_forms.$key.$arLocale.radio", []);
-                                    if (is_array($oldRadioAr)) {
-                                        foreach (array_keys($oldRadioAr) as $radioKey) {
-                                            if (!in_array($radioKey, $radioKeys, true)) {
-                                                $radioKeys[] = $radioKey;
-                                            }
-                                        }
-                                    }
-                                    $oldRadioEn = old("contact_forms.$key.$enLocale.radio", []);
-                                    if (is_array($oldRadioEn)) {
-                                        foreach (array_keys($oldRadioEn) as $radioKey) {
-                                            if (!in_array($radioKey, $radioKeys, true)) {
-                                                $radioKeys[] = $radioKey;
-                                            }
-                                        }
-                                    }
-
-                                    $optionKeys = array_keys($sectionAr['options'] ?? []);
-                                    foreach (array_keys($sectionEn['options'] ?? []) as $optionKey) {
-                                        if (!in_array($optionKey, $optionKeys, true)) {
-                                            $optionKeys[] = $optionKey;
-                                        }
-                                    }
-                                    $oldOptionsAr = old("contact_forms.$key.$arLocale.options", []);
-                                    if (is_array($oldOptionsAr)) {
-                                        foreach (array_keys($oldOptionsAr) as $optionKey) {
-                                            if (!in_array($optionKey, $optionKeys, true)) {
-                                                $optionKeys[] = $optionKey;
-                                            }
-                                        }
-                                    }
-                                    $oldOptionsEn = old("contact_forms.$key.$enLocale.options", []);
-                                    if (is_array($oldOptionsEn)) {
-                                        foreach (array_keys($oldOptionsEn) as $optionKey) {
-                                            if (!in_array($optionKey, $optionKeys, true)) {
-                                                $optionKeys[] = $optionKey;
-                                            }
-                                        }
-                                    }
-                                @endphp
-
-                                <div class="row g-3 flex-md-row-reverse mt-3">
-                                    <div class="col-md-6 text-md-end">
-                                        <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.card_text_locale', ['locale' => strtoupper($arLocale)]) }}</label>
-                                        <textarea class="form-control" rows="3" dir="rtl" name="contact_forms[{{ $key }}][{{ $arLocale }}][card_text]">{{ old("contact_forms.$key.$arLocale.card_text", $sectionAr['card_text'] ?? '') }}</textarea>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">{{ __('admin.cms.shared.card_text_locale', ['locale' => strtoupper($enLocale)]) }}</label>
-                                        <textarea class="form-control" rows="3" name="contact_forms[{{ $key }}][{{ $enLocale }}][card_text]">{{ old("contact_forms.$key.$enLocale.card_text", $sectionEn['card_text'] ?? '') }}</textarea>
-                                    </div>
-                                </div>
-                                <div class="row g-3 flex-md-row-reverse">
-                                    <div class="col-md-6 text-md-end">
-                                        <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.modal_title_locale', ['locale' => strtoupper($arLocale)]) }}</label>
-                                        <input type="text" class="form-control" dir="rtl"
-                                            name="contact_forms[{{ $key }}][{{ $arLocale }}][modal_title]"
-                                            value="{{ old("contact_forms.$key.$arLocale.modal_title", $sectionAr['modal_title'] ?? '') }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">{{ __('admin.cms.shared.modal_title_locale', ['locale' => strtoupper($enLocale)]) }}</label>
-                                        <input type="text" class="form-control"
-                                            name="contact_forms[{{ $key }}][{{ $enLocale }}][modal_title]"
-                                            value="{{ old("contact_forms.$key.$enLocale.modal_title", $sectionEn['modal_title'] ?? '') }}">
-                                    </div>
-                                </div>
-                                <div class="row g-3 flex-md-row-reverse">
-                                    <div class="col-md-6 text-md-end">
-                                        <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.submit_text_locale', ['locale' => strtoupper($arLocale)]) }}</label>
-                                        <input type="text" class="form-control" dir="rtl"
-                                            name="contact_forms[{{ $key }}][{{ $arLocale }}][submit_text]"
-                                            value="{{ old("contact_forms.$key.$arLocale.submit_text", $sectionAr['submit_text'] ?? '') }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">{{ __('admin.cms.shared.submit_text_locale', ['locale' => strtoupper($enLocale)]) }}</label>
-                                        <input type="text" class="form-control"
-                                            name="contact_forms[{{ $key }}][{{ $enLocale }}][submit_text]"
-                                            value="{{ old("contact_forms.$key.$enLocale.submit_text", $sectionEn['submit_text'] ?? '') }}">
-                                    </div>
-                                </div>
-
-                                @if (!empty($labelKeys))
-                                    @foreach ($labelKeys as $labelKey)
-                                        <div class="row g-3 flex-md-row-reverse">
-                                            <div class="col-md-6 text-md-end">
-                                                <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.label_locale_value', ['locale' => strtoupper($arLocale), 'value' => \Illuminate\Support\Str::headline($labelKey)]) }}</label>
-                                                <input type="text" class="form-control" dir="rtl"
-                                                    name="contact_forms[{{ $key }}][{{ $arLocale }}][labels][{{ $labelKey }}]"
-                                                    value="{{ old("contact_forms.$key.$arLocale.labels.$labelKey", $sectionAr['labels'][$labelKey] ?? '') }}">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">{{ __('admin.cms.shared.label_locale_value', ['locale' => strtoupper($enLocale), 'value' => \Illuminate\Support\Str::headline($labelKey)]) }}</label>
-                                                <input type="text" class="form-control"
-                                                    name="contact_forms[{{ $key }}][{{ $enLocale }}][labels][{{ $labelKey }}]"
-                                                    value="{{ old("contact_forms.$key.$enLocale.labels.$labelKey", $sectionEn['labels'][$labelKey] ?? '') }}">
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                @endif
-
-                                @if (!empty($radioKeys))
-                                    @foreach ($radioKeys as $radioKey)
-                                        <div class="row g-3 flex-md-row-reverse">
-                                            <div class="col-md-6 text-md-end">
-                                                <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.radio_locale_value', ['locale' => strtoupper($arLocale), 'value' => \Illuminate\Support\Str::headline($radioKey)]) }}</label>
-                                                <input type="text" class="form-control" dir="rtl"
-                                                    name="contact_forms[{{ $key }}][{{ $arLocale }}][radio][{{ $radioKey }}]"
-                                                    value="{{ old("contact_forms.$key.$arLocale.radio.$radioKey", $sectionAr['radio'][$radioKey] ?? '') }}">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">{{ __('admin.cms.shared.radio_locale_value', ['locale' => strtoupper($enLocale), 'value' => \Illuminate\Support\Str::headline($radioKey)]) }}</label>
-                                                <input type="text" class="form-control"
-                                                    name="contact_forms[{{ $key }}][{{ $enLocale }}][radio][{{ $radioKey }}]"
-                                                    value="{{ old("contact_forms.$key.$enLocale.radio.$radioKey", $sectionEn['radio'][$radioKey] ?? '') }}">
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                @endif
-
-                                @if (!empty($optionKeys))
-                                    @foreach ($optionKeys as $optionKey)
-                                        <div class="row g-3 flex-md-row-reverse">
-                                            <div class="col-md-6 text-md-end">
-                                                <label class="form-label text-md-end d-block">{{ __('admin.cms.shared.options_locale_value', ['locale' => strtoupper($arLocale), 'value' => \Illuminate\Support\Str::headline($optionKey)]) }}</label>
-                                                <textarea class="form-control" rows="3" dir="rtl" name="contact_forms[{{ $key }}][{{ $arLocale }}][options][{{ $optionKey }}]">{{ old("contact_forms.$key.$arLocale.options.$optionKey", is_array($sectionAr['options'][$optionKey] ?? null) ? implode("\n", $sectionAr['options'][$optionKey]) : ($sectionAr['options'][$optionKey] ?? '')) }}</textarea>
-                                                <small class="text-muted">{{ __('admin.cms.shared.options_help_text') }}</small>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">{{ __('admin.cms.shared.options_locale_value', ['locale' => strtoupper($enLocale), 'value' => \Illuminate\Support\Str::headline($optionKey)]) }}</label>
-                                                <textarea class="form-control" rows="3" name="contact_forms[{{ $key }}][{{ $enLocale }}][options][{{ $optionKey }}]">{{ old("contact_forms.$key.$enLocale.options.$optionKey", is_array($sectionEn['options'][$optionKey] ?? null) ? implode("\n", $sectionEn['options'][$optionKey]) : ($sectionEn['options'][$optionKey] ?? '')) }}</textarea>
-                                                <small class="text-muted">{{ __('admin.cms.shared.options_help_text') }}</small>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                @endif
-                            </div>
-                        </div>
+                    @foreach ([
+                        'card_text' => ['key' => 'admin.cms.shared.card_text_locale', 'type' => 'textarea'],
+                        'modal_title' => ['key' => 'admin.cms.shared.modal_title_locale', 'type' => 'text'],
+                        'submit_text' => ['key' => 'admin.cms.shared.submit_text_locale', 'type' => 'text'],
+                    ] as $field => $meta)
+                        <x-admin.translatable-field
+                            :type="$meta['type']"
+                            :label-key="$meta['key']"
+                            :id-prefix="'contact_' . $key . '_' . $field"
+                            :names="['en' => $base . '[' . $en . '][' . $field . ']', 'ar' => $base . '[' . $ar . '][' . $field . ']']"
+                            :values="[
+                                'en' => old($dot . '.' . $en . '.' . $field, $sectionEn[$field] ?? ''),
+                                'ar' => old($dot . '.' . $ar . '.' . $field, $sectionAr[$field] ?? ''),
+                            ]" />
                     @endforeach
 
-                    <div class="text-end">
-                        <button type="submit" class="btn btn-primary">{{ __('admin.forms.save_button') }}</button>
-                    </div>
-                </form>
+                    @foreach ($labelKeys as $labelKey)
+                        <x-admin.translatable-field
+                            label-key="admin.cms.shared.label_locale_value"
+                            :label-replace="['value' => \Illuminate\Support\Str::headline($labelKey)]"
+                            :id-prefix="'contact_' . $key . '_label_' . \Illuminate\Support\Str::slug($labelKey, '_')"
+                            :names="['en' => $base . '[' . $en . '][labels][' . $labelKey . ']', 'ar' => $base . '[' . $ar . '][labels][' . $labelKey . ']']"
+                            :values="[
+                                'en' => old($dot . '.' . $en . '.labels.' . $labelKey, $sectionEn['labels'][$labelKey] ?? ''),
+                                'ar' => old($dot . '.' . $ar . '.labels.' . $labelKey, $sectionAr['labels'][$labelKey] ?? ''),
+                            ]" />
+                    @endforeach
+
+                    @foreach ($radioKeys as $radioKey)
+                        <x-admin.translatable-field
+                            label-key="admin.cms.shared.radio_locale_value"
+                            :label-replace="['value' => \Illuminate\Support\Str::headline($radioKey)]"
+                            :id-prefix="'contact_' . $key . '_radio_' . \Illuminate\Support\Str::slug($radioKey, '_')"
+                            :names="['en' => $base . '[' . $en . '][radio][' . $radioKey . ']', 'ar' => $base . '[' . $ar . '][radio][' . $radioKey . ']']"
+                            :values="[
+                                'en' => old($dot . '.' . $en . '.radio.' . $radioKey, $sectionEn['radio'][$radioKey] ?? ''),
+                                'ar' => old($dot . '.' . $ar . '.radio.' . $radioKey, $sectionAr['radio'][$radioKey] ?? ''),
+                            ]" />
+                    @endforeach
+
+                    @foreach ($optionKeys as $optionKey)
+                        @php
+                            // Options are stored as arrays and edited as one option per line.
+                            $rawEn = $sectionEn['options'][$optionKey] ?? null;
+                            $rawAr = $sectionAr['options'][$optionKey] ?? null;
+                            $optionEn = is_array($rawEn) ? implode("\n", $rawEn) : ($rawEn ?? '');
+                            $optionAr = is_array($rawAr) ? implode("\n", $rawAr) : ($rawAr ?? '');
+                        @endphp
+
+                        <x-admin.translatable-field
+                            type="textarea"
+                            label-key="admin.cms.shared.options_locale_value"
+                            :label-replace="['value' => \Illuminate\Support\Str::headline($optionKey)]"
+                            :help="__('admin.cms.shared.options_help_text')"
+                            :id-prefix="'contact_' . $key . '_option_' . \Illuminate\Support\Str::slug($optionKey, '_')"
+                            :names="['en' => $base . '[' . $en . '][options][' . $optionKey . ']', 'ar' => $base . '[' . $ar . '][options][' . $optionKey . ']']"
+                            :values="[
+                                'en' => old($dot . '.' . $en . '.options.' . $optionKey, $optionEn),
+                                'ar' => old($dot . '.' . $ar . '.options.' . $optionKey, $optionAr),
+                            ]" />
+                    @endforeach
+                </x-admin.cms-section-card>
+            @endforeach
+
+            <div class="card">
+                <div class="card-body">
+                    <x-admin.group-btn class="justify-content-end">
+                        <x-admin.btn
+                            :href="route('admin.dashboard', ['lang' => app()->getLocale()])"
+                            variant="light"
+                            icon="arrow-left">
+                            {{ __('admin.buttons.back') }}
+                        </x-admin.btn>
+                        <x-admin.btn type="submit" icon="save">
+                            {{ __('admin.forms.save_button') }}
+                        </x-admin.btn>
+                    </x-admin.group-btn>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 @endsection
+
+@push('scripts')
+    <script src="{{ asset('admin-assets/js/cms-admin.js') }}"></script>
+@endpush
