@@ -14,11 +14,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Tests\Concerns\SignsScreenRequests;
 use Tests\TestCase;
 
 class PlaylistEtagInvalidationTest extends TestCase
 {
     use RefreshDatabase;
+    use SignsScreenRequests;
 
     public function tearDown(): void
     {
@@ -127,9 +129,11 @@ class PlaylistEtagInvalidationTest extends TestCase
 
     private function getPlaylistEtag(Screen $screen): string
     {
+        $url = route('api.v1.screens.playlist', ['screen' => $screen->id]);
+
         $response = $this
-            ->withHeader('X-Screen-Uid', $screen->device_uid)
-            ->getJson(route('api.v1.screens.playlist', ['screen' => $screen->id]));
+            ->withHeaders($this->signedGetHeaders($url, $screen->device_uid))
+            ->getJson($url);
 
         $response->assertOk();
 

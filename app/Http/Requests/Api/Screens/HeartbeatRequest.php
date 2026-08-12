@@ -60,7 +60,8 @@ class HeartbeatRequest extends ApiRequest
 
         if ($validator instanceof Validator) {
             $validator->after(function (Validator $validator): void {
-                if ($validator->fails()) {
+                // See ApiRequest::withValidator() — fails() is re-entrant here.
+                if ($validator->errors()->isNotEmpty()) {
                     return;
                 }
 

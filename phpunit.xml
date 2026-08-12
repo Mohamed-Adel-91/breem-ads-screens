@@ -30,5 +30,13 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!--
+            Pin the Device API signing secret so tests never inherit a developer's
+            local .env. A secret IS configured here, mirroring .env.example, so the
+            suite exercises the signed path rather than ApiRequest's fail-open
+            branch (which only applies when the secret is empty).
+        -->
+        <env name="SCREENS_HMAC_SECRET" value="testing-screens-secret"/>
+        <env name="SCREENS_SIGNATURE_LEEWAY" value="300"/>
     </php>
 </phpunit>

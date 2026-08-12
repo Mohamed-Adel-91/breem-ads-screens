@@ -124,13 +124,48 @@ must not recompute status.
 Documented, deliberately unfixed. Do not "fix" these as a side effect of another
 task.
 
-**Device API**
-- `routes/api.php` is **not registered**. `bootstrap/app.php` passes a `using:`
-  closure, which supersedes the `api:` argument, and the closure does not include
-  `routes/api.php`. **No `/api/v1/*` route currently exists.** This is why the
-  playlist-ETag, rate-limit and CORS tests fail.
-- HMAC protocol, pairing lifecycle, token lifecycle, replay protection and
-  proof-of-play trust are unreviewed.
+**Device API** — registered since Phase 9; the endpoints below are live.
+
+| Method | URI | Name | Auth |
+|---|---|---|---|
+| POST | `api/v1/screens/handshake` | `api.v1.screens.handshake` | signature only (no `screen.auth`) |
+| POST | `api/v1/screens/heartbeat` | `api.v1.screens.heartbeat` | `screen.auth` + signature |
+| GET | `api/v1/screens/{screen}/playlist` | `api.v1.screens.playlist` | `screen.auth` + signature |
+| POST | `api/v1/playbacks` | `api.v1.playbacks.store` | `screen.auth` + signature |
+| GET | `api/v1/config` | `api.v1.config.show` | `screen.auth` + signature |
+
+`{screen}` resolves by **id or code**. All five carry `api` + `throttle:api.v1`
+(120/min, keyed by IP). `bootstrap/app.php` must register `routes/api.php`
+explicitly inside the `using:` closure — a custom `using:` callback makes the
+`api:`, `web:` and `health:` arguments inert.
+
+Authentication is two independent layers:
+
+1. `EnsureScreenAuthentication` (`screen.auth`) — accepts a request if **any** of:
+   an `X-Screen-Uid` header matching `screens.device_uid`; a resolvable `{screen}`
+   route parameter; or the mere presence of a `device_uid`/`code` input. A bearer
+   token is copied into request attributes and **never validated**.
+2. `ApiRequest` — HMAC-SHA256 over the raw body (POST) or the full URL (GET),
+   compared against `X-Screen-Signature` using `hash_equals`, keyed by the single
+   global `services.screens.hmac_secret`. POST bodies additionally carry a
+   `timestamp` checked against `signature_leeway` (300 s). GET has no timestamp.
+
+**Confirmed weaknesses — do not treat the current design as secure:**
+- `hasValidSignature()` returns **true when the secret is empty**, so an unset
+  `SCREENS_HMAC_SECRET` disables signing entirely (fail-open).
+- The HMAC secret is **global**, not per-screen, so any holder can sign for any
+  screen.
+- The handshake **re-pairs an already-paired screen** to whatever `device.uid` is
+  supplied; the `bearer_token` it returns is literally the `device_uid`.
+- The `device_uid` is a bearer-equivalent credential sent in a plain header.
+- **No nonce and no used-signature store**: a captured request is replayable
+  within the leeway window, and a signed GET (no timestamp) is replayable forever.
+- Playback reports are **not validated against the ad↔screen assignment**.
+- `GET /api/v1/config` returns every row of the `settings` table to any
+  authenticated device.
+
+All of the above are pinned by `tests/Feature/Api/DeviceApiContractTest.php` under
+`test_known_finding_*` names so a fix has to be a deliberate change.
 
 **Heartbeat / Monitoring**
 - Acknowledging a monitoring alert sets `last_heartbeat = now()` with no device

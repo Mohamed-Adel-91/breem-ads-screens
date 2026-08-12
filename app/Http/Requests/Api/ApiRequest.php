@@ -25,7 +25,12 @@ abstract class ApiRequest extends FormRequest
         }
 
         $validator->after(function (Validator $validator): void {
-            if ($validator->fails()) {
+            // Must NOT call $validator->fails() here: fails() re-runs passes(),
+            // which re-runs every after() callback, recursing until the process
+            // exhausts memory. Inside an after() callback the rules have already
+            // executed and the message bag is populated, so inspecting it is the
+            // equivalent, non-re-entrant check.
+            if ($validator->errors()->isNotEmpty()) {
                 return;
             }
 
