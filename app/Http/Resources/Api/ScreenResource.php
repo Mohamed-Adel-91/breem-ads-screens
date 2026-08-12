@@ -6,13 +6,18 @@ use App\Enums\ScreenStatus;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
+ * Screen representation for the Device API.
+ *
+ * `device_uid` is deliberately absent. The device already knows its own UID, and
+ * echoing it on every response widened the exposure of a value that used to be
+ * accepted as authentication. Admin screens use their own Blade views, so this
+ * change does not affect the dashboard.
+ *
  * @mixin \App\Models\Screen
  */
 class ScreenResource extends JsonResource
 {
     /**
-     * Transform the resource into an array.
-     *
      * @param  \Illuminate\Http\Request  $request
      * @return array<string, mixed>
      */
@@ -21,7 +26,6 @@ class ScreenResource extends JsonResource
         return [
             'id' => $this->id,
             'code' => $this->code,
-            'device_uid' => $this->device_uid,
             'status' => $this->status instanceof ScreenStatus ? $this->status->value : $this->status,
             'last_heartbeat_at' => optional($this->last_heartbeat)->toAtomString(),
             'created_at' => optional($this->created_at)->toAtomString(),

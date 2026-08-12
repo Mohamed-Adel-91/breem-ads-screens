@@ -104,6 +104,47 @@ Never duplicate these; find the existing owner and use it:
 | Admin menu + permission visibility | `config/admin_menu.php` + `Admin\MenuBuilder` |
 | Validation rules | the Form Request for that action |
 
+## Preserving repository structure
+
+**Preserve standard Laravel repository structure unless the project owner
+explicitly requests structural removal.**
+
+"Zero runtime consumers" is a valid argument for deleting *application* code. It
+is **not** a valid argument for deleting a file that belongs to any of these
+categories:
+
+- Laravel standard scaffold
+- framework convention
+- developer tooling structure
+- repository-standard configuration
+
+For those categories the rule is **zero consumers ⇒ retain**, and only the
+project owner can approve removal.
+
+Currently protected — do not delete, rename, move, empty or replace with a
+placeholder:
+
+| Path | Category |
+|---|---|
+| `package.json` | Laravel scaffold |
+| `vite.config.js` | Laravel scaffold |
+| `tailwind.config.js` | tooling configuration |
+| `postcss.config.js` | tooling configuration |
+| `resources/js/` | Laravel scaffold |
+| `resources/css/` | Laravel scaffold |
+
+These carry no runtime dependency: Breem's admin runtime does not use Vite,
+Tailwind, Alpine, Node or any frontend build step, and production deploys with
+Composer alone. Keeping the files does not change that, and restoring them must
+never be read as licence to wire a build step back in — see
+[frontend-blade.md](frontend-blade.md#prohibited).
+
+This does **not** extend to confirmed dead *application* code. Obsolete Breeze
+auth pages and controllers, dead auth routes, orphaned dashboard views and legacy
+admin layouts were removed as application-level dead code, which is a separate
+category. Do not restore them without an independent audit proving they are
+needed.
+
 ## Comments
 
 Applies **only to files you are already modifying**. Never sweep the repository

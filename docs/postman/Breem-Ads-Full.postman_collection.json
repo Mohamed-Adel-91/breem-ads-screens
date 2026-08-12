@@ -2,16 +2,83 @@
     "info": {
         "_postman_id": "0a12abd5-eaa0-465e-9c06-779dc3b586dd",
         "name": "Breem Ads Screens - Full (Admin + Device API v1)",
-        "description": "Full Postman collection covering the Android device API v1 and Laravel admin panel routes discovered via artisan route:list.",
+        "description": "Admin panel plus Device API v1. The device folder pairs with a one-time code and then signs every request with its own HMAC secret; see docs/android-device-api.md.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
         {
             "name": "Android v1 (Device)",
-            "description": "Device API v1 endpoints consumed by the Android TV player. All requests send the X-Device-UID header.",
+            "description": "Device API v1, as implemented after Phase 10.\n\nRun \"1. Handshake (pair device)\" first. Generate a pairing code for the\nscreen in the admin panel (Screens -> the screen -> Device pairing), put it\nin the {{pairing_code}} variable, and send the handshake. Its test script\nstores the returned bearer token and HMAC secret in collection variables.\n\nEvery other request is signed automatically by this folder's pre-request\nscript. Nonces are single-use, so re-sending a request is fine (a fresh\nnonce is generated) but replaying a captured one is not.\n\nA pairing code is single-use and expires after SCREENS_PAIRING_CODE_TTL.\nA screen that is already paired returns 409 already_paired until an\nadministrator resets it.",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "// Signs the request exactly the way EnsureScreenAuthentication verifies it.",
+                            "//",
+                            "// Canonical message (six lines, joined with \\n):",
+                            "//   METHOD / path / canonical query / timestamp / nonce / sha256(body)",
+                            "//",
+                            "// The handshake is unauthenticated by definition and is skipped.",
+                            "// Note: this reads the path from the parsed URL, so {{base_url}} must be a bare",
+                            "// scheme://host[:port] with no path prefix.",
+                            "const path = pm.variables.replaceIn(pm.request.url.getPath());",
+                            "",
+                            "if (path.indexOf('/screens/handshake') === -1) {",
+                            "    const token = pm.collectionVariables.get('device_token');",
+                            "    const secret = pm.collectionVariables.get('device_hmac_secret');",
+                            "",
+                            "    if (!token || !secret) {",
+                            "        throw new Error('Run \"1. Handshake (pair device)\" first — it stores device_token and device_hmac_secret.');",
+                            "    }",
+                            "",
+                            "    // RFC 3986: encodeURIComponent leaves !'()* alone, so encode them by hand.",
+                            "    const enc = (value) => encodeURIComponent(value)",
+                            "        .replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());",
+                            "",
+                            "    const query = pm.request.url.query.all()",
+                            "        .filter((p) => !p.disabled)",
+                            "        .map((p) => [",
+                            "            pm.variables.replaceIn(p.key || ''),",
+                            "            pm.variables.replaceIn(p.value || ''),",
+                            "        ])",
+                            "        .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))",
+                            "        .map((p) => enc(p[0]) + '=' + enc(p[1]))",
+                            "        .join('&');",
+                            "",
+                            "    // A GET must send no body at all: sha256('') differs from sha256('{}').",
+                            "    const body = (pm.request.body && pm.request.body.mode === 'raw' && pm.request.body.raw)",
+                            "        ? pm.variables.replaceIn(pm.request.body.raw)",
+                            "        : '';",
+                            "",
+                            "    const timestamp = Math.floor(Date.now() / 1000).toString();",
+                            "    const nonce = CryptoJS.lib.WordArray.random(16).toString(CryptoJS.enc.Hex);",
+                            "",
+                            "    const message = [",
+                            "        pm.request.method.toUpperCase(),",
+                            "        path,",
+                            "        query,",
+                            "        timestamp,",
+                            "        nonce,",
+                            "        CryptoJS.SHA256(body).toString(CryptoJS.enc.Hex),",
+                            "    ].join('\\n');",
+                            "",
+                            "    pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + token });",
+                            "    pm.request.headers.upsert({ key: 'X-Screen-Timestamp', value: timestamp });",
+                            "    pm.request.headers.upsert({ key: 'X-Screen-Nonce', value: nonce });",
+                            "    pm.request.headers.upsert({",
+                            "        key: 'X-Screen-Signature',",
+                            "        value: CryptoJS.HmacSHA256(message, secret).toString(CryptoJS.enc.Hex),",
+                            "    });",
+                            "}"
+                        ]
+                    }
+                }
+            ],
             "item": [
                 {
-                    "name": "Handshake",
+                    "name": "1. Handshake (pair device)",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -23,11 +90,6 @@
                             {
                                 "key": "Accept",
                                 "value": "application/json",
-                                "type": "text"
-                            },
-                            {
-                                "key": "X-Device-UID",
-                                "value": "{{device_uid}}",
                                 "type": "text"
                             }
                         ],
@@ -45,14 +107,14 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"device_uid\": \"{{device_uid}}\",\n    \"code\": \"{{screen_code}}\",\n    \"version\": \"1.0.0\",\n    \"capabilities\": {\n        \"video\": true,\n        \"image\": true\n    }\n}",
+                            "raw": "{\n    \"code\": \"{{screen_code}}\",\n    \"pairing_code\": \"{{pairing_code}}\",\n    \"device\": {\n        \"uid\": \"{{device_uid}}\",\n        \"model\": \"BX-1\",\n        \"os_version\": \"13\"\n    }\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
                                 }
                             }
                         },
-                        "description": "Initiate the screen handshake and register the player. Returns screen metadata, config and current playlist."
+                        "description": "Exchange a one-time pairing code for device credentials. This is the only response that ever contains the bearer token and HMAC secret."
                     },
                     "response": [],
                     "event": [
@@ -61,8 +123,20 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status 200', function () {",
-                                    "  pm.response.to.have.status(200);",
+                                    "pm.test('Status 201 Created', function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "// The token and secret are returned exactly once. Store them for every",
+                                    "// subsequent request; there is no way to fetch them again.",
+                                    "const auth = pm.response.json().data.auth;",
+                                    "pm.collectionVariables.set('device_token', auth.access_token);",
+                                    "pm.collectionVariables.set('device_hmac_secret', auth.hmac_secret);",
+                                    "",
+                                    "pm.test('Credentials captured', function () {",
+                                    "    pm.expect(auth.access_token).to.be.a('string').and.not.empty;",
+                                    "    pm.expect(auth.hmac_secret).to.be.a('string').and.not.empty;",
+                                    "    pm.expect(auth.hmac_secret).to.not.equal(auth.access_token);",
                                     "});"
                                 ]
                             }
@@ -70,7 +144,48 @@
                     ]
                 },
                 {
-                    "name": "Heartbeat",
+                    "name": "2. Playlist",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/screens/{{screen_id}}/playlist",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "screens",
+                                "{{screen_id}}",
+                                "playlist"
+                            ]
+                        },
+                        "description": "Fetch the playlist for the paired screen. Send If-None-Match with a cached ETag to get 304. A credential may only address its own screen."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status 200 OK', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "3. Heartbeat",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -82,11 +197,6 @@
                             {
                                 "key": "Accept",
                                 "value": "application/json",
-                                "type": "text"
-                            },
-                            {
-                                "key": "X-Device-UID",
-                                "value": "{{device_uid}}",
                                 "type": "text"
                             }
                         ],
@@ -104,14 +214,14 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"screen_id\": \"{{screen_id}}\",\n    \"current_ad_code\": \"AD-15\",\n    \"ts\": \"2025-09-22T10:20:00Z\"\n}",
+                            "raw": "{\n    \"status\": \"online\",\n    \"current_ad_code\": \"AD-15\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
                                 }
                             }
                         },
-                        "description": "Post periodic heartbeat data so the backend can monitor screen liveness."
+                        "description": "Report status for the authenticated screen. status is online, offline or maintenance."
                     },
                     "response": [],
                     "event": [
@@ -120,8 +230,8 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Status 200', function () {",
-                                    "  pm.response.to.have.status(200);",
+                                    "pm.test('Status 200 OK', function () {",
+                                    "    pm.response.to.have.status(200);",
                                     "});"
                                 ]
                             }
@@ -129,63 +239,7 @@
                     ]
                 },
                 {
-                    "name": "Playlist",
-                    "request": {
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json",
-                                "type": "text"
-                            },
-                            {
-                                "key": "X-Device-UID",
-                                "value": "{{device_uid}}",
-                                "type": "text"
-                            },
-                            {
-                                "key": "If-None-Match",
-                                "value": "{{etag}}",
-                                "description": "Send the cached playlist ETag to receive 304 when unchanged.",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}/api/v1/screens/{{screen_id}}/playlist",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "screens",
-                                "{{screen_id}}",
-                                "playlist"
-                            ]
-                        },
-                        "description": "Fetch the current playlist for a screen. Pass If-None-Match with the cached ETag to leverage 304 responses."
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "const etag = pm.response.headers.get('ETag');",
-                                    "if (etag) {",
-                                    "  pm.collectionVariables.set('etag', etag);",
-                                    "}",
-                                    "pm.test('Status 200 or 304', function () {",
-                                    "  pm.expect([200, 304]).to.include(pm.response.code);",
-                                    "});"
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "name": "Playbacks",
+                    "name": "4. Playbacks",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -197,11 +251,6 @@
                             {
                                 "key": "Accept",
                                 "value": "application/json",
-                                "type": "text"
-                            },
-                            {
-                                "key": "X-Device-UID",
-                                "value": "{{device_uid}}",
                                 "type": "text"
                             }
                         ],
@@ -218,14 +267,14 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"screen_id\": \"{{screen_id}}\",\n    \"ad_id\": \"{{ad_id}}\",\n    \"played_at\": \"2025-09-22T10:26:21Z\",\n    \"duration\": 20,\n    \"extra\": {\n        \"bufferedMs\": 120,\n        \"droppedFrames\": 2\n    }\n}",
+                            "raw": "{\n    \"entries\": [\n        {\n            \"ad_id\": \"{{ad_id}}\",\n            \"played_at\": \"{{$isoTimestamp}}\",\n            \"duration\": 15\n        }\n    ]\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
                                 }
                             }
                         },
-                        "description": "Report completed ad playback for analytics."
+                        "description": "Submit a proof-of-play batch. Every ad_id must be assigned to the authenticated screen or the whole batch is rejected with 422."
                     },
                     "response": [],
                     "event": [
@@ -234,25 +283,22 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test('Accepted', () => pm.expect([200, 202]).to.include(pm.response.code));"
+                                    "pm.test('Status 202 Accepted', function () {",
+                                    "    pm.response.to.have.status(202);",
+                                    "});"
                                 ]
                             }
                         }
                     ]
                 },
                 {
-                    "name": "Config",
+                    "name": "5. Config",
                     "request": {
                         "method": "GET",
                         "header": [
                             {
                                 "key": "Accept",
                                 "value": "application/json",
-                                "type": "text"
-                            },
-                            {
-                                "key": "X-Device-UID",
-                                "value": "{{device_uid}}",
                                 "type": "text"
                             }
                         ],
@@ -267,9 +313,22 @@
                                 "config"
                             ]
                         },
-                        "description": "Retrieve global configuration tweaks for the player (polling intervals, feature flags, etc.)."
+                        "description": "Device configuration. Returns only the allow-listed settings in DeviceConfigService::ALLOWED_SETTING_KEYS, never the whole settings table."
                     },
-                    "response": []
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Status 200 OK', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -2359,7 +2418,7 @@
                                         "download"
                                     ]
                                 },
-                                "description": "Download the latest log export (ZIP or CSV depending on configuration). Use Postman \u201cSave Response\u201d to persist the file."
+                                "description": "Download the latest log export (ZIP or CSV depending on configuration). Use Postman “Save Response” to persist the file."
                             },
                             "response": []
                         }
@@ -2564,7 +2623,7 @@
                                         "download"
                                     ]
                                 },
-                                "description": "Download the report as CSV. Use Postman \u201cSave Response\u201d to store the file."
+                                "description": "Download the report as CSV. Use Postman “Save Response” to store the file."
                             },
                             "response": []
                         }
@@ -2639,6 +2698,21 @@
         },
         {
             "key": "xsrf",
+            "value": "",
+            "type": "default"
+        },
+        {
+            "key": "pairing_code",
+            "value": "",
+            "type": "default"
+        },
+        {
+            "key": "device_token",
+            "value": "",
+            "type": "default"
+        },
+        {
+            "key": "device_hmac_secret",
             "value": "",
             "type": "default"
         }

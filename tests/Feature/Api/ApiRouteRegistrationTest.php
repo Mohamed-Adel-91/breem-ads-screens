@@ -51,14 +51,37 @@ class ApiRouteRegistrationTest extends TestCase
         }
     }
 
-    public function test_every_api_route_carries_the_api_middleware_and_v1_throttle(): void
+    public function test_every_api_route_carries_the_api_middleware(): void
     {
         foreach (self::apiRouteProvider() as [$name, , ]) {
-            $route = Route::getRoutes()->getByName($name);
-            $middleware = $route->gatherMiddleware();
+            $this->assertContains(
+                'api',
+                Route::getRoutes()->getByName($name)->gatherMiddleware(),
+                "[{$name}] lost the api middleware group."
+            );
+        }
+    }
 
-            $this->assertContains('api', $middleware, "[{$name}] lost the api middleware group.");
-            $this->assertContains('throttle:api.v1', $middleware, "[{$name}] lost the v1 rate limiter.");
+    /**
+     * Authenticated traffic and the unauthenticated handshake must never share a
+     * throttle bucket: pairing-code guessing would otherwise burn a real
+     * device's request budget, and a busy device would relax the guessing limit.
+     *
+     * gatherMiddleware() still lists middleware that a route excluded, so the
+     * handshake is asserted through excludedMiddleware() instead.
+     */
+    public function test_the_handshake_throttles_separately_from_authenticated_traffic(): void
+    {
+        $handshake = Route::getRoutes()->getByName('api.v1.screens.handshake');
+
+        $this->assertContains('throttle:api.v1.handshake', $handshake->gatherMiddleware());
+        $this->assertContains('throttle:api.v1', $handshake->excludedMiddleware());
+
+        foreach (['api.v1.screens.heartbeat', 'api.v1.screens.playlist', 'api.v1.playbacks.store', 'api.v1.config.show'] as $name) {
+            $route = Route::getRoutes()->getByName($name);
+
+            $this->assertContains('throttle:api.v1', $route->gatherMiddleware(), "[{$name}] lost the v1 rate limiter.");
+            $this->assertNotContains('throttle:api.v1', $route->excludedMiddleware(), "[{$name}] opted out of the v1 rate limiter.");
         }
     }
 
@@ -100,7 +123,9 @@ class ApiRouteRegistrationTest extends TestCase
             ->filter(fn ($route) => str_starts_with((string) $route->getName(), 'admin.'))
             ->count();
 
-        $this->assertSame(93, $adminRoutes, 'The admin route surface changed.');
+        // 93 through Phase 9, plus the two Phase 10 pairing actions
+        // (admin.screens.pairing.generate and admin.screens.pairing.reset).
+        $this->assertSame(95, $adminRoutes, 'The admin route surface changed.');
     }
 
     public function test_the_health_endpoint_declared_in_bootstrap_is_reachable(): void

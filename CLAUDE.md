@@ -3,7 +3,8 @@
 Digital-signage platform: a **single Laravel 12 monolith** serving a public Blade
 website and a Blade admin dashboard, plus a device-facing API for screens.
 
-There is no Node build step. There is no SPA. There is no second application.
+There is no Node build step in the runtime. There is no SPA. There is no second
+application.
 
 ---
 
@@ -31,6 +32,13 @@ There is no Node build step. There is no SPA. There is no second application.
     field names, permission names, stored enum values — unless the task is
     explicitly about changing them.
 11. **Digital-signage work requires reading [`docs/ai/digital-signage.md`](docs/ai/digital-signage.md) first.**
+12. **Preserve standard Laravel repository structure** unless the project owner
+    explicitly requests structural removal. Laravel scaffold, framework
+    convention, developer tooling and repository-standard configuration files are
+    retained even with **zero runtime consumers** — "unused" is not grounds for
+    deletion. Application dead code is a separate category and may still be
+    removed after proper tracing. See
+    [`docs/ai/architecture.md`](docs/ai/architecture.md#preserving-repository-structure).
 
 ---
 
@@ -62,5 +70,8 @@ Agent entry point: [`AGENTS.md`](AGENTS.md).
 - **Locales** — `en` and `ar`, carried in the URL as `{lang?}`; Arabic renders RTL.
 - **Auth** — custom admin guard (`auth:admin`) with OTP; roles/permissions via
   spatie/laravel-permission.
-- **No Node, no Vite, no Tailwind, no Alpine.** Reintroducing any of them is an
-  architecture decision that needs explicit approval.
+- **The runtime uses no Node, Vite, Tailwind or Alpine.** Wiring any of them into
+  the application is an architecture decision that needs explicit approval.
+  The standard Laravel scaffold files (`package.json`, `vite.config.js`,
+  `tailwind.config.js`, `postcss.config.js`, `resources/js/`, `resources/css/`)
+  nonetheless stay in the repository — see rule 12.

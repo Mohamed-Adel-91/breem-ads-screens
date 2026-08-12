@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\Screens\StoreScreenRequest;
 use App\Http\Requests\Admin\Screens\UpdateScreenRequest;
 use App\Models\Place;
 use App\Models\Screen;
+use App\Services\Screen\DevicePairingService;
 use App\Support\Lang;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -107,7 +108,7 @@ class ScreenController extends Controller
             ->with('success', Lang::t('admin.flash.screens.created', 'Screen created successfully.'));
     }
 
-    public function show(string $lang, Screen $screen): View
+    public function show(string $lang, Screen $screen, DevicePairingService $pairing): View
     {
         $screen->load([
             'place',
@@ -134,8 +135,13 @@ class ScreenController extends Controller
             ScreenStatus::Offline->value => $offlineCount,
         ];
 
+        $credential = $pairing->activeCredential($screen);
+        $livePairingCode = $pairing->livePairingCode($screen);
+
         return view('admin.screens.show', [
             'pageName' => Lang::t('admin.pages.screens.show', 'تفاصيل الشاشة'),
+            'deviceCredential' => $credential,
+            'livePairingCode' => $livePairingCode,
             'lang' => $lang,
             'screen' => $screen,
             'recentLogs' => $recentLogs,
@@ -196,6 +202,46 @@ class ScreenController extends Controller
         return redirect()
             ->route('admin.screens.index', ['lang' => $lang])
             ->with('success', Lang::t('admin.flash.screens.deleted', 'Screen deleted successfully.'));
+    }
+
+    /**
+     * Issue a one-time pairing code so a device can claim this screen.
+     *
+     * The plaintext is flashed once, here; only its hash is persisted.
+     */
+    public function generatePairingCode(string $lang, Screen $screen, DevicePairingService $pairing): RedirectResponse
+    {
+        $result = $pairing->issuePairingCode($screen, Auth::guard('admin')->id());
+
+        activity()
+            ->performedOn($screen)
+            ->causedBy(Auth::guard('admin')->user())
+            ->withProperties(['screen_id' => $screen->id])
+            ->log('Generated screen pairing code');
+
+        return redirect()
+            ->route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id])
+            ->with('pairing_code', $result['code'])
+            ->with('pairing_code_expires_at', $result['expires_at']->toDateTimeString())
+            ->with('success', Lang::t('admin.screens.pairing.code_generated', 'Pairing code generated.'));
+    }
+
+    /**
+     * Revoke this screen's device credentials and retire any live pairing code.
+     */
+    public function resetDevice(string $lang, Screen $screen, DevicePairingService $pairing): RedirectResponse
+    {
+        $pairing->resetDevice($screen);
+
+        activity()
+            ->performedOn($screen)
+            ->causedBy(Auth::guard('admin')->user())
+            ->withProperties(['screen_id' => $screen->id])
+            ->log('Reset screen device credentials');
+
+        return redirect()
+            ->route('admin.screens.show', ['lang' => $lang, 'screen' => $screen->id])
+            ->with('success', Lang::t('admin.screens.pairing.device_reset', 'Device credentials revoked.'));
     }
 
     private function availableStatuses(): array

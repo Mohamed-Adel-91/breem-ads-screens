@@ -29,7 +29,12 @@ return [
         'Content-Type',
         'If-None-Match',
         'X-Client-Id',
-        'X-Screens-Signature',
+        // The signing headers the Device API actually reads. The previous list
+        // carried "X-Screens-Signature", which no code has ever sent or read.
+        'X-Screen-Signature',
+        'X-Screen-Timestamp',
+        'X-Screen-Nonce',
+        'X-Screen-Uid',
     ],
 
     'exposed_headers' => [],

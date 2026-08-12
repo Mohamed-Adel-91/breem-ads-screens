@@ -16,11 +16,11 @@ class ConfigController extends Controller
     ) {}
 
     /**
-     * Return the configuration payload for the screen.
+     * Return the configuration payload for the authenticated screen.
      */
     public function __invoke(ConfigRequest $request): JsonResponse
     {
-        $result = $this->configService->forRequest($request->validated());
+        $result = $this->configService->forScreen($request->authenticatedScreen());
         $etag = $result['etag'] ?? null;
 
         if ($etag && $request->ifNoneMatch() && hash_equals($etag, $request->ifNoneMatch())) {

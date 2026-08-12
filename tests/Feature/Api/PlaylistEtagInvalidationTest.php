@@ -22,6 +22,9 @@ class PlaylistEtagInvalidationTest extends TestCase
     use RefreshDatabase;
     use SignsScreenRequests;
 
+    /** @var array{credential: \App\Models\ScreenDeviceCredential, token: string, secret: string} */
+    private array $deviceCredentials;
+
     public function tearDown(): void
     {
         Carbon::setTestNow();
@@ -29,7 +32,18 @@ class PlaylistEtagInvalidationTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_playlist_etag_changes_after_ad_update(): void
+    /**
+     * The playlist ETag validates the bytes the device receives, not the ad
+     * record's version. The device payload carries media, timing and ordering
+     * only — never the ad title or description — so a title-only edit correctly
+     * leaves the ETag alone and the device keeps its cached copy.
+     *
+     * The original expectation here (title change => new ETag) was written
+     * before routes/api.php was reachable and never ran. It is stale. The title
+     * was deliberately NOT added to the device payload to satisfy it; see
+     * docs/ai/digital-signage.md.
+     */
+    public function test_playlist_etag_is_unchanged_by_an_edit_the_device_never_sees(): void
     {
         Carbon::setTestNow(Carbon::parse('2024-01-01 12:00:00'));
 
@@ -39,11 +53,31 @@ class PlaylistEtagInvalidationTest extends TestCase
 
         $ad->update([
             'title' => ['en' => 'Updated Headline'],
+            'description' => ['en' => 'Rewritten copy'],
         ]);
 
-        $updated = $this->getPlaylistEtag($screen);
+        $this->assertSame(
+            $initial,
+            $this->getPlaylistEtag($screen),
+            'Title and description are not part of the device playlist, so the ETag must hold.'
+        );
+    }
 
-        $this->assertNotSame($initial, $updated, 'Expected playlist ETag to change after updating the ad.');
+    public function test_playlist_etag_changes_when_a_field_the_device_receives_changes(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2024-01-01 12:00:00'));
+
+        [$screen, $ad] = $this->createScreenWithAd();
+
+        $initial = $this->getPlaylistEtag($screen);
+
+        $ad->update(['duration_seconds' => 90]);
+
+        $this->assertNotSame(
+            $initial,
+            $this->getPlaylistEtag($screen),
+            'duration_seconds IS sent to the device, so the ETag must change.'
+        );
     }
 
     public function test_playlist_etag_changes_after_schedule_update(): void
@@ -116,6 +150,8 @@ class PlaylistEtagInvalidationTest extends TestCase
 
         $screen->ads()->attach($ad->id, ['play_order' => 1]);
 
+        $this->deviceCredentials = $this->pairScreen($screen);
+
         $schedule = AdSchedule::create([
             'ad_id' => $ad->id,
             'screen_id' => $screen->id,
@@ -131,9 +167,9 @@ class PlaylistEtagInvalidationTest extends TestCase
     {
         $url = route('api.v1.screens.playlist', ['screen' => $screen->id]);
 
-        $response = $this
-            ->withHeaders($this->signedGetHeaders($url, $screen->device_uid))
-            ->getJson($url);
+        // Time is frozen for these tests, so each call needs a fresh nonce —
+        // deviceGet() generates one per request.
+        $response = $this->deviceGet($url, $this->deviceCredentials);
 
         $response->assertOk();
 

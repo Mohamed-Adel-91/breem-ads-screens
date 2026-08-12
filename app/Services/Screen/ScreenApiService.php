@@ -4,7 +4,6 @@ namespace App\Services\Screen;
 
 use App\Enums\ScreenStatus;
 use App\Models\Screen;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 
 class ScreenApiService
@@ -15,36 +14,17 @@ class ScreenApiService
     }
 
     /**
-     * Handle the initial handshake for a screen.
+     * Build the bootstrap configuration handed to a freshly paired device.
      *
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    public function handshake(array $payload): array
+    public function bootstrapConfig(array $payload = []): array
     {
-        $screen = Screen::query()
-            ->where('code', $payload['code'])
-            ->firstOrFail();
-
-        $deviceUid = data_get($payload, 'device.uid');
-
-        if ($deviceUid && $screen->device_uid !== $deviceUid) {
-            $screen->device_uid = $deviceUid;
-        }
-
-        $screen->status = ScreenStatus::Online;
-        $screen->last_heartbeat = now();
-        $screen->save();
-
-        $config = $this->buildConfigPayload($screen, $payload);
-
         return [
-            'screen' => $screen->fresh(),
-            'config' => $config,
-            'token' => $screen->device_uid,
-            'meta' => [
-                'handshaken_at' => now(),
-            ],
+            "heartbeat_interval" => $this->heartbeatInterval(),
+            "playlist_ttl" => $this->playlistTtl(),
+            "timezone" => data_get($payload, "meta.timezone", config("app.timezone")),
         ];
     }
 
@@ -73,56 +53,6 @@ class ScreenApiService
             'unchanged' => $unchanged,
             'generated_at' => $payload['generated_at'] ?? now(),
             'expires_at' => $payload['expires_at'] ?? now()->addSeconds($this->playlistTtl()),
-        ];
-    }
-
-    /**
-     * Resolve a screen using the provided identifiers.
-     *
-     * @param  array<string, mixed>  $payload
-     */
-    public function resolveScreen(array $payload): Screen
-    {
-        $identifiers = collect([
-            'device_uid' => $payload['device_uid'] ?? null,
-            'code' => $payload['code'] ?? null,
-        ])->filter();
-
-        if ($identifiers->isEmpty()) {
-            throw new ModelNotFoundException(__('Unable to determine the screen for the request.'));
-        }
-
-        if ($identifiers->has('device_uid')) {
-            $screen = Screen::query()
-                ->where('device_uid', $identifiers->get('device_uid'))
-                ->first();
-
-            if ($screen) {
-                return $screen;
-            }
-        }
-
-        if ($identifiers->has('code')) {
-            return Screen::query()
-                ->where('code', $identifiers->get('code'))
-                ->firstOrFail();
-        }
-
-        throw new ModelNotFoundException(__('Screen not found.'));
-    }
-
-    /**
-     * Build the configuration payload returned to devices.
-     *
-     * @param  array<string, mixed>  $payload
-     * @return array<string, mixed>
-     */
-    protected function buildConfigPayload(Screen $screen, array $payload): array
-    {
-        return [
-            'heartbeat_interval' => $this->heartbeatInterval(),
-            'playlist_ttl' => $this->playlistTtl(),
-            'timezone' => data_get($payload, 'meta.timezone', config('app.timezone')),
         ];
     }
 

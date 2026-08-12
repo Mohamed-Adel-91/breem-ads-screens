@@ -2,120 +2,45 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Http\Middleware\EnsureScreenAuthentication;
+use App\Models\Screen;
+use App\Models\ScreenDeviceCredential;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
 
+/**
+ * Base for Device API requests.
+ *
+ * Authentication — token, timestamp, nonce and signature — is enforced by
+ * EnsureScreenAuthentication before validation runs, so these classes only
+ * describe payload shape. Keeping the two apart is why authentication failures
+ * are now 401/403 instead of 422 validation errors.
+ */
 abstract class ApiRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * Configure the validator instance.
+     * The screen this request was authenticated as, when the route is protected.
      */
-    public function withValidator($validator): void
+    public function authenticatedScreen(): ?Screen
     {
-        if (! $validator instanceof Validator) {
-            return;
-        }
+        $screen = $this->attributes->get(EnsureScreenAuthentication::REQUEST_SCREEN);
 
-        $validator->after(function (Validator $validator): void {
-            // Must NOT call $validator->fails() here: fails() re-runs passes(),
-            // which re-runs every after() callback, recursing until the process
-            // exhausts memory. Inside an after() callback the rules have already
-            // executed and the message bag is populated, so inspecting it is the
-            // equivalent, non-re-entrant check.
-            if ($validator->errors()->isNotEmpty()) {
-                return;
-            }
+        return $screen instanceof Screen ? $screen : null;
+    }
 
-            if ($this->expectsTimestamp() && ! $this->hasValidTimestamp()) {
-                $validator->errors()->add('timestamp', __('The timestamp is outside the allowed window.'));
-            }
+    public function deviceCredential(): ?ScreenDeviceCredential
+    {
+        $credential = $this->attributes->get(EnsureScreenAuthentication::REQUEST_CREDENTIAL);
 
-            if ($this->expectsSignature() && ! $this->hasValidSignature()) {
-                $validator->errors()->add('signature', __('Invalid request signature.'));
-            }
-        });
+        return $credential instanceof ScreenDeviceCredential ? $credential : null;
     }
 
     /**
-     * Determine whether the request should be signed.
-     */
-    protected function expectsSignature(): bool
-    {
-        return true;
-    }
-
-    /**
-     * Determine whether the request should validate a timestamp.
-     */
-    protected function expectsTimestamp(): bool
-    {
-        return true;
-    }
-
-    /**
-     * Retrieve the canonical payload that should be signed for the request.
-     */
-    protected function signaturePayload(): string
-    {
-        if (in_array($this->getMethod(), ['GET', 'HEAD', 'OPTIONS'], true)) {
-            return $this->fullUrl();
-        }
-
-        $content = $this->getContent();
-
-        return $content === '' ? $this->fullUrl() : $content;
-    }
-
-    /**
-     * Validate the presence and accuracy of the timestamp parameter.
-     */
-    protected function hasValidTimestamp(): bool
-    {
-        $timestamp = $this->input('timestamp');
-
-        if (! is_numeric($timestamp)) {
-            return false;
-        }
-
-        $timestamp = (int) $timestamp;
-        $allowedSkew = (int) config('services.screens.signature_leeway', 300);
-        $delta = abs(now()->timestamp - $timestamp);
-
-        return $delta <= $allowedSkew;
-    }
-
-    /**
-     * Validate the HMAC signature header for the request.
-     */
-    protected function hasValidSignature(): bool
-    {
-        $secret = (string) config('services.screens.hmac_secret');
-
-        if ($secret === '') {
-            return true;
-        }
-
-        $signature = (string) $this->headers->get('X-Screen-Signature', '');
-
-        if ($signature === '') {
-            return false;
-        }
-
-        $expected = hash_hmac('sha256', $this->signaturePayload(), $secret);
-
-        return hash_equals($expected, $signature);
-    }
-
-    /**
-     * Retrieve the If-None-Match header stripped from quotes.
+     * Retrieve the If-None-Match header stripped of quotes.
      */
     public function ifNoneMatch(): ?string
     {

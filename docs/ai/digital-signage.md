@@ -53,19 +53,43 @@ Device API failure.
 Preserve screen identity, the place relation, the status lifecycle, the
 `device_uid` contract, `last_heartbeat` and the log stream.
 
-`device_uid` is **security-sensitive**: it is how a physical device claims an
-identity. Do not casually reassign, regenerate or expose it.
+`device_uid` is an **inventory identifier, not a credential**. Since Phase 10 it
+authenticates nothing: it records which hardware occupies a screen. Do not
+casually reassign or regenerate it, and do not expose it in a device-facing
+Resource — but do not treat possession of it as proof of anything either.
 
 ## Device security
+
+The current model (Phase 10) is:
+
+- **Pairing** is a one-time code an administrator generates per screen. It is
+  stored hashed, expires after `services.screens.pairing_code_ttl`, and is
+  consumed atomically inside a transaction (`DevicePairingService::claim()`).
+- **Credentials are per device.** Pairing mints a random 32-byte bearer token
+  (stored only as `hash('sha256', $token)`) and a separate random 32-byte HMAC
+  secret (stored encrypted). Both live in `screen_device_credentials`; the model
+  hides them from serialisation.
+- **Every protected request proves four things**: the bearer token, an
+  HMAC-SHA256 signature over the canonical message, a timestamp inside
+  `services.screens.signature_leeway`, and a nonce unused by that credential.
+- **The canonical message** is defined once, in `App\Support\DeviceSignature`,
+  and both the middleware and the tests use it. It is
+  `METHOD\n/path\ncanonical_query\ntimestamp\nnonce\nsha256(body)`, so method,
+  path, query, freshness, uniqueness and body are all bound into the signature.
+- **Replay protection is atomic**: `DeviceReplayGuard::consume()` relies on a
+  unique constraint in `screen_request_nonces`, not a read-then-write check.
+- **`EnsureScreenAuthentication` fails closed** at every step, including when a
+  credential's stored secret is unreadable or empty.
 
 Never, without explicit architecture approval:
 
 - trust a client-supplied device UID as authentication
-- bypass or weaken token/signature validation (`screen.auth` middleware,
-  `services.screens.hmac_secret`)
-- expose a global shared secret to devices
-- silently re-pair a device to a different screen
-- accept replay-prone requests knowingly
+- reintroduce a fleet-wide signing secret — compromising one device must not
+  compromise the fleet
+- store a bearer token in plaintext, or return a stored hash / secret through a
+  Resource
+- silently re-pair an already-paired screen (an administrator reset is required)
+- claim replay protection without an atomic guarantee behind it
 
 ## Advertisements
 
@@ -101,9 +125,10 @@ Output must be deterministic from authoritative state.
 
 ## Playback
 
-`playback_logs` are operational/audit data. When the Device API is hardened,
-validate that the screen exists, the ad exists, the ad is genuinely assigned to
-that screen, and the report belongs to an authenticated context.
+`playback_logs` are operational/audit data. Since Phase 10 a batch is attributed
+to the **authenticated** screen — never to a screen named in the body — and every
+`ad_id` is validated against that screen's assignments, so a device cannot report
+plays for an ad it was never given.
 
 Do not change those semantics outside an approved stabilization phase.
 
@@ -124,48 +149,58 @@ must not recompute status.
 Documented, deliberately unfixed. Do not "fix" these as a side effect of another
 task.
 
-**Device API** — registered since Phase 9; the endpoints below are live.
+**Device API** — registered since Phase 9, hardened in Phase 10. The endpoint
+names below are a **frozen contract**; do not rename them.
 
 | Method | URI | Name | Auth |
 |---|---|---|---|
-| POST | `api/v1/screens/handshake` | `api.v1.screens.handshake` | signature only (no `screen.auth`) |
-| POST | `api/v1/screens/heartbeat` | `api.v1.screens.heartbeat` | `screen.auth` + signature |
-| GET | `api/v1/screens/{screen}/playlist` | `api.v1.screens.playlist` | `screen.auth` + signature |
-| POST | `api/v1/playbacks` | `api.v1.playbacks.store` | `screen.auth` + signature |
-| GET | `api/v1/config` | `api.v1.config.show` | `screen.auth` + signature |
+| POST | `api/v1/screens/handshake` | `api.v1.screens.handshake` | pairing code only (opts out of `screen.auth`) |
+| POST | `api/v1/screens/heartbeat` | `api.v1.screens.heartbeat` | token + signature + timestamp + nonce |
+| GET | `api/v1/screens/{screen}/playlist` | `api.v1.screens.playlist` | token + signature + timestamp + nonce |
+| POST | `api/v1/playbacks` | `api.v1.playbacks.store` | token + signature + timestamp + nonce |
+| GET | `api/v1/config` | `api.v1.config.show` | token + signature + timestamp + nonce |
 
-`{screen}` resolves by **id or code**. All five carry `api` + `throttle:api.v1`
-(120/min, keyed by IP). `bootstrap/app.php` must register `routes/api.php`
-explicitly inside the `using:` closure — a custom `using:` callback makes the
-`api:`, `web:` and `health:` arguments inert.
+`{screen}` resolves by **id or code**, but the credential decides access: a
+credential may only address its own screen (403 `screen_mismatch` otherwise).
 
-Authentication is two independent layers:
+Throttling is split deliberately. The four authenticated routes carry
+`throttle:api.v1` (120/min); the handshake opts out of it and carries
+`throttle:api.v1.handshake` (10/min) instead, so pairing-code guessing cannot
+consume a real device's request budget and a busy device cannot relax the
+guessing limit.
 
-1. `EnsureScreenAuthentication` (`screen.auth`) — accepts a request if **any** of:
-   an `X-Screen-Uid` header matching `screens.device_uid`; a resolvable `{screen}`
-   route parameter; or the mere presence of a `device_uid`/`code` input. A bearer
-   token is copied into request attributes and **never validated**.
-2. `ApiRequest` — HMAC-SHA256 over the raw body (POST) or the full URL (GET),
-   compared against `X-Screen-Signature` using `hash_equals`, keyed by the single
-   global `services.screens.hmac_secret`. POST bodies additionally carry a
-   `timestamp` checked against `signature_leeway` (300 s). GET has no timestamp.
+`bootstrap/app.php` must register `routes/api.php` explicitly inside the `using:`
+closure — a custom `using:` callback makes the `api:`, `web:` and `health:`
+arguments inert.
 
-**Confirmed weaknesses — do not treat the current design as secure:**
-- `hasValidSignature()` returns **true when the secret is empty**, so an unset
-  `SCREENS_HMAC_SECRET` disables signing entirely (fail-open).
-- The HMAC secret is **global**, not per-screen, so any holder can sign for any
-  screen.
-- The handshake **re-pairs an already-paired screen** to whatever `device.uid` is
-  supplied; the `bearer_token` it returns is literally the `device_uid`.
-- The `device_uid` is a bearer-equivalent credential sent in a plain header.
-- **No nonce and no used-signature store**: a captured request is replayable
-  within the leeway window, and a signed GET (no timestamp) is replayable forever.
-- Playback reports are **not validated against the ad↔screen assignment**.
-- `GET /api/v1/config` returns every row of the `settings` table to any
-  authenticated device.
+Authentication is one fail-closed chain in `EnsureScreenAuthentication`, in this
+order, each step returning a distinct machine-readable `error` code:
 
-All of the above are pinned by `tests/Feature/Api/DeviceApiContractTest.php` under
-`test_known_finding_*` names so a fix has to be a deliberate change.
+`missing_token` → `invalid_token` → `revoked_token` / `expired_token` →
+`screen_mismatch` (403) → `stale_timestamp` → `missing_nonce` →
+`invalid_signature` → `replayed_request`.
+
+On success the credential and screen are attached as request attributes; every
+controller reads the screen from there, never from user input.
+
+Tables added in Phase 10, all additive — `screens` was not altered:
+
+| Table | Purpose |
+|---|---|
+| `screen_device_credentials` | per-device `token_hash` (sha256) + encrypted `hmac_secret`, `issued_at`, `last_used_at`, `expires_at`, `revoked_at`. `active_screen_id` is a nullable-unique mirror of `screen_id` that goes NULL on revoke, so the database enforces at most one live credential per screen. |
+| `screen_pairing_codes` | hashed one-time codes with `expires_at` and `consumed_at`. |
+| `screen_request_nonces` | unique(`credential_id`, `nonce`) — the replay guard. Pruned opportunistically. |
+
+Behaviour pinned by `tests/Feature/Api/DeviceApiContractTest.php` (38 tests).
+
+**Remaining Device API limitations** — known, deliberately unfixed:
+- Credentials do not expire by default (`expires_at` is supported and enforced,
+  but pairing leaves it null). There is no rotation endpoint; recovery is an
+  administrator reset plus re-pair.
+- Nonce pruning is opportunistic (1-in-200 requests), not a scheduled job, so
+  `screen_request_nonces` growth is bounded only by traffic on a quiet fleet.
+- The handshake throttle is keyed by IP, so a fleet behind one NAT shares the
+  10/min pairing budget.
 
 **Heartbeat / Monitoring**
 - Acknowledging a monitoring alert sets `last_heartbeat = now()` with no device
@@ -186,8 +221,6 @@ All of the above are pinned by `tests/Feature/Api/DeviceApiContractTest.php` und
 - An `active` ad attached to a screen can play outside every schedule window.
 - `datetime-local` values are parsed in the app timezone; there is no per-screen or
   per-place timezone concept.
-- Schedule create/update/delete does **not** flush the playlist cache, so a cached
-  playlist can outlive a schedule boundary change.
 - No recurring schedules, no location targeting.
 
 **Ads**

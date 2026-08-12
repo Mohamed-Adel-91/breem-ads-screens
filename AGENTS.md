@@ -1,7 +1,7 @@
 # Agent instructions — Breem
 
 Breem is one Laravel 12 monolith: Blade public site + Blade admin dashboard +
-device API. No Node build. Start with [`CLAUDE.md`](CLAUDE.md).
+device API. No Node build in the runtime. Start with [`CLAUDE.md`](CLAUDE.md).
 
 ## Always read before writing code
 
@@ -22,7 +22,11 @@ device API. No Node build. Start with [`CLAUDE.md`](CLAUDE.md).
 
 ## Hard limits
 
-- Do not add Node, Vite, Tailwind or Alpine.
+- Do not wire Node, Vite, Tailwind or Alpine into the runtime. The scaffold files
+  for them stay tracked in the repository — do not delete them either.
+- Do not delete standard Laravel scaffold, framework-convention, developer-tooling
+  or repository-standard configuration files. For those, zero runtime consumers
+  means **retain**, not remove.
 - Do not run `migrate:fresh`, `db:wipe` or `TRUNCATE`, and do not re-seed real content.
 - Do not delete or weaken a test to make the suite pass. A test may only be
   removed when the feature it covers has been removed.

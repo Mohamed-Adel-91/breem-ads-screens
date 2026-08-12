@@ -24,8 +24,8 @@ The ad screens features rely on several long-running services and configuration 
 - **Queue worker** – keep a worker running (for example via Supervisor) with `php artisan queue:work` so playlist updates, asset downloads, and other background jobs are processed promptly.
 - **Scheduler** – execute the scheduler every minute using `* * * * * php /path/to/artisan schedule:run` in cron or trigger it manually with `php artisan schedule:run` to refresh playlists and send heartbeat alerts.
 - **Environment configuration** – review the `.env` file and set the ads-specific variables:
-  - `SCREENS_HMAC_SECRET` – shared secret used to sign requests between the screens and the API.
   - `SCREENS_SIGNATURE_LEEWAY` – number of seconds of clock drift allowed when validating signatures.
+  - `SCREENS_PAIRING_CODE_TTL` – how long a generated device pairing code stays valid, in seconds.
   - `SCREENS_HEARTBEAT_INTERVAL` – expected heartbeat frequency from each screen in seconds.
   - `SCREENS_PLAYLIST_TTL` and `SCREENS_CONFIG_TTL` – cache lifetimes that control how often screens fetch new playlists and configuration.
   - `PLAYLIST_TTL` and `HEARTBEAT_OFFLINE_THRESHOLD` – backend thresholds for playlist caching and marking screens offline.
@@ -48,7 +48,7 @@ Authoritative API contracts, request/response samples, and webhook formats are m
 The solution consists of three cooperating layers:
 
 1. **Laravel Admin (Monolith)** – Hosts the management interface, REST API controllers, background jobs, and scheduler definitions. It persists screen state, playlist manifests, and audit logs in the relational database.
-2. **Android Device Player** – A lightweight Kotlin service that calls the API, validates HMAC-signed payloads using `SCREENS_HMAC_SECRET`, plays back downloaded media, and uploads heartbeats according to `SCREENS_HEARTBEAT_INTERVAL`.
+2. **Android Device Player** – A lightweight Kotlin service that pairs once with an administrator-issued code, stores the bearer token and HMAC secret it receives, signs every subsequent request with that per-device secret, plays back downloaded media, and uploads heartbeats according to `SCREENS_HEARTBEAT_INTERVAL`.
 3. **Media Storage** – Uses Laravel's filesystem abstraction (default `public` disk) for campaign assets. Production deployments can swap in S3-compatible storage by configuring `FILESYSTEM_DISK` and corresponding credentials.
 
 Supporting services include database-backed queues (`QUEUE_CONNECTION=database`), Laravel scheduler-driven tasks (`php artisan schedule:run`), and optional Slack alerts for operations.
@@ -58,7 +58,6 @@ Supporting services include database-backed queues (`QUEUE_CONNECTION=database`)
 ## Prerequisites
 
 - PHP 8.2+ with Composer
-- Node.js 18+ with npm
 - SQLite (default) or MySQL/PostgreSQL for production
 - ffprobe binary (from FFmpeg) for media metadata when `ADS_TRY_FFPROBE=true`
 - Android device(s) running the Breem player build with network connectivity
@@ -70,20 +69,20 @@ Supporting services include database-backed queues (`QUEUE_CONNECTION=database`)
    git clone git@github.com:breem/breem-ads-screens.git
    cd breem-ads-screens
    composer install
-   npm install
    ```
+   No `npm install` is required. The repository keeps the standard Laravel
+   frontend scaffold (`package.json`, `vite.config.js`, `tailwind.config.js`,
+   `postcss.config.js`, `resources/js/`, `resources/css/`), but nothing in the
+   running application consumes it.
 2. **Copy & configure environment**
    ```bash
    cp .env.example .env
    php artisan key:generate
    ```
    Fill in database credentials, storage drivers, and the ads-specific keys outlined below.
-3. **Build front-end assets**
-
-   ```bash
-   npm run build
-   ```
-   During local development you can run `npm run dev` instead.
+3. **Front-end assets** – Nothing to build. Admin assets are served statically
+   from `public/admin-assets/` and the public site from `public/frontend/`; no
+   Blade view references a compiled bundle. Deployment does not run a build step.
 4. **Run migrations & seeders** – See the Seeding section for details.
 5. **Start queues and scheduler** – See the Jobs & Scheduler section.
 6. **Provide device credentials** – Share the generated provisioning codes with Android field teams to enroll devices. API usage details live in `docs/android-device-api.md`.
@@ -93,8 +92,8 @@ Supporting services include database-backed queues (`QUEUE_CONNECTION=database`)
 | Key | Description |
 | --- | --- |
 | `APP_URL` | Base URL served to the Android players for API requests and media downloads. |
-| `SCREENS_HMAC_SECRET` | Shared secret used by Android devices to sign `X-Screens-Signature` headers. |
 | `SCREENS_SIGNATURE_LEEWAY` | Allowed clock skew (seconds) when validating signed requests. |
+| `SCREENS_PAIRING_CODE_TTL` | Lifetime (seconds) of a generated device pairing code. |
 | `SCREENS_HEARTBEAT_INTERVAL` | Expected heartbeat cadence from each device. |
 | `SCREENS_PLAYLIST_TTL` / `SCREENS_CONFIG_TTL` | Cache lifetimes (seconds) for playlist/config endpoints. |
 | `PLAYLIST_TTL` | Backend playlist cache expiration used when recalculating manifests. |
@@ -204,7 +203,7 @@ Operational alerts flow through Slack when `SLACK_WEBHOOK_URL` is populated. If 
 
 | Symptom | Next steps |
 | --- | --- |
-| Devices report `401 Unauthorized` | Confirm `SCREENS_HMAC_SECRET` matches on both admin and Android builds. Verify device clock drift is within `SCREENS_SIGNATURE_LEEWAY`. |
+| Devices report `401 Unauthorized` | Read the `error` field in the body — it names the exact failure (`invalid_token`, `stale_timestamp`, `invalid_signature`, `replayed_request`, `revoked_token`). Clock drift shows as `stale_timestamp`; a reset screen shows as `revoked_token` and must be re-paired. |
 | Devices stuck on fallback media | Ensure playlists are published, queue workers are running, and ffprobe is installed if media durations are missing. |
 | Media 404 errors | Re-run `php artisan storage:link` and confirm the filesystem driver exposes public URLs reachable by the devices. |
 | Slack alerts not firing | Check `SLACK_WEBHOOK_URL`, queue worker logs, and scheduler cron execution. |
@@ -213,7 +212,7 @@ Operational alerts flow through Slack when `SLACK_WEBHOOK_URL` is populated. If 
 # Security notes
 
 - Require HTTPS for all device-to-API traffic and enforce TLS pinning on Android where feasible.
-- Rotate `SCREENS_HMAC_SECRET` periodically and redeploy player builds with the new secret.
+- Signing secrets are per device and are issued at pairing; there is no fleet-wide secret to rotate. To retire a device, reset it from the screen detail page — this revokes its credential immediately — then pair the replacement with a fresh code.
 - Limit admin panel access via SSO or IP allowlists and monitor audit logs.
 - Store ffprobe and media binaries in read-only directories to prevent tampering.
 - Follow Laravel's security updates and apply patches promptly.

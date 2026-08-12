@@ -17,11 +17,14 @@ class PlaybackController extends Controller
     }
 
     /**
-     * Store the playback batch reported by the screen.
+     * Store a playback batch for the authenticated screen.
      */
     public function store(StorePlaybackRequest $request): JsonResponse
     {
-        $result = $this->playbackService->store($request->validated());
+        $result = $this->playbackService->store(
+            $request->authenticatedScreen(),
+            $request->validated()
+        );
 
         return PlaybackResource::make($result)
             ->response()

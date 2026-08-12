@@ -16,8 +16,14 @@ php artisan view:cache && php artisan view:clear
 git diff --check
 ```
 
-**There is no npm, no Vite build and no asset compilation step.** Never tell
-anyone to run one.
+**There is no npm build and no asset compilation step in this project's workflow.**
+Never tell anyone to run one, and never make a test or a deployment depend on one
+— the application installs and runs with Composer alone.
+
+`package.json` and the other Laravel scaffold files *are* tracked in the
+repository (see [frontend-blade.md](frontend-blade.md#scaffold-files-are-not-dead-code)).
+Their presence does not imply a build step, and their being unused is not a
+reason to delete them. `node_modules` is not installed and is not needed.
 
 There is no static analyser and no CI workflow wired to the suite — do not
 reference tools that are not installed.

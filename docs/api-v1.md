@@ -1,6 +1,15 @@
 # Ads API v1 Reference
 
-This document describes the public REST API used by Breem screens and partner integrations. It covers the base URL, authentication scheme, caching headers, endpoint contracts, and guidance for building resilient clients.
+> **⚠️ This document does not describe the API this repository implements.**
+>
+> It specifies a partner-facing product — OAuth 2.0 bearer tokens from a separate
+> auth service, a hosted `api.breemads.com`, and campaign/manifest resources —
+> none of which exist in this codebase. The endpoints, identifiers, headers and
+> authentication scheme below do **not** match `routes/api.php`.
+>
+> For the API this repository actually serves, read
+> [android-device-api.md](android-device-api.md). Kept here only as a record of
+> the intended partner integration; do not implement or test against it.
 
 ## Base URL
 

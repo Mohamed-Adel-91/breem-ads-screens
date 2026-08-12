@@ -2,67 +2,109 @@
 
 namespace Tests\Concerns;
 
+use App\Models\Screen;
+use App\Models\ScreenDeviceCredential;
+use App\Services\Screen\DevicePairingService;
+use App\Support\DeviceSignature;
+use Illuminate\Testing\TestResponse;
+
 /**
- * Produces the headers a paired device must send on Device API requests.
+ * Issues Device API requests the way a paired device does.
  *
- * Mirrors App\Http\Requests\Api\ApiRequest exactly:
- *   - GET/HEAD/OPTIONS sign the full URL
- *   - other verbs sign the raw request body
- *   - the digest is HMAC-SHA256 with services.screens.hmac_secret
- *   - it travels in the X-Screen-Signature header
+ * The canonical message comes from App\Support\DeviceSignature — the same class
+ * the server verifies with — so the protocol has one definition and the tests
+ * cannot drift from the implementation.
  *
- * This helper does not define the protocol; it only lets tests satisfy the
- * protocol the application already implements.
+ * Requests are sent through call() rather than getJson()/postJson because those
+ * helpers always write a JSON body (an empty GET becomes a literal "[]"), which
+ * a real device never sends and which would change the signed body hash.
  */
 trait SignsScreenRequests
 {
-    protected function screenSecret(): string
+    /**
+     * Pair a screen and keep the plaintext credentials for signing.
+     *
+     * @return array{credential: ScreenDeviceCredential, token: string, secret: string}
+     */
+    protected function pairScreen(Screen $screen, ?string $deviceUid = null): array
     {
-        return (string) config('services.screens.hmac_secret');
+        $result = app(DevicePairingService::class)
+            ->issueCredential($screen, $deviceUid ?? $screen->device_uid);
+
+        return [
+            'credential' => $result['credential'],
+            'token' => $result['token'],
+            'secret' => $result['hmac_secret'],
+        ];
     }
 
     /**
-     * Sign a GET-style request, whose canonical payload is the full URL.
+     * Signed GET, exactly as a device sends it: no request body.
      *
+     * @param  array{token: string, secret: string}  $creds
+     * @param  array<string, string>  $overrides  drop or corrupt headers to test failures
+     */
+    protected function deviceGet(string $url, array $creds, array $overrides = []): TestResponse
+    {
+        $headers = $this->signedHeaders('GET', $url, '', $creds, $overrides);
+
+        return $this->call('GET', $url, [], [], [], $this->deviceServerVars($headers), '');
+    }
+
+    /**
+     * Signed POST carrying a JSON body.
+     *
+     * @param  array<string, mixed>  $payload
+     * @param  array{token: string, secret: string}  $creds
+     * @param  array<string, string>  $overrides
+     */
+    protected function devicePost(string $url, array $payload, array $creds, array $overrides = []): TestResponse
+    {
+        $body = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $headers = $this->signedHeaders('POST', $url, $body, $creds, $overrides)
+            + ['Content-Type' => 'application/json'];
+
+        return $this->call('POST', $url, [], [], [], $this->deviceServerVars($headers), $body);
+    }
+
+    /**
+     * @param  array{token: string, secret: string}  $creds
+     * @param  array<string, string>  $overrides
      * @return array<string, string>
      */
-    protected function signedGetHeaders(string $url, ?string $deviceUid = null): array
+    protected function signedHeaders(string $method, string $url, string $body, array $creds, array $overrides = []): array
     {
+        $parts = parse_url($url);
+        $path = $parts['path'] ?? '/';
+        $query = $parts['query'] ?? '';
+
+        $timestamp = $overrides['timestamp'] ?? (string) now()->timestamp;
+        $nonce = $overrides['nonce'] ?? bin2hex(random_bytes(16));
+
+        $message = DeviceSignature::message($method, $path, $query, $timestamp, $nonce, $body);
+
         $headers = [
-            'X-Screen-Signature' => hash_hmac('sha256', $url, $this->screenSecret()),
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer '.($overrides['token'] ?? $creds['token']),
+            DeviceSignature::TIMESTAMP_HEADER => $timestamp,
+            DeviceSignature::NONCE_HEADER => $nonce,
+            DeviceSignature::SIGNATURE_HEADER => $overrides['signature']
+                ?? DeviceSignature::sign($message, $creds['secret']),
         ];
 
-        if ($deviceUid !== null) {
-            $headers['X-Screen-Uid'] = $deviceUid;
+        foreach (($overrides['without'] ?? []) as $drop) {
+            unset($headers[$drop]);
         }
 
         return $headers;
     }
 
     /**
-     * Build a signed JSON request body plus its headers.
-     *
-     * The digest is taken over the exact bytes returned here, and callers send
-     * those same bytes, so the signature matches what the server recomputes from
-     * the raw request content.
-     *
-     * @param  array<string, mixed>  $payload
-     * @return array{0: string, 1: array<string, string>} [rawBody, headers]
+     * @param  array<string, string>  $headers
+     * @return array<string, string>
      */
-    protected function signedJsonBody(array $payload, ?string $deviceUid = null): array
+    protected function deviceServerVars(array $headers): array
     {
-        $body = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-        $headers = [
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            'X-Screen-Signature' => hash_hmac('sha256', $body, $this->screenSecret()),
-        ];
-
-        if ($deviceUid !== null) {
-            $headers['X-Screen-Uid'] = $deviceUid;
-        }
-
-        return [$body, $headers];
+        return $this->transformHeadersToServerVars($headers);
     }
 }

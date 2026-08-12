@@ -169,6 +169,13 @@
             </div>
         </div>
 
+        @include('admin.screens.partials.pairing', [
+            'screen' => $screen,
+            'lang' => $lang,
+            'deviceCredential' => $deviceCredential ?? null,
+            'livePairingCode' => $livePairingCode ?? null,
+        ])
+
         <div class="row">
             <div class="col-lg-6">
                 <div class="card mb-4">

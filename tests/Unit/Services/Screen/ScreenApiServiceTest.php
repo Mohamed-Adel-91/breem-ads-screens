@@ -67,14 +67,21 @@ class ScreenApiServiceTest extends TestCase
         $this->assertTrue($second['unchanged']);
         $this->assertSame($etag, $second['etag']);
 
+        // A title edit is invisible to the device, so the ETag must hold and the
+        // device keeps its cached playlist.
         Carbon::setTestNow($now->copy()->addMinutes(4));
-        $scheduledAd->update([
-            'title' => ['en' => 'Updated Scheduled'],
-        ]);
+        $scheduledAd->update(['title' => ['en' => 'Updated Scheduled']]);
 
         $third = $service->playlist($screen, $etag);
-        $this->assertFalse($third['unchanged']);
-        $this->assertNotSame($etag, $third['etag']);
+        $this->assertTrue($third['unchanged']);
+        $this->assertSame($etag, $third['etag']);
+
+        // duration_seconds IS part of the playlist payload, so it must invalidate.
+        $scheduledAd->update(['duration_seconds' => 77]);
+
+        $fourth = $service->playlist($screen, $etag);
+        $this->assertFalse($fourth['unchanged']);
+        $this->assertNotSame($etag, $fourth['etag']);
     }
 
     /**

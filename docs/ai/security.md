@@ -63,7 +63,10 @@ All managed uploads go through `FileService`:
 
 ## Rate limiting
 
-`RateLimitServiceProvider` defines the `api.v1` limiter used by the device API.
+`RateLimitServiceProvider` defines two device limiters: `api.v1` (120/min) for
+authenticated traffic, and `api.v1.handshake` (10/min) for the unauthenticated
+pairing endpoint. Keep them separate — a shared bucket lets pairing-code guessing
+burn a real device's budget, and lets a busy device relax the guessing limit.
 Admin login is throttled with `throttle:10,1`.
 
 ## Operations endpoints
@@ -88,19 +91,32 @@ silently drops columns.
 
 ## API authentication
 
-Device requests pass through the `screen.auth` middleware
-(`EnsureScreenAuthentication`) using `services.screens.hmac_secret` and
-`signature_leeway`.
+Device requests pass through `screen.auth` (`EnsureScreenAuthentication`), which
+since Phase 10 requires **all four** of: a per-device bearer token, an HMAC-SHA256
+signature, a timestamp within `services.screens.signature_leeway`, and a nonce
+that credential has not used. It fails closed at every step. See
+[digital-signage.md](digital-signage.md) for the canonical message, the error-code
+order and the three supporting tables.
+
+Credential storage rules — these are the invariants, not implementation detail:
+
+- the bearer token is stored **only** as `hash('sha256', $token)`; the plaintext
+  is returned once, at pairing, and never again
+- the HMAC secret is stored **encrypted** (`'encrypted'` cast) and is distinct
+  from the token
+- `ScreenDeviceCredential::$hidden` covers `token_hash` and `hmac_secret`, and no
+  API Resource reads either
+- pairing codes are hashed, single-use and time-limited; consumption is atomic
+- there is **no fleet-wide signing secret** — `SCREENS_HMAC_SECRET` was retired
 
 **Deferred functional security work** — do not redesign these outside an approved
 phase:
 
-- `routes/api.php` is not registered, so no `/api/v1/*` route currently exists
-- HMAC protocol strength and key distribution
-- device pairing and `device_uid` claim lifecycle
-- token lifecycle and rotation
-- replay protection
-- proof-of-play trust (playback reports are not validated against assignment)
+- credential expiry and rotation policy (`expires_at` is enforced but unset at
+  pairing; recovery is an administrator reset plus re-pair)
+- scheduled nonce pruning (currently opportunistic)
+- per-fleet handshake throttling (the pairing limiter is keyed by IP)
+- heartbeat truth, uptime-by-elapsed-time and offline-scheduler redesign
 
 ## Safe remediation policy
 

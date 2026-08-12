@@ -105,6 +105,25 @@ stack the page header, action groups and pagination on small screens.
 
 ## Prohibited
 
-Do not reintroduce **Vite, Tailwind, Alpine or any npm build dependency**. They
-were removed deliberately in Phase 8. Adding one back is an architecture decision
-requiring explicit approval.
+Do not wire **Vite, Tailwind, Alpine or any npm build dependency** into the
+runtime. No `@vite(...)` in any layout or view, no `x-app-layout`/`x-guest-layout`,
+no Alpine directives, no CDN script tags. Admin assets are served statically from
+`public/admin-assets/`, and the application installs and runs with Composer alone
+— production deployment requires no npm step.
+
+## Scaffold files are not dead code
+
+`package.json`, `vite.config.js`, `tailwind.config.js`, `postcss.config.js`,
+`resources/js/` and `resources/css/` **are tracked in the repository and must stay
+there.** They are standard Laravel project scaffold, kept as developer tooling
+structure.
+
+They have zero runtime consumers by design. That is not grounds for deleting them.
+A previous cleanup pass removed them on exactly that reasoning and the project
+owner reversed it — see [architecture.md](architecture.md#preserving-repository-structure).
+
+Restoring these files does **not** mean the admin moves back to a build step. The
+static architecture above remains authoritative; the scaffold simply sits unused.
+
+Adding a build step to the runtime is an architecture decision requiring explicit
+approval. So is removing the scaffold.

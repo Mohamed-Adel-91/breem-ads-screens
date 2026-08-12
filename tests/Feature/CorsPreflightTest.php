@@ -18,7 +18,10 @@ use Tests\TestCase;
  *    real security property is therefore "the requesting origin is not echoed
  *    back", which is what is asserted below.
  *
- * config/cors.php is unchanged — nothing was loosened to make these pass.
+ * Phase 10 replaced the never-used X-Screens-Signature entry with the signing
+ * headers the middleware actually reads. Nothing was loosened: the allow-list
+ * is still explicit and is asserted here in full, so broadening it to "*" — or
+ * quietly adding a header — fails this test.
  */
 class CorsPreflightTest extends TestCase
 {
@@ -29,7 +32,7 @@ class CorsPreflightTest extends TestCase
         $response = $this->withHeaders([
             'Origin' => self::ALLOWED_ORIGIN,
             'Access-Control-Request-Method' => 'POST',
-            'Access-Control-Request-Headers' => 'X-Client-Id, X-Screens-Signature, Authorization',
+            'Access-Control-Request-Headers' => 'X-Client-Id, X-Screen-Signature, Authorization',
         ])->options('/api/v1/screens/handshake');
 
         $response->assertStatus(204);
@@ -38,9 +41,10 @@ class CorsPreflightTest extends TestCase
         $response->assertHeader('Access-Control-Max-Age', '600');
 
         $this->assertSame(
-            'accept, authorization, content-type, if-none-match, x-client-id, x-screens-signature',
+            'accept, authorization, content-type, if-none-match, x-client-id, '
+                .'x-screen-signature, x-screen-timestamp, x-screen-nonce, x-screen-uid',
             strtolower((string) $response->headers->get('Access-Control-Allow-Headers')),
-            'Every header configured in config/cors.php must be advertised.'
+            'Every header configured in config/cors.php must be advertised, and no others.'
         );
     }
 

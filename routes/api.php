@@ -8,18 +8,25 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| Device API (v1)
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
+| Registered by bootstrap/app.php under the `api` prefix, giving /api/v1/*.
+|
+| Every endpoint except the handshake requires a per-device bearer token plus a
+| signed, timestamped, nonced request — see EnsureScreenAuthentication and
+| docs/ai/digital-signage.md. The handshake is unauthenticated by definition and
+| therefore carries a stricter limiter of its own.
 |
 */
 
-
+// screen.auth runs BEFORE the throttle so the limiter can key on the resolved
+// device credential rather than the IP; a whole site behind one NAT address
+// would otherwise share a single bucket. Authentication is one indexed lookup
+// and fails closed immediately, and the unauthenticated handshake keeps its own
+// IP-keyed limiter below.
 Route::prefix('v1')
-    ->middleware(['api', 'throttle:api.v1', 'screen.auth'])
+    ->middleware(['api', 'screen.auth', 'throttle:api.v1'])
     ->group(function (): void {
         Route::bind('screen', function (string $value): Screen {
             return Screen::query()
@@ -30,7 +37,8 @@ Route::prefix('v1')
 
         Route::post('screens/handshake', [ScreenApiController::class, 'handshake'])
             ->name('api.v1.screens.handshake')
-            ->withoutMiddleware(['screen.auth']);
+            ->withoutMiddleware(['screen.auth', 'throttle:api.v1'])
+            ->middleware('throttle:api.v1.handshake');
 
         Route::post('screens/heartbeat', [ScreenApiController::class, 'heartbeat'])
             ->name('api.v1.screens.heartbeat');
@@ -44,4 +52,3 @@ Route::prefix('v1')
         Route::get('config', ConfigController::class)
             ->name('api.v1.config.show');
     });
-

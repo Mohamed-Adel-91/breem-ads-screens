@@ -95,6 +95,13 @@ Route::group([
             Route::get('/{screen}/edit', [ScreenController::class, 'edit'])->name('edit')->middleware('permission:screens.edit');
             Route::put('/{screen}', [ScreenController::class, 'update'])->name('update')->middleware('permission:screens.edit');
             Route::delete('/{screen}', [ScreenController::class, 'destroy'])->name('destroy')->middleware('permission:screens.delete');
+
+            // Device pairing. Re-pairing is an explicit administrator action —
+            // a device can no longer silently claim a screen it already holds.
+            Route::post('/{screen}/pairing-code', [ScreenController::class, 'generatePairingCode'])
+                ->name('pairing.generate')->middleware('permission:screens.edit');
+            Route::delete('/{screen}/device', [ScreenController::class, 'resetDevice'])
+                ->name('pairing.reset')->middleware('permission:screens.edit');
         });
 
         Route::prefix('places')->as('places.')->group(function () {

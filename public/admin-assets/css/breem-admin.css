@@ -908,3 +908,18 @@ body.breem-admin .nav-pills .nav-link.active {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* ---------- Phase 10: one-time device pairing code ---------- */
+
+.breem-admin .admin-pairing-code {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border: 1px dashed var(--breem-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--breem-heading);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    user-select: all;
+}

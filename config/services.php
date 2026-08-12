@@ -33,8 +33,11 @@ return [
     ],
 
     'screens' => [
-        'hmac_secret' => env('SCREENS_HMAC_SECRET'),
+        // Signing secrets are per device and live in screen_device_credentials.
+        // There is deliberately no fleet-wide signing key any more: compromising
+        // one device must not compromise the others.
         'signature_leeway' => env('SCREENS_SIGNATURE_LEEWAY', 300),
+        'pairing_code_ttl' => env('SCREENS_PAIRING_CODE_TTL', 900),
         'heartbeat_interval' => env('SCREENS_HEARTBEAT_INTERVAL', 60),
         'playlist_ttl' => env('SCREENS_PLAYLIST_TTL', 300),
         'config_ttl' => env('SCREENS_CONFIG_TTL', 900),
