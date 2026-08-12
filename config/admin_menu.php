@@ -54,7 +54,9 @@ return [
                     'ads.schedule',
                 ],
                 'active' => [
-                    'admin.ads.index',
+                    // All Ads and Schedules both point at admin.ads.index, so the
+                    // index only activates All Ads when the schedules tab is absent.
+                    ['route' => 'admin.ads.index', 'query' => ['tab' => null]],
                     'admin.ads.create',
                     'admin.ads.edit',
                     'admin.ads.update',
@@ -73,6 +75,7 @@ return [
                 ],
                 'active' => [
                     'admin.ads.schedules.*',
+                    ['route' => 'admin.ads.index', 'query' => ['tab' => 'schedules']],
                 ],
             ],
             [

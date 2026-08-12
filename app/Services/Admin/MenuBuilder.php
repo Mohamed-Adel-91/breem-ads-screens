@@ -147,22 +147,40 @@ class MenuBuilder
         return $parameters;
     }
 
+    /**
+     * An `active` entry is either a route-name pattern, or an array carrying a
+     * pattern plus query-string constraints:
+     *
+     *     'active' => [
+     *         'admin.ads.schedules.*',
+     *         ['route' => 'admin.ads.index', 'query' => ['tab' => 'schedules']],
+     *     ]
+     *
+     * A null constraint value means the parameter must be absent or empty, which
+     * is what lets two siblings share one route and stay mutually exclusive.
+     */
     protected function isItemActive(array $item): bool
     {
-        $patterns = Arr::wrap(Arr::get($item, 'active', []));
+        $rules = Arr::wrap(Arr::get($item, 'active', []));
 
-        if (!empty($item['route'])) {
-            $patterns[] = $item['route'];
+        // The item's own route only acts as an implicit rule when it declares no
+        // explicit `active` list. Otherwise two siblings pointing at the same
+        // route (All Ads / Schedules) would both match that route.
+        if (empty($rules) && !empty($item['route'])) {
+            $rules[] = $item['route'];
         }
 
-        foreach (array_filter($patterns) as $pattern) {
-            if (request()->routeIs($pattern)) {
+        foreach ($rules as $rule) {
+            if ($this->matchesActiveRule($rule)) {
                 return true;
             }
         }
 
+        // URL comparison is the fallback for entries that have no route at all.
+        // Route-backed entries are decided by their patterns above, so a query
+        // string cannot silently re-activate a sibling.
         $url = Arr::get($item, 'url');
-        if ($url && $url !== '#') {
+        if (empty($item['route']) && $url && $url !== '#') {
             if (request()->fullUrlIs($url) || url()->current() === $url) {
                 return true;
             }
@@ -175,6 +193,48 @@ class MenuBuilder
         }
 
         return false;
+    }
+
+    protected function matchesActiveRule(mixed $rule): bool
+    {
+        if (is_string($rule)) {
+            return $rule !== '' && request()->routeIs($rule);
+        }
+
+        if (!is_array($rule)) {
+            return false;
+        }
+
+        $pattern = Arr::get($rule, 'route');
+        if (!$pattern || !request()->routeIs($pattern)) {
+            return false;
+        }
+
+        return $this->matchesQuery(Arr::get($rule, 'query', []));
+    }
+
+    /**
+     * @param  array<string, string|int|null>  $constraints
+     */
+    protected function matchesQuery(array $constraints): bool
+    {
+        foreach ($constraints as $key => $expected) {
+            $actual = request()->query($key);
+
+            if ($expected === null) {
+                if ($actual !== null && $actual !== '') {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if ((string) $actual !== (string) $expected) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     protected function markActiveItems(array $items): array

@@ -60,12 +60,14 @@ class ScreenApiServiceTest extends TestCase
 
         $etag = $first['etag'];
 
-        Carbon::setTestNow($now->copy()->addMinutes(5));
+        // Stay inside services.screens.playlist_ttl (300s) so this exercises the
+        // cache hit rather than TTL expiry, which is what the assertion means.
+        Carbon::setTestNow($now->copy()->addMinutes(3));
         $second = $service->playlist($screen, $etag);
         $this->assertTrue($second['unchanged']);
         $this->assertSame($etag, $second['etag']);
 
-        Carbon::setTestNow($now->copy()->addMinutes(10));
+        Carbon::setTestNow($now->copy()->addMinutes(4));
         $scheduledAd->update([
             'title' => ['en' => 'Updated Scheduled'],
         ]);

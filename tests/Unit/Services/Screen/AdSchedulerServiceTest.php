@@ -139,7 +139,9 @@ class AdSchedulerServiceTest extends TestCase
         $this->assertTrue($payload['generated_at']->eq($now));
         $this->assertTrue($payload['expires_at']->eq($now->copy()->addSeconds(config('services.screens.playlist_ttl'))));
 
-        Carbon::setTestNow($now->copy()->addMinutes(10));
+        // The line above asserts the entry expires at now + playlist_ttl (300s),
+        // so the cache-hit assertion must stay inside that window.
+        Carbon::setTestNow($now->copy()->addMinutes(4));
         $cached = $scheduler->forScreen($screen);
         $this->assertEquals($payload['generated_at'], $cached['generated_at']);
         $this->assertEquals($payload['etag'], $cached['etag']);

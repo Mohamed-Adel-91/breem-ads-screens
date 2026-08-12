@@ -40,7 +40,8 @@ class HeartbeatServiceTest extends TestCase
         $this->assertSame(ScreenStatus::Online, $result['screen']->status);
 
         $this->assertSame('AD-42', $result['log']->current_ad_code);
-        $this->assertSame(ScreenStatus::Online->value, $result['log']->status);
+        // ScreenLog casts `status` to the ScreenStatus enum, so compare enum to enum.
+        $this->assertSame(ScreenStatus::Online, $result['log']->status);
         $this->assertTrue($result['log']->reported_at?->equalTo($now));
     }
 
@@ -65,7 +66,7 @@ class HeartbeatServiceTest extends TestCase
         $this->assertSame(ScreenStatus::Offline, $result['screen']->status);
         $this->assertTrue($result['screen']->last_heartbeat?->equalTo($heartbeatAt));
         $this->assertTrue($result['log']->reported_at?->equalTo($reportedAt));
-        $this->assertSame(ScreenStatus::Offline->value, $result['log']->status);
+        $this->assertSame(ScreenStatus::Offline, $result['log']->status);
     }
 
     public function test_it_returns_null_when_screen_is_missing(): void

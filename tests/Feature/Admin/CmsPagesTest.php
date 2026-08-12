@@ -368,7 +368,12 @@ class CmsPagesTest extends TestCase
         $response->assertRedirect(route('admin.cms.contact.edit', ['lang' => 'en']));
         $response->assertSessionHas('success');
 
-        $bannerSection = PageSection::where('type', 'second_banner')->first();
+        // `second_banner` exists on BOTH the "Who We Are" and "Contact Us" pages,
+        // so this must be scoped to the contact page — an unscoped first() picks
+        // up the Who We Are section and its untouched seeded image path.
+        $bannerSection = PageSection::whereRelation('page', 'slug', 'contact-us')
+            ->where('type', 'second_banner')
+            ->firstOrFail();
         $bannerData = $bannerSection->getTranslation('section_data', 'en', true);
         $this->assertFileExists($this->uploadPath($bannerData['image_path']));
 

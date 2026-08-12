@@ -85,7 +85,7 @@
             Swal.fire({
                 icon: 'error',
                 title: '{{ app()->getLocale() === 'ar' ? 'خطأ في التحقق' : 'Validation Error' }}',
-                html: `{!! implode('<br>', $errors->all()) !!}`,
+                html: `{!! implode('<br>', array_map('e', $errors->all())) !!}`,
             });
         @endif
     })();

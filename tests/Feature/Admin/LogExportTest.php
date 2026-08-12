@@ -62,12 +62,14 @@ class LogExportTest extends TestCase
         $csv = $response->streamedContent();
 
         $response->assertOk();
-        $response->assertHeader('content-type', 'text/csv');
+        // Laravel appends the charset to streamed text responses.
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
 
         $lines = preg_split("/(\r\n|\n|\r)/", trim($csv));
 
         $this->assertNotFalse($lines);
-        $this->assertSame('Screen,Place,Status,Reported At', $lines[0]);
+        // fputcsv() quotes fields containing a space on current PHP versions.
+        $this->assertSame('Screen,Place,Status,"Reported At"', $lines[0]);
         $this->assertCount($totalLogs + 1, $lines);
 
         $selectQueries = collect(DB::getQueryLog())
