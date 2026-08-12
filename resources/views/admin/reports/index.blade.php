@@ -1,196 +1,288 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900">{{ __('Reports') }}</h1>
-                <p class="mt-1 text-sm text-gray-500">{{ __('Generate insights from playback logs and uptime records.') }}</p>
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
+@section('content')
+    @php
+        $indexUrl = route('admin.reports.index', ['lang' => $lang]);
+
+        // Persisted type values are emitted verbatim; only the label is translated.
+        $typeLabel = fn (?string $type) => $type
+            ? \App\Support\Lang::t('admin.reports.types.' . $type, ucfirst(str_replace('-', ' ', $type)))
+            : null;
+
+        $screenLabel = function ($screen) {
+            $label = $screen->code;
+
+            if ($screen->place) {
+                $placeName = data_get($screen->place->getTranslations('name'), app()->getLocale());
+
+                if ($placeName) {
+                    $label .= ' — ' . $placeName;
+                }
+            }
+
+            return $label;
+        };
+
+        $adTitle = fn ($ad) => data_get($ad->getTranslations('title'), app()->getLocale())
+            ?: __('admin.reports.unnamed_ad', ['id' => $ad->id]);
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'subtitle' => __('admin.reports.subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.ads_system')],
+                ['label' => __('admin.sidebar.ads_system_reports')],
+            ],
+        ])
+
+        {{-- Filter card: query parameter names (`search`, `type`) preserved verbatim. --}}
+        <div class="card admin-filter-card mb-4">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ __('admin.reports.filters.heading') }}</h2>
             </div>
-        </div>
-    </x-slot>
-
-    <div class="py-8">
-        <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div class="space-y-8">
-                @include('admin.layouts.legacy.alerts')
-
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                        <h2 class="text-lg font-semibold text-gray-900">{{ __('Filters') }}</h2>
-                    </div>
-                    <div class="px-6 py-6">
-                        <form method="GET" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            <div class="lg:col-span-2">
-                                <label for="search" class="block text-sm font-medium text-gray-700">{{ __('Search') }}</label>
-                                <input id="search" type="text" name="search" value="{{ $filters['search'] ?? '' }}"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                       placeholder="{{ __('Search by name') }}">
+            <div class="card-body">
+                <form method="GET" action="{{ $indexUrl }}">
+                    <div class="row align-items-end">
+                        <div class="col-md-8 col-lg-6">
+                            <div class="form-group">
+                                <label for="search">{{ __('admin.reports.filters.search') }}</label>
+                                <input type="text"
+                                       id="search"
+                                       name="search"
+                                       class="form-control"
+                                       placeholder="{{ __('admin.reports.filters.search_placeholder') }}"
+                                       value="{{ $filters['search'] ?? '' }}">
                             </div>
-                            <div>
-                                <label for="type" class="block text-sm font-medium text-gray-700">{{ __('Type') }}</label>
-                                <select id="type" name="type"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">-- {{ __('All types') }} --</option>
+                        </div>
+                        <div class="col-md-4 col-lg-3">
+                            <div class="form-group">
+                                <label for="type">{{ __('admin.reports.filters.type') }}</label>
+                                <select id="type" name="type" class="form-control">
+                                    <option value="">{{ __('admin.reports.filters.all_types') }}</option>
                                     @foreach ($types as $type)
-                                        <option value="{{ $type }}" @selected(($filters['type'] ?? '') === $type)>{{ ucfirst(str_replace('-', ' ', $type)) }}</option>
+                                        <option value="{{ $type }}" @selected(($filters['type'] ?? '') === $type)>
+                                            {{ $typeLabel($type) }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center justify-end gap-3 pt-2">
-                                <button type="submit"
-                                        class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                                    {{ __('admin.buttons.filter') }}
-                                </button>
-                                <a href="{{ route('admin.reports.index', ['lang' => $lang]) }}"
-                                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                    {{ __('admin.buttons.reset') }}
-                                </a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                @can('reports.generate')
-                    <div class="overflow-hidden rounded-lg bg-white shadow">
-                        <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                            <h2 class="text-lg font-semibold text-gray-900">{{ __('Generate new report') }}</h2>
                         </div>
-                        <div class="px-6 py-6">
-                            <form method="POST" action="{{ route('admin.reports.generate', ['lang' => $lang]) }}" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                @csrf
-                                <div class="lg:col-span-2">
-                                    <label for="name" class="block text-sm font-medium text-gray-700">{{ __('Report name') }}</label>
-                                    <input id="name" type="text" name="name" value="{{ old('name') }}"
-                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                           placeholder="{{ __('Enter a descriptive name') }}">
+
+                        <div class="col-12">
+                            <x-admin.group-btn class="justify-content-end">
+                                <x-admin.btn type="submit" variant="primary" icon="filter">
+                                    {{ __('admin.buttons.filter') }}
+                                </x-admin.btn>
+                                <x-admin.btn :href="$indexUrl" variant="light" icon="rotate-ccw">
+                                    {{ __('admin.buttons.reset') }}
+                                </x-admin.btn>
+                            </x-admin.group-btn>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @can('reports.generate')
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="card-title mb-0">{{ __('admin.reports.generate.heading') }}</h2>
+                </div>
+                <div class="card-body">
+                    {{-- Field names (`name`, `type`, `screen_id`, `ad_id`, `from_date`,
+                         `to_date`) and the persisted `type` values are unchanged. --}}
+                    <form method="POST" action="{{ route('admin.reports.generate', ['lang' => $lang]) }}">
+                        @csrf
+                        <div class="row align-items-end">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="form-group">
+                                    <label for="name">
+                                        {{ __('admin.reports.generate.name') }}
+                                        <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="name"
+                                           name="name"
+                                           required
+                                           placeholder="{{ __('admin.reports.generate.name_placeholder') }}"
+                                           value="{{ old('name') }}"
+                                           @class(['form-control', 'is-invalid' => $errors->has('name')])>
                                     @error('name')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <div>
-                                    <label for="type_select" class="block text-sm font-medium text-gray-700">{{ __('Report type') }}</label>
-                                    <select id="type_select" name="type"
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div class="col-md-6 col-lg-2">
+                                <div class="form-group">
+                                    <label for="type_select">
+                                        {{ __('admin.reports.generate.type') }}
+                                        <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <select id="type_select"
+                                            name="type"
+                                            required
+                                            @class(['form-control', 'is-invalid' => $errors->has('type')])>
                                         @foreach ($types as $type)
-                                            <option value="{{ $type }}" @selected(old('type', $types[0] ?? '') === $type)>{{ ucfirst(str_replace('-', ' ', $type)) }}</option>
+                                            <option value="{{ $type }}"
+                                                @selected(old('type', $types[0] ?? '') === $type)>
+                                                {{ $typeLabel($type) }}
+                                            </option>
                                         @endforeach
                                     </select>
                                     @error('type')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <div>
-                                    <label for="screen_id" class="block text-sm font-medium text-gray-700">{{ __('Screen (optional)') }}</label>
-                                    <select id="screen_id" name="screen_id"
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                        <option value="">-- {{ __('All screens') }} --</option>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="form-group">
+                                    <label for="screen_id">{{ __('admin.reports.generate.screen') }}</label>
+                                    <select id="screen_id"
+                                            name="screen_id"
+                                            @class(['form-control', 'is-invalid' => $errors->has('screen_id')])>
+                                        <option value="">{{ __('admin.reports.generate.all_screens') }}</option>
                                         @foreach ($screens as $screen)
                                             <option value="{{ $screen->id }}" @selected(old('screen_id') == $screen->id)>
-                                                {{ $screen->code }}
-                                                @if ($screen->place)
-                                                    — {{ data_get($screen->place->getTranslations('name'), app()->getLocale()) ?? __('Place #:id', ['id' => $screen->place->id]) }}
-                                                @endif
+                                                {{ $screenLabel($screen) }}
                                             </option>
                                         @endforeach
                                     </select>
                                     @error('screen_id')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <div>
-                                    <label for="ad_id" class="block text-sm font-medium text-gray-700">{{ __('Ad (optional)') }}</label>
-                                    <select id="ad_id" name="ad_id"
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                        <option value="">-- {{ __('All ads') }} --</option>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="form-group">
+                                    <label for="ad_id">{{ __('admin.reports.generate.ad') }}</label>
+                                    <select id="ad_id"
+                                            name="ad_id"
+                                            @class(['form-control', 'is-invalid' => $errors->has('ad_id')])>
+                                        <option value="">{{ __('admin.reports.generate.all_ads') }}</option>
                                         @foreach ($ads as $ad)
-                                            <option value="{{ $ad->id }}" @selected(old('ad_id') == $ad->id)>{{ data_get($ad->getTranslations('title'), app()->getLocale()) ?? __('Ad #:id', ['id' => $ad->id]) }}</option>
+                                            <option value="{{ $ad->id }}" @selected(old('ad_id') == $ad->id)>
+                                                {{ $adTitle($ad) }}
+                                            </option>
                                         @endforeach
                                     </select>
                                     @error('ad_id')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <div>
-                                    <label for="from_date" class="block text-sm font-medium text-gray-700">{{ __('From date') }}</label>
-                                    <input id="from_date" type="date" name="from_date" value="{{ old('from_date') }}"
-                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="form-group">
+                                    <label for="from_date">{{ __('admin.reports.generate.from_date') }}</label>
+                                    <input type="date"
+                                           id="from_date"
+                                           name="from_date"
+                                           dir="ltr"
+                                           value="{{ old('from_date') }}"
+                                           @class(['form-control', 'is-invalid' => $errors->has('from_date')])>
                                     @error('from_date')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <div>
-                                    <label for="to_date" class="block text-sm font-medium text-gray-700">{{ __('To date') }}</label>
-                                    <input id="to_date" type="date" name="to_date" value="{{ old('to_date') }}"
-                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="form-group">
+                                    <label for="to_date">{{ __('admin.reports.generate.to_date') }}</label>
+                                    <input type="date"
+                                           id="to_date"
+                                           name="to_date"
+                                           dir="ltr"
+                                           value="{{ old('to_date') }}"
+                                           @class(['form-control', 'is-invalid' => $errors->has('to_date')])>
                                     @error('to_date')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <div class="sm:col-span-2 lg:col-span-4 flex justify-end">
-                                    <button type="submit"
-                                            class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500">
-                                        {{ __('Generate report') }}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                @endcan
+                            </div>
 
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-                        <h2 class="text-lg font-semibold text-gray-900">{{ __('Existing reports') }}</h2>
-                        <span class="text-sm text-gray-500">{{ $reports->total() }} {{ __('entries') }}</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">#</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Name') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Type') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Generated by') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Created at') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('admin.table.options') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                @forelse ($reports as $report)
-                                    <tr>
-                                        <td class="px-4 py-3 text-gray-500">{{ $loop->iteration + ($reports->currentPage() - 1) * $reports->perPage() }}</td>
-                                        <td class="px-4 py-3 font-medium text-gray-900">{{ $report->name }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ ucfirst(str_replace('-', ' ', $report->type)) }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ optional($report->generator)->name ?? __('System') }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ optional($report->created_at)->format('Y-m-d H:i') }}</td>
-                                        <td class="px-4 py-3">
-                                            <div class="flex flex-wrap gap-2">
-                                                @can('reports.view')
-                                                    <a href="{{ route('admin.reports.show', ['lang' => $lang, 'report' => $report->id]) }}"
-                                                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                                        {{ __('View') }}
-                                                    </a>
-                                                @endcan
-                                                @can('reports.view')
-                                                    <a href="{{ route('admin.reports.download', ['lang' => $lang, 'report' => $report->id]) }}"
-                                                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                                                        {{ __('Download') }}
-                                                    </a>
-                                                @endcan
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500">{{ __('No reports generated yet.') }}</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="border-t border-gray-200 px-6 py-4">
-                        @include('admin.partials.pagination', ['data' => $reports])
-                    </div>
+                            <div class="col-12">
+                                <x-admin.group-btn class="justify-content-end">
+                                    <x-admin.btn type="submit" variant="success" icon="bar-chart-2">
+                                        {{ __('admin.reports.generate.submit') }}
+                                    </x-admin.btn>
+                                </x-admin.group-btn>
+                            </div>
+                        </div>
+                    </form>
                 </div>
+            </div>
+        @endcan
+
+        @include('admin.partials.results-summary', [
+            'data' => $reports,
+            'label' => __('admin.reports.results_label'),
+        ])
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ __('admin.reports.table.heading') }}</h2>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">{{ __('admin.reports.table.name') }}</th>
+                                <th scope="col">{{ __('admin.reports.table.type') }}</th>
+                                <th scope="col">{{ __('admin.reports.table.generated_by') }}</th>
+                                <th scope="col">{{ __('admin.reports.table.created_at') }}</th>
+                                <th scope="col">{{ __('admin.table.options') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($reports as $report)
+                                <tr>
+                                    <th scope="row">{{ ($reports->firstItem() ?? 1) + $loop->index }}</th>
+                                    <td>{{ $report->name }}</td>
+                                    <td>
+                                        <x-admin.badge variant="light">{{ $typeLabel($report->type) }}</x-admin.badge>
+                                    </td>
+                                    <td>{{ $report->generator?->name ?? __('admin.reports.system') }}</td>
+                                    <td dir="ltr">{{ optional($report->created_at)->format('Y-m-d H:i') ?? '—' }}</td>
+                                    <td>
+                                        <x-admin.group-btn>
+                                            @can('reports.view')
+                                                <x-admin.btn
+                                                    :href="route('admin.reports.show', ['lang' => $lang, 'report' => $report->id])"
+                                                    variant="outline-secondary"
+                                                    size="sm"
+                                                    icon="eye">
+                                                    {{ __('admin.reports.actions.view') }}
+                                                </x-admin.btn>
+                                                <x-admin.btn
+                                                    :href="route('admin.reports.download', ['lang' => $lang, 'report' => $report->id])"
+                                                    variant="outline-primary"
+                                                    size="sm"
+                                                    icon="download">
+                                                    {{ __('admin.reports.actions.download') }}
+                                                </x-admin.btn>
+                                            @endcan
+                                        </x-admin.group-btn>
+                                    </td>
+                                </tr>
+                            @empty
+                                @include('admin.partials.empty-state', [
+                                    'colspan' => 6,
+                                    'message' => __('admin.reports.table.empty'),
+                                    'icon' => 'bar-chart-2',
+                                ])
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                @include('admin.partials.pagination', ['data' => $reports, 'variant' => 'static'])
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

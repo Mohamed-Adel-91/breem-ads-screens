@@ -1,140 +1,148 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900">{{ $report->name }}</h1>
-                <p class="mt-1 text-sm text-gray-500">{{ __('Report type:') }} {{ ucfirst(str_replace('-', ' ', $report->type)) }}</p>
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
+@section('content')
+    @php
+        $indexUrl = route('admin.reports.index', ['lang' => $lang]);
+
+        $typeLabel = \App\Support\Lang::t(
+            'admin.reports.types.' . $report->type,
+            ucfirst(str_replace('-', ' ', (string) $report->type))
+        );
+
+        // Row layout follows the stored type. `screen-uptime` has its own columns;
+        // everything else uses the playback layout — the same fallback the CSV
+        // export and the pre-migration view already applied.
+        $isScreenUptime = $report->type === 'screen-uptime';
+        $isKnownType = in_array($report->type, \App\Http\Requests\Admin\Reports\GenerateReportRequest::TYPES, true);
+
+        // Filters are stored JSON; render them defensively without executing anything.
+        $formatFilterValue = function ($value) use (&$formatFilterValue) {
+            if (is_array($value)) {
+                return collect($value)
+                    ->map(function ($item, $key) use (&$formatFilterValue) {
+                        $label = is_string($key) ? ucfirst(str_replace('_', ' ', $key)) . ': ' : '';
+
+                        return $label . $formatFilterValue($item);
+                    })
+                    ->implode(', ');
+            }
+
+            if (is_bool($value)) {
+                return $value ? __('admin.monitoring.show.yes') : __('admin.monitoring.show.no');
+            }
+
+            return (string) $value;
+        };
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $report->name,
+            'subtitle' => __('admin.reports.show_subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.ads_system')],
+                ['label' => __('admin.sidebar.ads_system_reports'), 'url' => $indexUrl],
+                ['label' => $report->name],
+            ],
+            'secondaryAction' => [
+                'href' => $indexUrl,
+                'label' => __('admin.reports.actions.back_to_list'),
+                'icon' => 'arrow-left',
+            ],
+            'primaryAction' => auth('admin')->user()?->can('reports.view')
+                ? [
+                    'href' => route('admin.reports.download', ['lang' => $lang, 'report' => $report->id]),
+                    'label' => __('admin.reports.actions.download_csv'),
+                    'icon' => 'download',
+                ]
+                : null,
+        ])
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title mb-0">{{ __('admin.reports.show.metadata') }}</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0 admin-detail-table">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.reports.table.type') }}</th>
+                                        <td><x-admin.badge variant="light">{{ $typeLabel }}</x-admin.badge></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.reports.show.generated_by') }}</th>
+                                        <td>{{ $report->generator?->name ?? __('admin.reports.system') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.reports.show.created_at') }}</th>
+                                        <td dir="ltr">{{ optional($report->created_at)->format('Y-m-d H:i') ?? '—' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.reports.show.generated_at') }}</th>
+                                        <td dir="ltr">{{ data_get($report->data, 'generated_at') ?? '—' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ __('admin.reports.show.total_records') }}</th>
+                                        <td>{{ data_get($report->data, 'total_logs', count($rows)) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="flex flex-wrap gap-3">
-                @can('reports.view')
-                    <a href="{{ route('admin.reports.index', ['lang' => $lang]) }}"
-                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                        {{ __('Back to reports') }}
-                    </a>
-                @endcan
-                @can('reports.view')
-                    <a href="{{ route('admin.reports.download', ['lang' => $lang, 'report' => $report->id]) }}"
-                       class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                        {{ __('Download CSV') }}
-                    </a>
-                @endcan
-            </div>
-        </div>
-    </x-slot>
 
-    <div class="py-8">
-        <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div class="space-y-8">
-                @include('admin.layouts.legacy.alerts')
-
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="px-6 py-6">
-                        <dl class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">{{ __('Generated by') }}</dt>
-                                <dd class="mt-1 text-base text-gray-900">{{ optional($report->generator)->name ?? __('System') }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">{{ __('Created at') }}</dt>
-                                <dd class="mt-1 text-base text-gray-900">{{ optional($report->created_at)->format('Y-m-d H:i') }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">{{ __('Total records') }}</dt>
-                                <dd class="mt-1 text-base text-gray-900">{{ $report->data['total_logs'] ?? count($rows) }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">{{ __('Generated at') }}</dt>
-                                <dd class="mt-1 text-base text-gray-900">{{ $report->data['generated_at'] ?? '—' }}</dd>
-                            </div>
-                        </dl>
-
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title mb-0">{{ __('admin.reports.show.applied_filters') }}</h2>
+                    </div>
+                    <div class="card-body">
                         @if (!empty($report->filters))
-                            <div class="mt-6">
-                                <h2 class="text-sm font-semibold text-gray-700">{{ __('Applied filters') }}</h2>
-                                @php
-                                    $formatFilterValue = function ($value) use (&$formatFilterValue) {
-                                        if (is_array($value)) {
-                                            return collect($value)
-                                                ->map(function ($item, $key) use (&$formatFilterValue) {
-                                                    $label = is_string($key) ? ucfirst(str_replace('_', ' ', $key)) . ': ' : '';
-
-                                                    return $label . $formatFilterValue($item);
-                                                })
-                                                ->implode(', ');
-                                        }
-
-                                        return (string) $value;
-                                    };
-                                @endphp
-                                <div class="mt-2 flex flex-wrap gap-2">
-                                    @foreach ($report->filters as $key => $value)
-                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                                            {{ ucfirst(str_replace('_', ' ', $key)) }}: {{ $formatFilterValue($value) }}
-                                        </span>
-                                    @endforeach
-                                </div>
+                            <div class="admin-actions">
+                                @foreach ($report->filters as $key => $value)
+                                    <x-admin.badge variant="light" pill>
+                                        {{ ucfirst(str_replace('_', ' ', $key)) }}:
+                                        {{ $formatFilterValue($value) }}
+                                    </x-admin.badge>
+                                @endforeach
                             </div>
+                        @else
+                            <p class="text-muted mb-0">{{ __('admin.reports.show.no_filters') }}</p>
                         @endif
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                        <h2 class="text-lg font-semibold text-gray-900">{{ __('Report data') }}</h2>
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
+                <h2 class="card-title mb-0">{{ __('admin.reports.show.data_heading') }}</h2>
+                <x-admin.badge variant="light">{{ count($rows) }}</x-admin.badge>
+            </div>
+
+            @unless ($isKnownType)
+                <div class="card-body pb-0">
+                    <div class="alert alert-warning mb-0" role="alert">
+                        {{ __('admin.reports.show.unknown_type_notice') }}
                     </div>
-                    <div class="overflow-x-auto">
-                        @php $isScreenUptime = $report->type === 'screen-uptime'; @endphp
-                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                <tr>
-                                    @if ($isScreenUptime)
-                                        <th class="px-4 py-3 text-left">{{ __('Screen ID') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Code') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Place') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Online events') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Offline events') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Last status') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Period start') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Period end') }}</th>
-                                    @else
-                                        <th class="px-4 py-3 text-left">{{ __('Ad ID') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Ad title') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Plays') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Total duration (seconds)') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('Screens') }}</th>
-                                    @endif
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                @forelse ($rows as $row)
-                                    <tr>
-                                        @if ($isScreenUptime)
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['screen_id'] ?? '—' }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['screen_code'] ?? '—' }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['place'] ?? '—' }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['online_events'] ?? 0 }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['offline_events'] ?? 0 }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['last_status'] ?? '—' }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['period_start'] ?? '—' }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['period_end'] ?? '—' }}</td>
-                                        @else
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['ad_id'] ?? '—' }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['ad_title'] ?? '—' }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['plays'] ?? 0 }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $row['total_duration'] ?? 0 }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ implode(', ', $row['screens'] ?? []) }}</td>
-                                        @endif
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="{{ $isScreenUptime ? 8 : 5 }}" class="px-4 py-6 text-center text-sm text-gray-500">{{ __('No data available for this report.') }}</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                </div>
+            @endunless
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    @if ($isScreenUptime)
+                        @include('admin.reports.partials.rows-screen-uptime', ['rows' => $rows])
+                    @else
+                        @include('admin.reports.partials.rows-playback', ['rows' => $rows])
+                    @endif
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

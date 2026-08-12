@@ -1,143 +1,202 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900">{{ __('Monitoring') }}</h1>
-                <p class="mt-1 text-sm text-gray-500">{{ __('Track live screen status, spot alerts, and drill into problem devices.') }}</p>
+@extends('admin.layouts.master')
+
+@section('title', $pageName)
+
+@section('content')
+    @php
+        $indexUrl = route('admin.monitoring.index', ['lang' => $lang]);
+
+        $placeName = fn ($place) => $place
+            ? (data_get($place->getTranslations('name'), app()->getLocale())
+                ?: __('admin.monitoring.unnamed_place', ['id' => $place->id]))
+            : null;
+    @endphp
+
+    <div class="container-fluid">
+        @include('admin.layouts.page-header', [
+            'title' => $pageName,
+            'subtitle' => __('admin.monitoring.subtitle'),
+            'breadcrumbs' => [
+                ['label' => __('admin.sidebar.ads_system')],
+                ['label' => __('admin.sidebar.ads_system_monitoring')],
+            ],
+        ])
+
+        {{-- Filter card: query parameter names (`search`, `status`, `place_id`,
+             `has_alerts`) are preserved verbatim. No new backend filter is offered. --}}
+        <div class="card admin-filter-card mb-4">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{{ __('admin.monitoring.filters.heading') }}</h2>
             </div>
-        </div>
-    </x-slot>
-
-    <div class="py-8">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="space-y-8">
-                @include('admin.layouts.legacy.alerts')
-
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                        <h2 class="text-lg font-semibold text-gray-900">{{ __('Filters') }}</h2>
-                    </div>
-                    <div class="px-6 py-6">
-                        <form method="GET" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                            <div class="lg:col-span-2">
-                                <label for="search" class="block text-sm font-medium text-gray-700">{{ __('Search') }}</label>
-                                <input id="search" type="text" name="search" value="{{ $filters['search'] ?? '' }}"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                       placeholder="{{ __('Search by code or device UID') }}">
+            <div class="card-body">
+                <form method="GET" action="{{ $indexUrl }}">
+                    <div class="row align-items-end">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="form-group">
+                                <label for="search">{{ __('admin.monitoring.filters.search') }}</label>
+                                <input type="text"
+                                       id="search"
+                                       name="search"
+                                       class="form-control"
+                                       placeholder="{{ __('admin.monitoring.filters.search_placeholder') }}"
+                                       value="{{ $filters['search'] ?? '' }}">
                             </div>
-                            <div>
-                                <label for="status" class="block text-sm font-medium text-gray-700">{{ __('Status') }}</label>
-                                <select id="status" name="status"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">-- {{ __('All statuses') }} --</option>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="form-group">
+                                <label for="status">{{ __('admin.monitoring.filters.status') }}</label>
+                                <select id="status" name="status" class="form-control">
+                                    <option value="">{{ __('admin.monitoring.filters.all_statuses') }}</option>
                                     @foreach ($statuses as $value => $label)
-                                        <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>{{ ucfirst(__($label)) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label for="place_id" class="block text-sm font-medium text-gray-700">{{ __('Place') }}</label>
-                                <select id="place_id" name="place_id"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">-- {{ __('All places') }} --</option>
-                                    @foreach ($places as $place)
-                                        <option value="{{ $place->id }}" @selected(($filters['place_id'] ?? '') == $place->id)>
-                                            {{ data_get($place->getTranslations('name'), app()->getLocale()) ?? __('Place #:id', ['id' => $place->id]) }}
+                                        <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>
+                                            {{ \App\Support\Lang::t('admin.screens.statuses.' . $value, $label) }}
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="flex items-center gap-2 pt-6">
-                                <input id="has_alerts" type="checkbox" name="has_alerts" value="1" @checked(($filters['has_alerts'] ?? false))
-                                       class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                <label for="has_alerts" class="text-sm font-medium text-gray-700">{{ __('Show screens with alerts only') }}</label>
-                            </div>
-                            <div class="sm:col-span-2 lg:col-span-5 flex flex-wrap items-center justify-end gap-3 pt-2">
-                                <button type="submit"
-                                        class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-                                    {{ __('admin.buttons.filter') }}
-                                </button>
-                                <a href="{{ route('admin.monitoring.index', ['lang' => $lang]) }}"
-                                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                    {{ __('admin.buttons.reset') }}
-                                </a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach ($summary as $status => $count)
-                        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                            <dt class="text-sm font-medium text-gray-500">{{ ucfirst($status) }}</dt>
-                            <dd class="mt-2 text-2xl font-semibold text-gray-900">{{ $count }}</dd>
                         </div>
-                    @endforeach
-                </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="form-group">
+                                <label for="place_id">{{ __('admin.monitoring.filters.place') }}</label>
+                                <select id="place_id" name="place_id" class="form-control">
+                                    <option value="">{{ __('admin.monitoring.filters.all_places') }}</option>
+                                    @foreach ($places as $place)
+                                        <option value="{{ $place->id }}"
+                                            @selected(($filters['place_id'] ?? '') == $place->id)>
+                                            {{ $placeName($place) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-2">
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox"
+                                           class="custom-control-input"
+                                           id="has_alerts"
+                                           name="has_alerts"
+                                           value="1"
+                                           @checked($filters['has_alerts'] ?? false)>
+                                    <label class="custom-control-label" for="has_alerts">
+                                        {{ __('admin.monitoring.filters.has_alerts') }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
 
-                <div class="overflow-hidden rounded-lg bg-white shadow">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">#</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Code') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Place') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Status') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Last report') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Offline logs (24h)') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('Active schedules') }}</th>
-                                    <th class="px-4 py-3 text-left">{{ __('admin.table.options') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                @forelse ($screens as $screen)
-                                    @php $latestLog = $screen->logs->first(); @endphp
-                                    <tr>
-                                        <td class="px-4 py-3 text-gray-500">{{ $loop->iteration + ($screens->currentPage() - 1) * $screens->perPage() }}</td>
-                                        <td class="px-4 py-3 font-medium text-gray-900">{{ $screen->code }}</td>
-                                        <td class="px-4 py-3 text-gray-700">
-                                            @if ($screen->place)
-                                                {{ data_get($screen->place->getTranslations('name'), app()->getLocale()) ?? __('Place #:id', ['id' => $screen->place->id]) }}
-                                            @else
-                                                —
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <span class="inline-flex rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">{{ ucfirst($screen->status->value ?? '-') }}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-gray-700">
-                                            @if ($latestLog)
-                                                <div class="text-sm font-medium text-gray-900">{{ $latestLog->status->value ?? '-' }}</div>
-                                                <div class="text-xs text-gray-500">{{ optional($latestLog->reported_at)->format('Y-m-d H:i') }}</div>
-                                            @else
-                                                <span class="text-sm text-gray-500">{{ __('No logs') }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-3 text-gray-700">{{ $screen->offline_logs_count }}</td>
-                                        <td class="px-4 py-3 text-gray-700">{{ $screen->active_schedule_count }}</td>
-                                        <td class="px-4 py-3">
-                                            @can('monitoring.view')
-                                                <a href="{{ route('admin.monitoring.screens.show', ['lang' => $lang, 'screen' => $screen->id]) }}"
-                                                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                                                    {{ __('View') }}
-                                                </a>
-                                            @endcan
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="8" class="px-4 py-6 text-center text-sm text-gray-500">{{ __('No screens found for the selected filters.') }}</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                        <div class="col-12">
+                            <x-admin.group-btn class="justify-content-end">
+                                <x-admin.btn type="submit" variant="primary" icon="filter">
+                                    {{ __('admin.buttons.filter') }}
+                                </x-admin.btn>
+                                <x-admin.btn :href="$indexUrl" variant="light" icon="rotate-ccw">
+                                    {{ __('admin.buttons.reset') }}
+                                </x-admin.btn>
+                            </x-admin.group-btn>
+                        </div>
                     </div>
-                    <div class="border-t border-gray-200 px-6 py-4">
-                        @include('admin.partials.pagination', ['data' => $screens])
+                </form>
+            </div>
+        </div>
+
+        {{-- Counters come straight from the controller; Blade never derives status. --}}
+        <div class="row">
+            @foreach ($summary as $status => $count)
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card admin-stat-card mb-4">
+                        <div class="card-body">
+                            <span class="admin-stat-label">
+                                {{ \App\Support\Lang::t('admin.screens.statuses.' . $status, ucfirst($status)) }}
+                            </span>
+                            <span @class([
+                                'admin-stat-value',
+                                'text-success' => $status === 'online',
+                                'text-danger' => $status === 'offline',
+                                'text-warning' => $status === 'maintenance',
+                            ])>{{ $count }}</span>
+                        </div>
                     </div>
                 </div>
+            @endforeach
+        </div>
+
+        @include('admin.partials.results-summary', [
+            'data' => $screens,
+            'label' => __('admin.monitoring.results_label'),
+        ])
+
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">{{ __('admin.monitoring.table.code') }}</th>
+                                <th scope="col">{{ __('admin.monitoring.table.place') }}</th>
+                                <th scope="col">{{ __('admin.monitoring.table.status') }}</th>
+                                <th scope="col">{{ __('admin.monitoring.table.last_report') }}</th>
+                                <th scope="col">{{ __('admin.monitoring.table.offline_logs') }}</th>
+                                <th scope="col">{{ __('admin.monitoring.table.active_schedules') }}</th>
+                                <th scope="col">{{ __('admin.table.options') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($screens as $screen)
+                                @php($latestLog = $screen->logs->first())
+                                <tr>
+                                    <th scope="row">{{ ($screens->firstItem() ?? 1) + $loop->index }}</th>
+                                    <td><code>{{ $screen->code }}</code></td>
+                                    <td>{{ $placeName($screen->place) ?? '—' }}</td>
+                                    <td>
+                                        {{-- Reuses the Screens status badge: one semantic mapping project-wide. --}}
+                                        @include('admin.screens.partials.status-badge', ['status' => $screen->status])
+                                    </td>
+                                    <td>
+                                        @if ($latestLog)
+                                            @include('admin.screens.partials.status-badge', ['status' => $latestLog->status])
+                                            <small class="d-block text-muted" dir="ltr">
+                                                {{ optional($latestLog->reported_at)->format('Y-m-d H:i') ?? '—' }}
+                                            </small>
+                                        @else
+                                            <span class="text-muted">{{ __('admin.monitoring.table.no_logs') }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <x-admin.badge :variant="$screen->offline_logs_count > 0 ? 'danger' : 'secondary'" pill>
+                                            {{ $screen->offline_logs_count }}
+                                        </x-admin.badge>
+                                    </td>
+                                    <td>{{ $screen->active_schedule_count }}</td>
+                                    <td>
+                                        <x-admin.group-btn>
+                                            @can('monitoring.view')
+                                                <x-admin.btn
+                                                    :href="route('admin.monitoring.screens.show', ['lang' => $lang, 'screen' => $screen->id])"
+                                                    variant="outline-secondary"
+                                                    size="sm"
+                                                    icon="eye">
+                                                    {{ __('admin.monitoring.actions.view') }}
+                                                </x-admin.btn>
+                                            @endcan
+                                        </x-admin.group-btn>
+                                    </td>
+                                </tr>
+                            @empty
+                                @include('admin.partials.empty-state', [
+                                    'colspan' => 8,
+                                    'message' => __('admin.monitoring.table.empty'),
+                                    'icon' => 'monitor',
+                                ])
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                @include('admin.partials.pagination', ['data' => $screens, 'variant' => 'static'])
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection
