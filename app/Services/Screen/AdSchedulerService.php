@@ -7,16 +7,73 @@ use App\Models\Ad;
 use App\Models\AdSchedule;
 use App\Models\Screen;
 use App\Support\MediaUrl;
+use App\Support\TimeWindow;
+use Carbon\CarbonInterface;
 use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
+/**
+ * The single authoritative source of playlist eligibility.
+ *
+ * No controller, resource, observer or Blade view may re-derive "is this ad
+ * playable right now" — they all read the payload this service produces.
+ *
+ * ELIGIBILITY (all applicable rules must pass):
+ *   1. the ad is assigned to the screen (ad_screen pivot);
+ *   2. its status is Active;
+ *   3. now is inside the ad's own global window (start_date/end_date);
+ *   4. the schedule policy below permits playback.
+ *
+ * SCHEDULE POLICY, decided per (ad, screen):
+ *   - ZERO schedule rows for that pair  -> always scheduled. Assignment-only ads
+ *     are valid always-on content, still gated by rules 2 and 3.
+ *   - ONE OR MORE rows for that pair    -> playback requires at least one row
+ *     that is `is_active` AND currently contains now. Rows existing but none
+ *     matching means the ad does NOT play. This closes the historical defect
+ *     where an ad with schedules fell back to unscheduled playback outside every
+ *     window.
+ *
+ * Existence is counted over ALL rows, matching only over active ones: an ad
+ * whose only row is inactive is gated and cannot play, because an inactive
+ * schedule contributes nothing to eligibility and must never make an ad
+ * eligible.
+ *
+ * Boundary inclusivity is delegated to App\Support\TimeWindow (start inclusive,
+ * end exclusive) and applies identically to the ad's global window and to
+ * schedule rows. Both constraints apply, so the effective window is their
+ * intersection — a schedule can never extend playback past the ad's own
+ * validity.
+ *
+ * DETERMINISM: one assigned ad yields exactly one playlist item however many
+ * schedule rows match. Items are ordered by pivot `play_order` then ad id, so the
+ * same authoritative state at the same instant always produces the same items,
+ * the same order and the same ETag.
+ */
 class AdSchedulerService
 {
+    /**
+     * Lowest cache lifetime handed to the store, in seconds.
+     */
+    protected const MIN_TTL_SECONDS = 1;
+
     public function __construct(
         private readonly Repository $cache
     ) {
+    }
+
+    /**
+     * The cache key owning a screen's playlist payload. This service owns the
+     * key format; nothing else may compose it by hand.
+     */
+    public static function cacheKeyFor(Screen|int $screen): string
+    {
+        $screenId = $screen instanceof Screen ? $screen->id : $screen;
+
+        return 'playlist:'.(int) $screenId;
     }
 
     /**
@@ -29,32 +86,29 @@ class AdSchedulerService
         $screen = $screen->fresh();
 
         if (!$screen) {
+            $now = now();
+
             return [
                 'screen' => null,
                 'items' => [],
                 'etag' => '',
-                'generated_at' => now(),
-                'expires_at' => now()->addSeconds($this->ttl()),
+                'generated_at' => $now,
+                'expires_at' => $now->copy()->addSeconds($this->ttl()),
             ];
         }
 
-        $key = $this->cacheKey($screen->id);
+        $key = self::cacheKeyFor($screen);
 
         $payload = $this->cache->get($key);
 
-        if (!is_array($payload)) {
+        // A cached payload is only reusable until its own expiry. The store's TTL
+        // is a whole number of seconds, so it cannot land exactly on a schedule
+        // boundary; re-checking `expires_at` here makes the transition exact
+        // regardless of the store's granularity.
+        if (!is_array($payload) || $this->hasExpired($payload)) {
             $payload = $this->buildPayload($screen);
-            $this->cache->put($key, $payload, $this->ttl());
-        } else {
-            $etag = $this->makeEtag($screen, $payload['items'] ?? []);
 
-            if (($payload['etag'] ?? null) !== $etag) {
-                $payload['etag'] = $etag;
-                $payload['generated_at'] = now();
-                $payload['expires_at'] = (clone $payload['generated_at'])->addSeconds($this->ttl());
-
-                $this->cache->put($key, $payload, $this->ttl());
-            }
+            $this->cache->put($key, $payload, $this->cacheSeconds($payload));
         }
 
         return array_merge($payload, [
@@ -69,10 +123,12 @@ class AdSchedulerService
      */
     public function put(Screen $screen, array $payload): void
     {
+        $payload = Arr::except($payload, ['screen']);
+
         $this->cache->put(
-            $this->cacheKey($screen->id),
-            Arr::except($payload, ['screen']),
-            $this->ttl()
+            self::cacheKeyFor($screen),
+            $payload,
+            $this->cacheSeconds($payload)
         );
     }
 
@@ -84,7 +140,7 @@ class AdSchedulerService
         $screenId = $screen instanceof Screen ? $screen->id : $screen;
 
         if ($screenId) {
-            $this->cache->forget($this->cacheKey((int) $screenId));
+            $this->cache->forget(self::cacheKeyFor((int) $screenId));
         }
     }
 
@@ -101,79 +157,91 @@ class AdSchedulerService
     }
 
     /**
+     * The next instant at which this screen's playlist may change because of
+     * time alone, or null when no assigned ad has an upcoming boundary.
+     *
+     * This is the one calculation behind both the payload's `expires_at` and the
+     * cache lifetime; cache code never recomputes it.
+     */
+    public function nextBoundaryFor(Screen $screen, ?CarbonInterface $moment = null): ?Carbon
+    {
+        $moment = $moment ? Carbon::instance($moment) : now();
+
+        return $this->nextBoundary($this->assignedAds($screen), $moment);
+    }
+
+    /**
      * Build the playlist payload for the screen.
      *
      * @return array<string, mixed>
      */
     protected function buildPayload(Screen $screen): array
     {
-        $items = $this->buildItems($screen);
-        $generatedAt = now();
-        $expiresAt = (clone $generatedAt)->addSeconds($this->ttl());
+        $now = now();
+        $ads = $this->assignedAds($screen);
+
+        $items = $this->buildItems($ads, $now);
+        $boundaryAt = $this->nextBoundary($ads, $now);
 
         return [
             'items' => $items,
             'etag' => $this->makeEtag($screen, $items),
-            'generated_at' => $generatedAt,
-            'expires_at' => $expiresAt,
+            'generated_at' => $now,
+            'expires_at' => $this->resolveExpiry($now, $boundaryAt),
         ];
+    }
+
+    /**
+     * Load the ads assigned to the screen together with that screen's schedule
+     * rows.
+     *
+     * Two queries, whatever the number of ads or schedules: the pivot ordering
+     * is applied in SQL and the schedules are constrained to this screen so the
+     * eligibility pass never touches the database.
+     *
+     * @return EloquentCollection<int, Ad>
+     */
+    protected function assignedAds(Screen $screen): EloquentCollection
+    {
+        $screenId = $screen->id;
+
+        $screen->load([
+            'ads' => function ($query): void {
+                $query->withPivot('play_order')
+                    ->orderBy('ad_screen.play_order')
+                    ->orderBy('ads.id');
+            },
+            'ads.schedules' => function ($query) use ($screenId): void {
+                $query->where('screen_id', $screenId)
+                    ->orderBy('start_time')
+                    ->orderBy('id');
+            },
+        ]);
+
+        // A duplicated pivot row must never produce a duplicated playlist item.
+        return $screen->ads->unique('id')->values();
     }
 
     /**
      * Build the playlist items for the screen.
      *
+     * @param  EloquentCollection<int, Ad>  $ads
      * @return array<int, array<string, mixed>>
      */
-    protected function buildItems(Screen $screen): array
+    protected function buildItems(EloquentCollection $ads, Carbon $now): array
     {
-        $screenId = $screen->id;
-
-        $screen->loadMissing([
-            'ads' => function ($query): void {
-                $query->withPivot('play_order')
-                    ->orderBy('ad_screen.play_order');
-            },
-            'ads.schedules' => function ($query) use ($screenId): void {
-                $query->where('screen_id', $screenId)
-                    ->orderBy('start_time');
-            },
-        ]);
-
-        $now = now();
-
-        $eligibleAds = $screen->ads
-            ->filter(fn (Ad $ad) => $this->adIsEligible($ad, $now))
-            ->values();
-
-        $scheduled = $eligibleAds
-            ->map(function (Ad $ad) use ($now) {
-                $schedule = $ad->schedules
-                    ->filter(fn (AdSchedule $schedule) => $this->scheduleIsActive($schedule, $now))
-                    ->sortBy('start_time')
-                    ->first();
-
-                if (!$schedule) {
-                    return null;
-                }
-
-                return $this->makeItem($ad, $schedule);
-            })
+        $items = $ads
+            ->map(fn (Ad $ad) => $this->resolveItem($ad, $now))
             ->filter()
-            ->values();
-
-        $scheduledAdIds = $scheduled->pluck('ad_id')->unique();
-
-        $fallback = $eligibleAds
-            ->reject(fn (Ad $ad) => $scheduledAdIds->contains($ad->id))
-            ->map(fn (Ad $ad) => $this->makeItem($ad, null))
-            ->values();
-
-        $items = $scheduled
-            ->merge($fallback)
-            ->sortBy('play_order')
+            ->sortBy([
+                ['play_order', 'asc'],
+                ['ad_id', 'asc'],
+            ])
             ->values();
 
         if ($items->isEmpty()) {
+            // Fallback content only ever stands in for an empty playlist; it
+            // never plays alongside eligible ads.
             $fallbackItem = $this->makeConfiguredFallbackItem();
 
             if ($fallbackItem) {
@@ -181,13 +249,40 @@ class AdSchedulerService
             }
         }
 
-        return $items
-            ->values()
-            ->all();
+        return $items->values()->all();
     }
 
     /**
-     * Determine if the ad is eligible for playback at the given moment.
+     * Resolve the single playlist item for an assigned ad, or null when the ad
+     * is not eligible at this instant.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function resolveItem(Ad $ad, Carbon $now): ?array
+    {
+        if (!$this->adIsEligible($ad, $now)) {
+            return null;
+        }
+
+        $rows = $ad->schedules;
+
+        // Case A — no schedule rows for this screen: always-on assigned content.
+        if ($rows->isEmpty()) {
+            return $this->makeItem($ad, null);
+        }
+
+        // Case B — rows exist, so a currently matching active row is required.
+        $matching = $rows->filter(fn (AdSchedule $schedule) => $this->scheduleIsActive($schedule, $now));
+
+        if ($matching->isEmpty()) {
+            return null;
+        }
+
+        return $this->makeItem($ad, $this->representativeSchedule($matching));
+    }
+
+    /**
+     * Determine if the ad's own status and global window allow playback.
      */
     protected function adIsEligible(Ad $ad, Carbon $moment): bool
     {
@@ -195,19 +290,14 @@ class AdSchedulerService
             return false;
         }
 
-        if ($ad->start_date && $ad->start_date->greaterThan($moment)) {
-            return false;
-        }
-
-        if ($ad->end_date && $ad->end_date->lessThan($moment)) {
-            return false;
-        }
-
-        return true;
+        return TimeWindow::contains($ad->start_date, $ad->end_date, $moment);
     }
 
     /**
-     * Determine if the schedule is currently active.
+     * Determine if the schedule row is active and currently within its window.
+     *
+     * An inactive row is ignored outright: it can neither grant eligibility nor
+     * shift a boundary.
      */
     protected function scheduleIsActive(AdSchedule $schedule, Carbon $moment): bool
     {
@@ -215,15 +305,117 @@ class AdSchedulerService
             return false;
         }
 
-        if ($schedule->start_time && $schedule->start_time->greaterThan($moment)) {
-            return false;
+        return TimeWindow::contains($schedule->start_time, $schedule->end_time, $moment);
+    }
+
+    /**
+     * Pick the schedule row that represents the ad in the payload when several
+     * match at once.
+     *
+     * Eligibility is boolean, so this choice never affects *whether* the ad
+     * plays — only the schedule metadata the item carries. The order is earliest
+     * end, then earliest start, then lowest id, which is total (ids are unique)
+     * and therefore deterministic.
+     *
+     * @param  Collection<int, AdSchedule>  $matching
+     */
+    protected function representativeSchedule(Collection $matching): AdSchedule
+    {
+        return $matching
+            ->sortBy([
+                ['end_time', 'asc'],
+                ['start_time', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->first();
+    }
+
+    /**
+     * The next instant at which eligibility may change for these ads.
+     *
+     * Ads whose status forbids playback are skipped: no passage of time makes
+     * them eligible, and a status change flushes the cache through AdObserver.
+     * Inactive schedule rows are skipped for the same reason — they contribute
+     * nothing at any instant.
+     *
+     * @param  EloquentCollection<int, Ad>  $ads
+     */
+    protected function nextBoundary(EloquentCollection $ads, Carbon $now): ?Carbon
+    {
+        $moments = [];
+
+        foreach ($ads as $ad) {
+            if ($ad->status !== AdStatus::Active) {
+                continue;
+            }
+
+            $moments[] = $ad->start_date;
+            $moments[] = $ad->end_date;
+
+            foreach ($ad->schedules as $schedule) {
+                if (!$schedule->is_active) {
+                    continue;
+                }
+
+                $moments[] = $schedule->start_time;
+                $moments[] = $schedule->end_time;
+            }
         }
 
-        if ($schedule->end_time && $schedule->end_time->lessThan($moment)) {
-            return false;
+        return TimeWindow::nextBoundaryAfter($moments, $now);
+    }
+
+    /**
+     * When the payload stops being valid: the configured TTL, cut short by the
+     * next scheduling boundary.
+     *
+     * Without the cut, a playlist computed at 09:59:50 for an ad starting at
+     * 10:00:00 would stay authoritative until 10:04:50 — five minutes of a
+     * device showing the wrong content. The same applies in reverse to an ad
+     * about to expire.
+     */
+    protected function resolveExpiry(Carbon $now, ?Carbon $boundaryAt): Carbon
+    {
+        $expiresAt = $now->copy()->addSeconds($this->ttl());
+
+        if ($boundaryAt && $boundaryAt->lessThan($expiresAt)) {
+            // nextBoundary() only ever returns an instant strictly after $now,
+            // so the entry always has a non-zero lifetime.
+            return $boundaryAt->copy();
         }
 
-        return true;
+        return $expiresAt;
+    }
+
+    /**
+     * Whether a cached payload has reached its own expiry.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    protected function hasExpired(array $payload): bool
+    {
+        $expiresAt = $payload['expires_at'] ?? null;
+
+        return $expiresAt instanceof CarbonInterface
+            && now()->greaterThanOrEqualTo($expiresAt);
+    }
+
+    /**
+     * The store lifetime for a payload, derived from its own expiry.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    protected function cacheSeconds(array $payload): int
+    {
+        $expiresAt = $payload['expires_at'] ?? null;
+
+        if (!$expiresAt instanceof CarbonInterface) {
+            return $this->ttl();
+        }
+
+        $seconds = (int) ceil($expiresAt->getTimestamp() - now()->getTimestamp());
+
+        return max(self::MIN_TTL_SECONDS, min($this->ttl(), $seconds));
     }
 
     /**
@@ -336,23 +528,31 @@ class AdSchedulerService
     }
 
     /**
-     * Generate an ETag for the playlist payload.
+     * Generate the ETag for the playlist payload.
+     *
+     * The ETag validates the *playback manifest* the device receives: the stable
+     * screen identity plus the items. It deliberately excludes
+     * `screens.updated_at`, `status` and `last_heartbeat` — a heartbeat is
+     * operational state, not playlist content, and hashing it made every device
+     * re-download an identical manifest on its normal poll cadence.
+     *
+     * `generated_at`/`expires_at` are excluded for the same reason: they are
+     * cache bookkeeping, so including them would give the same state at the same
+     * instant a different ETag on every rebuild.
      *
      * @param  array<int, array<string, mixed>>  $items
      */
     protected function makeEtag(Screen $screen, array $items): string
     {
-        $payload = json_encode($items, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $manifest = json_encode([
+            'screen' => [
+                'id' => $screen->id,
+                'code' => $screen->code,
+            ],
+            'items' => $items,
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-        return sha1($screen->id.'|'.($screen->updated_at?->timestamp ?? 0).'|'.$payload);
-    }
-
-    /**
-     * Resolve the cache key for the playlist entry.
-     */
-    protected function cacheKey(int $screenId): string
-    {
-        return "playlist:{$screenId}";
+        return sha1((string) $manifest);
     }
 
     /**

@@ -74,6 +74,13 @@ Route::group([
             Route::get('/', [AdController::class, 'index'])->name('index')->middleware('permission:ads.view');
             Route::get('/create', [AdController::class, 'create'])->name('create')->middleware('permission:ads.create');
             Route::post('/', [AdController::class, 'store'])->name('store')->middleware('permission:ads.create');
+
+            // Declared ahead of /{ad} so "schedules" is never bound as an ad, and
+            // nested under /schedules/ so the segment cannot collide with an ad id.
+            Route::get('/schedules/overview', [ScheduleController::class, 'overview'])
+                ->name('schedules.overview')
+                ->middleware('permission:ads.view');
+
             Route::get('/{ad}', [AdController::class, 'show'])->name('show')->middleware('permission:ads.view');
             Route::get('/{ad}/edit', [AdController::class, 'edit'])->name('edit')->middleware('permission:ads.edit');
             Route::put('/{ad}', [AdController::class, 'update'])->name('update')->middleware('permission:ads.edit');

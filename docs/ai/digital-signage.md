@@ -106,22 +106,151 @@ created). Both must stay consistent.
 ## Scheduling
 
 One source of truth: `AdSchedulerService`. Do **not** duplicate eligibility logic
-in controllers, views, API Resources or JavaScript.
+in controllers, views, API Resources or JavaScript. `App\Support\TimeWindow` owns
+the single boundary rule that the service, the admin state badge and the overview
+filters all share.
 
-Before touching scheduling, inspect: overlaps, time boundaries, timezone handling,
-`is_active`, fallback behaviour, `play_order`, and cache invalidation.
+### Eligibility matrix
+
+An ad reaches a screen's playlist only when every applicable rule passes.
+
+| Assigned | Status Active | Inside global window | Schedule rows for (ad, screen) | Matching active row now | Eligible |
+|---|---|---|---|---|---|
+| no | — | — | — | — | **no** |
+| yes | no | — | — | — | **no** |
+| yes | yes | no (not started) | — | — | **no** |
+| yes | yes | no (ended) | — | — | **no** |
+| yes | yes | yes | none | n/a | **yes** |
+| yes | yes | yes | ≥1 | yes | **yes** |
+| yes | yes | yes | ≥1 | no | **no** |
+| yes | yes | yes | ≥1, all inactive | no (inactive rows are ignored) | **no** |
+
+Row existence is counted over **all** rows; matching is counted over **active**
+rows only. So an ad whose only row is inactive is gated and cannot play — an
+inactive schedule can never grant eligibility.
+
+### Unscheduled ads
+
+Zero schedule rows for a (ad, screen) pair means **always scheduled**, still
+subject to assignment, status and the ad's global window. Assignment-only ads are
+valid always-on content.
+
+### Ads with schedules
+
+Once rows exist for that pair, the ad plays **only** inside an active one. It never
+falls back to always-on playback outside every window — that was the historical
+defect.
+
+### Inactive schedules
+
+An inactive row means exactly *ignore this row*. It grants no eligibility, moves no
+boundary, and saving one changes nothing else.
+
+### Overlaps
+
+Overlapping windows are **valid** and are never silently resolved.
+
+- **Different ads, same screen** — both are eligible during the overlap and both
+  appear in the playlist. The playlist is the rotation. Saving one ad's schedule
+  must never touch another advertiser's row; `resolveScheduleConflicts()` did that
+  and was removed.
+- **Same ad, same screen** — eligibility is boolean, so several matching rows still
+  produce exactly **one** playlist item. The item's `schedule_id` / `schedule` /
+  `valid_from` / `valid_until` come from one deterministic representative row:
+  earliest `end_time`, then earliest `start_time`, then lowest `id`. That order is
+  total, so the payload is reproducible.
+
+### Both windows apply
+
+The ad's global window and the schedule window are ANDed; the effective window is
+their intersection. Global `Aug 1 → Aug 31` with a schedule `Aug 10 → Sep 10` plays
+`Aug 10 → Aug 31`. A schedule can never extend playback past the ad's own validity.
+
+### Play order
+
+`ad_screen.play_order` is the only ordering source. Items are sorted by
+`play_order` ascending, then `ads.id` ascending — a total order, so the same state
+at the same instant always yields the same sequence. Do not add a competing order
+field.
+
+### Timezone
+
+`config('app.timezone')` is **UTC**, and nothing overrides it. Admin
+`datetime-local` inputs are naive strings parsed in the app timezone, Eloquent
+casts read them back in the same zone, and MySQL stores them unshifted — so schedule
+comparisons are UTC end to end, with no conversion anywhere in the path. **UTC does
+not observe DST**, so there is no DST boundary to model; do not invent one. There is
+still no per-screen or per-place timezone concept.
+
+### Boundary inclusivity
+
+**Start inclusive, end exclusive** — `start <= now < end` — via
+`TimeWindow::contains()`, applied identically to schedule rows and to the ad's
+global window. Adjacent windows `10:00→11:00` and `11:00→12:00` therefore hand over
+cleanly: at exactly 11:00 the first is over and the second is live.
+
+Caveat: the ad's `start_date`/`end_date` come from `type="date"` inputs, so they
+land on midnight. An ad with `end_date = Aug 31` stops at `Aug 31 00:00`, i.e. it
+does not play *during* Aug 31. That was equally true under the previous
+inclusive-to-the-instant comparison; making the end day inclusive would be a
+product change, not a boundary fix. See Deferred functional defects.
 
 ## Playlist
 
 Output must be deterministic from authoritative state.
 
-- Cached per screen under `playlist:{screenId}` for `services.screens.playlist_ttl`
-  seconds.
-- ETag = `sha1(screen_id | screen.updated_at | json(items))`. It covers the
-  **playlist items**, not ad metadata such as the title.
-- Invalidated by `AdObserver`, `AdScheduleObserver` and explicit
-  `flushScreensCache()` calls.
-- Must not N+1. The device must never decide its own eligibility.
+- Cached per screen. `AdSchedulerService::cacheKeyFor()` owns the key format
+  (`playlist:{screenId}`); nothing else may compose it.
+- **Effective lifetime = `min(services.screens.playlist_ttl, time until the next
+  boundary)`.** Boundaries are the assigned ads' `start_date`/`end_date` and their
+  active schedule rows' `start_time`/`end_time`, from
+  `AdSchedulerService::nextBoundaryFor()` — one calculation, not duplicated in
+  cache code. A cached payload also re-checks its own `expires_at` on read, so the
+  transition is exact even though store TTLs are whole seconds. A cached empty
+  playlist can therefore never survive an ad's activation, and an expiring ad can
+  never linger for the rest of the TTL.
+- **ETag = `sha1(json({screen: {id, code}, items}))`.** It validates the bytes the
+  device receives and nothing else. It deliberately excludes `screens.updated_at`,
+  `status` and `last_heartbeat` (operational state, not content — hashing them made
+  every heartbeat force a re-download), and `generated_at`/`expires_at` (cache
+  bookkeeping — including them would give the same state a new ETag on every
+  rebuild).
+- `PlaylistResource` embeds `PlaylistScreenResource` (`id`, `code`), **not** the
+  general `ScreenResource`. The playlist is a playback manifest; monitoring state
+  belongs to the heartbeat response.
+- Invalidation has exactly two owners: **observers** for model writes
+  (`AdObserver`, `AdScheduleObserver` — create/update/delete) and the **calling
+  controller** for pivot writes via `Ad::flushScreensCache()`, because
+  attach/detach/sync fire no model events. Do not add a third path, and never flush
+  the whole cache store.
+- Must not N+1. Generation is three queries — screen refresh, ads with pivot,
+  the screen's schedule rows — flat in the number of ads and schedules.
+- The device must never decide its own eligibility.
+
+### ETag contract
+
+Changes ETag: ad added/removed, assigned/unassigned, media path or type, duration,
+`play_order`, a schedule edit that changes the effective playlist, a global-window
+change that changes it, an active schedule boundary being crossed, fallback content.
+
+Does **not** change ETag: a heartbeat, `last_heartbeat`, monitoring
+acknowledgement, a change to an unrelated screen, or an ad **title**/description
+edit.
+
+The title rule is deliberate and approved: the ETag represents device playlist
+payload semantics, and the title is not in that payload. The title was **not** added
+to the manifest merely to make invalidation fire.
+
+### Fallback
+
+`config('ads.fallback')` stands in **only** when no assigned ad is eligible at that
+instant — future schedule, expired schedule, inactive ad, or no assignment. It never
+plays alongside eligible ads. Its cache entry respects the same boundary rule, so
+the fallback disappears exactly when real content becomes eligible.
+
+Fallback is static configuration read per build (`ADS_FALLBACK_*`). Changing it is a
+deployment plus `config:clear`, not a runtime write — there is deliberately no
+invalidation hook for it.
 
 ## Playback
 
@@ -281,13 +410,6 @@ Behaviour pinned by `tests/Feature/Api/DeviceApiContractTest.php` (38 tests).
 **Heartbeat / Monitoring** — the first four entries below were fixed in Phase 11;
 see the sections above for the resulting contract. What remains:
 
-- **The playlist ETag is invalidated by every heartbeat.** The ETag includes
-  `screens.updated_at`, which every heartbeat bumps, so a device re-downloads an
-  identical manifest on every poll. Not fixable inside Phase 11: `PlaylistResource`
-  embeds `ScreenResource`, whose `status` and `last_heartbeat_at` genuinely do
-  change each heartbeat, so the response bytes really are different and a stable
-  ETag would be a lie. Fixing it means changing the playlist payload — Phase 12's
-  territory. Pinned by `PlaylistEtagHeartbeatInteractionTest`.
 - **Offline alerts are dropped when `ADMIN_EMAIL` is unset.** `CheckScreenHealthJob`
   builds its recipient from `admin.email`; with none configured it returns
   silently. Detection still works — nobody is told. Pinned by
@@ -304,14 +426,20 @@ see the sections above for the resulting contract. What remains:
 - The offline sweep runs every minute regardless of fleet size; there is no
   batching or chunking.
 
-**Scheduling**
-- Saving a schedule deactivates *any* overlapping schedule on the same screen —
-  including schedules belonging to other ads — silently and irreversibly.
-- A schedule submitted as **inactive** still triggers that conflict resolution.
-- An `active` ad attached to a screen can play outside every schedule window.
-- `datetime-local` values are parsed in the app timezone; there is no per-screen or
-  per-place timezone concept.
-- No recurring schedules, no location targeting.
+**Scheduling** — the first three entries were fixed in Phase 12 (silent conflict
+mutation, inactive-submission side effects, and playback outside every window); see
+the Scheduling and Playlist sections above for the resulting contract. What remains:
+
+- The ad's global `start_date`/`end_date` come from `type="date"` inputs, so an
+  `end_date` of `Aug 31` stops playback at `Aug 31 00:00` rather than at the end of
+  that day. Consistent with the documented end-exclusive rule and unchanged in
+  behaviour from earlier phases, but it is not what an operator reading "ends
+  Aug 31" expects. Making the end day inclusive is a product decision.
+- `datetime-local` values are parsed in the app timezone (UTC); there is no
+  per-screen or per-place timezone concept.
+- No recurring schedules (no daily/weekly rules), no location targeting.
+- The schedules overview reads `ad_schedules` directly; it has no index tuned for
+  the `state` filter beyond the existing `(screen_id, start_time, end_time)`.
 
 **Ads**
 - Status is directly editable; there is no approval workflow and `approved_by` is
@@ -321,7 +449,13 @@ see the sections above for the resulting contract. What remains:
 - `determineFileType()` trusts the client filename extension.
 - No upload size limit on the creative.
 - `AdController::update()` never calls `commitReplacedFiles()`, so every replaced
-  creative stays on disk forever.
+  creative stays on disk forever. Re-audited in Phase 12 and **deliberately left
+  alone**: the proven CMS lifecycle (`BasePageContentController::persistContent()`)
+  wraps its writes in a transaction and pairs `commitReplacedFiles()` with
+  `discardUploadedFiles()` on failure. `AdController::update()` is not transactional
+  and has an early `return back()->withErrors(...)` after the upload has already
+  been written (the ffprobe path), which currently leaks the *new* file too. Adding
+  only the commit call would half-fix it, so the whole path belongs to Phase 13.
 - `AdController::destroy()` deletes the creative immediately after `delete()`
   without the deferred-commit protection.
 - `resolveDurationSeconds()` is dead code; the logic is inlined twice.

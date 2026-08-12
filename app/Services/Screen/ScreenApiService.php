@@ -4,7 +4,6 @@ namespace App\Services\Screen;
 
 use App\Enums\ScreenStatus;
 use App\Models\Screen;
-use Illuminate\Support\Collection;
 
 class ScreenApiService
 {
@@ -41,10 +40,11 @@ class ScreenApiService
         $items = collect($payload['items'] ?? []);
         $screenModel = $payload['screen'] ?? $screen->fresh();
 
-        $etag = (string) ($payload['etag'] ?? ($screenModel
-            ? $this->makePlaylistEtag($screenModel, $items)
-            : sha1($items->toJson(JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE))));
-        $unchanged = $ifNoneMatch && hash_equals($etag, $ifNoneMatch);
+        // AdSchedulerService owns the ETag: it is the only component that knows
+        // what the manifest contains. Recomputing it here once produced a second,
+        // subtly different hash for the same payload.
+        $etag = (string) ($payload['etag'] ?? '');
+        $unchanged = $ifNoneMatch && $etag !== '' && hash_equals($etag, $ifNoneMatch);
 
         return [
             'screen' => $screenModel,
@@ -54,16 +54,6 @@ class ScreenApiService
             'generated_at' => $payload['generated_at'] ?? now(),
             'expires_at' => $payload['expires_at'] ?? now()->addSeconds($this->playlistTtl()),
         ];
-    }
-
-    /**
-     * Generate an ETag for the playlist payload.
-     */
-    protected function makePlaylistEtag(Screen $screen, Collection $items): string
-    {
-        $payload = $items->toJson(JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-        return sha1($screen->id.'|'.$screen->updated_at?->timestamp.'|'.$payload);
     }
 
     /**

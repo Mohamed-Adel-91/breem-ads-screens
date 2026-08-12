@@ -134,16 +134,34 @@ class AdminMenuActiveStateTest extends TestCase
         $this->assertExactlyOneActiveChild($group, 'ads_system_all_ads', "/{$locale}/admin-panel/ads");
     }
 
+    /**
+     * The Schedules entry now opens a real page of its own. It used to point at
+     * `/ads?tab=schedules`, a parameter AdController never read.
+     */
     #[DataProvider('localeProvider')]
-    public function test_schedules_tab_activates_only_schedules(string $locale): void
+    public function test_the_schedules_overview_activates_only_schedules(string $locale): void
     {
-        $group = $this->groupAfterVisiting("/{$locale}/admin-panel/ads?tab=schedules", 'ads_system');
+        $url = route('admin.ads.schedules.overview', ['lang' => $locale]);
+
+        $group = $this->groupAfterVisiting($url, 'ads_system');
 
         $this->assertTrue($group['is_open'], 'Ads System must stay open.');
 
+        $this->assertExactlyOneActiveChild($group, 'ads_system_schedules', $url);
+    }
+
+    /**
+     * A bookmark on the retired placeholder must still resolve sensibly: it is
+     * the ads index, so All Ads owns it and nothing is left with zero highlights.
+     */
+    #[DataProvider('localeProvider')]
+    public function test_the_retired_schedules_tab_query_activates_all_ads(string $locale): void
+    {
+        $group = $this->groupAfterVisiting("/{$locale}/admin-panel/ads?tab=schedules", 'ads_system');
+
         $this->assertExactlyOneActiveChild(
             $group,
-            'ads_system_schedules',
+            'ads_system_all_ads',
             "/{$locale}/admin-panel/ads?tab=schedules"
         );
     }
@@ -234,7 +252,7 @@ class AdminMenuActiveStateTest extends TestCase
     public function test_rendered_sidebar_marks_only_one_ads_child_link_active(string $locale): void
     {
         $allAdsUrl = route('admin.ads.index', ['lang' => $locale]);
-        $schedulesUrl = $allAdsUrl . '?tab=schedules';
+        $schedulesUrl = route('admin.ads.schedules.overview', ['lang' => $locale]);
 
         $cases = [
             $allAdsUrl => ['active' => $allAdsUrl, 'inactive' => $schedulesUrl],
@@ -274,6 +292,7 @@ class AdminMenuActiveStateTest extends TestCase
             '/en/admin-panel',
             '/en/admin-panel/ads',
             '/en/admin-panel/ads?tab=schedules',
+            '/en/admin-panel/ads/schedules/overview',
             '/en/admin-panel/ads/' . $this->ad->id . '/schedules',
             '/en/admin-panel/screens',
             '/en/admin-panel/places',
@@ -282,6 +301,7 @@ class AdminMenuActiveStateTest extends TestCase
             '/en/admin-panel/logs',
             '/ar/admin-panel/ads',
             '/ar/admin-panel/ads?tab=schedules',
+            '/ar/admin-panel/ads/schedules/overview',
         ];
 
         foreach ($urls as $url) {

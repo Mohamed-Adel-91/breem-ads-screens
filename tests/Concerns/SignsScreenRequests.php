@@ -43,10 +43,15 @@ trait SignsScreenRequests
      *
      * @param  array{token: string, secret: string}  $creds
      * @param  array<string, string>  $overrides  drop or corrupt headers to test failures
+     * @param  array<string, string>  $extraHeaders  additional headers (e.g. If-None-Match).
+     *                                              These sit outside the signed message —
+     *                                              DeviceSignature covers method, path, query,
+     *                                              timestamp, nonce and body only — so adding
+     *                                              them cannot mask a signature failure.
      */
-    protected function deviceGet(string $url, array $creds, array $overrides = []): TestResponse
+    protected function deviceGet(string $url, array $creds, array $overrides = [], array $extraHeaders = []): TestResponse
     {
-        $headers = $this->signedHeaders('GET', $url, '', $creds, $overrides);
+        $headers = $this->signedHeaders('GET', $url, '', $creds, $overrides) + $extraHeaders;
 
         return $this->call('GET', $url, [], [], [], $this->deviceServerVars($headers), '');
     }

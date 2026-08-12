@@ -25,9 +25,10 @@ use Tests\TestCase;
  * hidden `is_active=0` companion field in both forms — no controller, request,
  * route or scheduling rule was touched.
  *
- * NOTE — deliberately NOT changed here: conflict resolution still runs for a
- * schedule submitted as inactive, deactivating overlapping schedules. That is
- * asserted below to pin it, and remains a deferred scheduling defect.
+ * UPDATED in Phase 12 — the conflict-resolution defect noted here is fixed.
+ * Saving a schedule no longer deactivates overlapping rows, so the two tests at
+ * the end of this file now assert that neighbouring schedules are left untouched
+ * whether the submission is active or inactive.
  */
 class ScheduleActivationTest extends TestCase
 {
@@ -211,10 +212,11 @@ class ScheduleActivationTest extends TestCase
     }
 
     /**
-     * Pins the KNOWN DEFECT: submitting an INACTIVE schedule still runs conflict
-     * resolution and deactivates overlapping schedules. Deferred, not fixed.
+     * Phase 12 — the deferred defect is fixed: submitting a schedule, inactive or
+     * not, no longer runs conflict resolution and so leaves overlapping rows
+     * exactly as they were.
      */
-    public function test_known_defect_an_inactive_submission_still_deactivates_overlaps(): void
+    public function test_an_inactive_submission_leaves_overlapping_schedules_alone(): void
     {
         $existing = AdSchedule::create([
             'ad_id' => $this->ad->id,
@@ -229,9 +231,36 @@ class ScheduleActivationTest extends TestCase
             'end_time' => now()->addDays(4)->startOfHour()->format('Y-m-d\TH:i'),
         ]));
 
-        $this->assertFalse(
+        $this->assertTrue(
             $existing->fresh()->is_active,
-            'Deferred defect: an inactive submission still deactivates overlapping schedules.'
+            'Saving an inactive schedule must not touch any other schedule row.'
+        );
+    }
+
+    /**
+     * The same guarantee for an ACTIVE submission: an overlap is legitimate
+     * digital signage, not a conflict to resolve behind the admin's back.
+     */
+    public function test_an_active_submission_leaves_overlapping_schedules_alone(): void
+    {
+        $existing = AdSchedule::create([
+            'ad_id' => $this->ad->id,
+            'screen_id' => $this->screen->id,
+            'start_time' => now()->addDay()->startOfHour(),
+            'end_time' => now()->addDays(3)->startOfHour(),
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->admin, 'admin')->post($this->storeUrl(), $this->payload(true, [
+            'start_time' => now()->addDays(2)->startOfHour()->format('Y-m-d\TH:i'),
+            'end_time' => now()->addDays(4)->startOfHour()->format('Y-m-d\TH:i'),
+        ]));
+
+        $this->assertTrue($existing->fresh()->is_active);
+        $this->assertSame(
+            2,
+            AdSchedule::where('screen_id', $this->screen->id)->where('is_active', true)->count(),
+            'Both overlapping windows must remain active.'
         );
     }
 }

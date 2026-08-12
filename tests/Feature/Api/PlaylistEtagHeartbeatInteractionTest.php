@@ -16,28 +16,24 @@ use Tests\Concerns\SignsScreenRequests;
 use Tests\TestCase;
 
 /**
- * DOCUMENTED DEFECT — the playlist ETag is invalidated by every heartbeat.
+ * Phase 12 — a heartbeat must not invalidate the playlist ETag.
  *
- * The ETag is `sha1(screen.id | screen.updated_at | json(items))`, and every
- * heartbeat writes `screens.status` / `screens.last_heartbeat`, which bumps
- * `updated_at`. A device that heartbeats on its normal cadence therefore never
- * gets a 304 for its playlist: it re-downloads the whole manifest on every poll
- * even when nothing about its content changed.
+ * Phase 11 documented the defect: the ETag was
+ * `sha1(screen.id | screen.updated_at | json(items))`, and every heartbeat writes
+ * `screens.status` / `screens.last_heartbeat`, bumping `updated_at`. A device on
+ * its normal cadence therefore never got a 304 and re-downloaded an identical
+ * manifest on every poll.
  *
- * This is a bandwidth defect, not a correctness one — the playlist served is
- * always right. It is NOT fixed here because the honest fixes both reach outside
- * Phase 11's scope:
+ * Both halves of the honest fix are now in place, and the fix is a real one — not
+ * an ignored mismatch:
  *
- *   - drop `updated_at` from the ETag: wrong on its own, because
- *     PlaylistResource embeds ScreenResource, which carries `status` and
- *     `last_heartbeat_at`. Those really do change on every heartbeat, so the
- *     response bytes genuinely differ and a stable ETag would be a lie.
- *   - remove the live fields from the playlist's screen block: a Device API
- *     contract change, and Phase 11 is explicitly forbidden from redesigning the
- *     playlist.
+ *   - PlaylistResource embeds PlaylistScreenResource (id + code), so the response
+ *     bytes no longer carry heartbeat-driven telemetry;
+ *   - AdSchedulerService hashes only that stable screen identity plus the items,
+ *     so the ETag describes exactly the bytes the device receives.
  *
- * Recommended for Phase 12, which owns playlist and cache-boundary correctness.
- * This test pins the current behaviour so the eventual fix is deliberate.
+ * The tests below pin both: identical bytes AND an identical ETag across a
+ * heartbeat, which together make the 304 legitimate.
  */
 class PlaylistEtagHeartbeatInteractionTest extends TestCase
 {
@@ -108,7 +104,7 @@ class PlaylistEtagHeartbeatInteractionTest extends TestCase
         );
     }
 
-    public function test_a_heartbeat_invalidates_the_playlist_etag(): void
+    public function test_a_heartbeat_does_not_change_the_playlist_etag(): void
     {
         Carbon::setTestNow($now = Carbon::create(2026, 7, 1, 12, 0, 0));
 
@@ -123,11 +119,57 @@ class PlaylistEtagHeartbeatInteractionTest extends TestCase
 
         $after = $this->playlistEtag($screen->fresh(), $creds);
 
-        $this->assertNotSame(
+        $this->assertSame(
             $before,
             $after,
-            'Documented defect: a heartbeat bumps screens.updated_at, which is part of the playlist ETag.'
+            'A heartbeat is operational state, not playlist content: the ETag must hold.'
         );
+    }
+
+    /**
+     * The ETag is only honest if the bytes really are identical — a stable hash
+     * over a changing body would just be an ignored mismatch.
+     */
+    public function test_the_playlist_screen_block_carries_no_heartbeat_telemetry(): void
+    {
+        Carbon::setTestNow($now = Carbon::create(2026, 7, 1, 12, 0, 0));
+
+        $screen = $this->makeScreenWithAd();
+        $creds = $this->pairScreen($screen);
+        $url = route('api.v1.screens.playlist', ['screen' => $screen->id]);
+
+        $before = $this->deviceGet($url, $creds)->json('data');
+
+        $this->assertSame(['id', 'code'], array_keys($before['screen']));
+
+        Carbon::setTestNow($now->copy()->addSeconds(60));
+        $this->devicePost('/api/v1/screens/heartbeat', ['status' => 'online'], $creds)->assertOk();
+
+        $after = $this->deviceGet($url, $creds)->json('data');
+
+        $this->assertSame($before['screen'], $after['screen']);
+        $this->assertSame($before['items'], $after['items']);
+    }
+
+    /**
+     * The end-to-end payoff: the device's conditional request is answered with a
+     * 304 instead of a full manifest.
+     */
+    public function test_a_conditional_request_gets_a_304_across_a_heartbeat(): void
+    {
+        Carbon::setTestNow($now = Carbon::create(2026, 7, 1, 12, 0, 0));
+
+        $screen = $this->makeScreenWithAd();
+        $creds = $this->pairScreen($screen);
+        $url = route('api.v1.screens.playlist', ['screen' => $screen->id]);
+
+        $etag = $this->playlistEtag($screen, $creds);
+
+        Carbon::setTestNow($now->copy()->addSeconds(60));
+        $this->devicePost('/api/v1/screens/heartbeat', ['status' => 'online'], $creds)->assertOk();
+
+        $this->deviceGet($url, $creds, [], ['If-None-Match' => '"'.$etag.'"'])
+            ->assertStatus(304);
     }
 
     public function test_the_playlist_content_itself_is_unchanged_by_a_heartbeat(): void

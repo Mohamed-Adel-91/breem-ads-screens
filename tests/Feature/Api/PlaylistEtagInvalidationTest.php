@@ -80,6 +80,85 @@ class PlaylistEtagInvalidationTest extends TestCase
         );
     }
 
+    public function test_playlist_etag_changes_when_the_creative_is_replaced(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2024-01-01 12:00:00'));
+
+        [$screen, $ad] = $this->createScreenWithAd();
+
+        $initial = $this->getPlaylistEtag($screen);
+
+        $ad->update(['file_path' => 'upload/ads/replacement.mp4']);
+
+        $this->assertNotSame(
+            $initial,
+            $this->getPlaylistEtag($screen),
+            'file_path and file_url are sent to the device, so the ETag must change.'
+        );
+    }
+
+    public function test_playlist_etag_changes_when_the_media_type_changes(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2024-01-01 12:00:00'));
+
+        [$screen, $ad] = $this->createScreenWithAd();
+
+        $initial = $this->getPlaylistEtag($screen);
+
+        $ad->update(['file_type' => 'image']);
+
+        $this->assertNotSame($initial, $this->getPlaylistEtag($screen));
+    }
+
+    public function test_playlist_etag_changes_when_the_play_order_changes(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2024-01-01 12:00:00'));
+
+        [$screen, $ad] = $this->createScreenWithAd();
+
+        $initial = $this->getPlaylistEtag($screen);
+
+        // Pivot writes fire no model event, so the caller flushes.
+        $screen->ads()->updateExistingPivot($ad->id, ['play_order' => 9]);
+        $ad->flushScreensCache([$screen->id]);
+
+        $this->assertNotSame(
+            $initial,
+            $this->getPlaylistEtag($screen),
+            'play_order is part of the manifest the device plays.'
+        );
+    }
+
+    /**
+     * An unrelated screen's manifest is untouched, so its validator must hold —
+     * the ETag is per-screen, not global.
+     */
+    public function test_an_unrelated_screen_keeps_its_playlist_etag(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2024-01-01 12:00:00'));
+
+        [$screen, $ad] = $this->createScreenWithAd();
+
+        $unrelated = Screen::create([
+            'place_id' => $screen->place_id,
+            'code' => 'screen-'.Str::random(8),
+            'device_uid' => 'device-'.Str::random(8),
+            'status' => ScreenStatus::Online,
+            'last_heartbeat' => now(),
+        ]);
+
+        // Each screen signs with its own credential; keep both and swap.
+        $unrelatedCredentials = $this->pairScreen($unrelated);
+
+        $this->deviceCredentials = $unrelatedCredentials;
+        $before = $this->getPlaylistEtag($unrelated);
+
+        // The change touches only the other screen's manifest.
+        $ad->update(['duration_seconds' => 120]);
+
+        $this->assertSame($before, $this->getPlaylistEtag($unrelated));
+    }
+
     public function test_playlist_etag_changes_after_schedule_update(): void
     {
         Carbon::setTestNow(Carbon::parse('2024-01-01 12:00:00'));

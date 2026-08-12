@@ -54,9 +54,9 @@ return [
                     'ads.schedule',
                 ],
                 'active' => [
-                    // All Ads and Schedules both point at admin.ads.index, so the
-                    // index only activates All Ads when the schedules tab is absent.
-                    ['route' => 'admin.ads.index', 'query' => ['tab' => null]],
+                    // Schedules now has a route of its own, so the ads index
+                    // unambiguously belongs to All Ads — no query constraint needed.
+                    'admin.ads.index',
                     'admin.ads.create',
                     'admin.ads.edit',
                     'admin.ads.update',
@@ -68,14 +68,13 @@ return [
             [
                 'key' => 'ads_system_schedules',
                 'title' => 'admin.sidebar.ads_system_schedules',
-                'route' => 'admin.ads.index',
+                // Was admin.ads.index?tab=schedules — an inert placeholder, since
+                // AdController never read `tab` and simply rendered the ads list.
+                'route' => 'admin.ads.schedules.overview',
                 'permission' => 'ads.view',
-                'query' => [
-                    'tab' => 'schedules',
-                ],
                 'active' => [
+                    // Covers both the overview and the per-ad schedule pages.
                     'admin.ads.schedules.*',
-                    ['route' => 'admin.ads.index', 'query' => ['tab' => 'schedules']],
                 ],
             ],
             [

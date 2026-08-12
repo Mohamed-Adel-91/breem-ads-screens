@@ -145,12 +145,25 @@ and `next_heartbeat_at`.
 ### Playlist
 
 Send `If-None-Match: "<etag>"` to get `304 Not Modified` when nothing changed.
-The ETag covers the playlist items the device actually receives — media, timing
-and ordering — so an edit to an ad's title does not invalidate a cached playlist.
+The ETag covers exactly the bytes the device receives — the screen identity plus
+the items — so an edit to an ad's title does not invalidate a cached playlist, and
+**a heartbeat does not either**. A device on its normal poll cadence now gets 304s.
+
+`data.screen` carries `id` and `code` only. Operational state — `status`,
+`last_heartbeat_at`, `created_at`, `updated_at` — is **not** in this response: the
+playlist is a playback manifest, and those fields change on every heartbeat, which
+used to force a full re-download each poll. Read them from the heartbeat response,
+which is unchanged.
 
 Each item carries `ad_id`, `file_url`, `file_type`, `duration_seconds`,
 `play_order` and the schedule window. The device plays what it is given; it never
-computes its own eligibility.
+computes its own eligibility. One assigned ad is always one item, however many
+schedule rows currently match.
+
+`meta.expires_at` is boundary-aware: it is never later than the next instant at
+which eligibility can change, so a device that refetches then will never play
+content that has started or stopped being valid. It may be much sooner than
+`config.playlist_ttl`.
 
 ### Playbacks
 

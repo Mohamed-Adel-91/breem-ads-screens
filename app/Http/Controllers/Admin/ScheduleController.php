@@ -7,15 +7,28 @@ use App\Http\Requests\Admin\Ads\StoreScheduleRequest;
 use App\Http\Requests\Admin\Ads\UpdateScheduleRequest;
 use App\Models\Ad;
 use App\Models\AdSchedule;
+use App\Models\Place;
 use App\Models\Screen;
 use App\Support\Lang;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
+/**
+ * Per-ad schedule management, plus the cross-ad schedules overview.
+ *
+ * NO SILENT SIDE EFFECTS: saving a schedule writes that row and nothing else.
+ * This controller used to run a `resolveScheduleConflicts()` pass that
+ * deactivated every overlapping row on the same screen — including rows belonging
+ * to *other advertisers* — so publishing one campaign silently took another off
+ * the air. Overlapping windows are normal digital signage: when two ads are
+ * eligible at once the playlist rotates them, which is exactly what a playlist is
+ * for. Conflict resolution was therefore removed outright, not softened.
+ *
+ * Eligibility itself is never decided here; AdSchedulerService owns it.
+ */
 class ScheduleController extends Controller
 {
     public function index(string $lang, Ad $ad, Request $request): View
@@ -62,6 +75,88 @@ class ScheduleController extends Controller
         ]);
     }
 
+    /**
+     * Every schedule row in the system, across ads.
+     *
+     * This is what the sidebar's "Schedules" entry opens. It used to point at
+     * `/ads?tab=schedules`, a query parameter AdController never read, so the link
+     * silently rendered the ads list instead.
+     *
+     * Rows are paginated and their relations eager-loaded; the per-row state badge
+     * comes from AdSchedule::currentState(), which reads loaded attributes only.
+     * Nothing is hydrated into memory in full and no query runs inside the view.
+     */
+    public function overview(string $lang, Request $request): View
+    {
+        $query = AdSchedule::query()
+            ->with(['ad:id,title', 'screen:id,code,place_id', 'screen.place:id,name'])
+            ->orderByDesc('start_time')
+            ->orderByDesc('id');
+
+        if ($request->filled('ad_id')) {
+            $query->where('ad_id', (int) $request->input('ad_id'));
+        }
+
+        if ($request->filled('screen_id')) {
+            $query->where('screen_id', (int) $request->input('screen_id'));
+        }
+
+        if ($request->filled('place_id')) {
+            $placeId = (int) $request->input('place_id');
+            $query->whereHas('screen', fn ($builder) => $builder->where('place_id', $placeId));
+        }
+
+        if ($request->filled('state') && in_array($request->input('state'), AdSchedule::states(), true)) {
+            $query->inState((string) $request->input('state'));
+        }
+
+        if ($request->filled('from_date')) {
+            $query->where('start_time', '>=', Carbon::parse($request->input('from_date')));
+        }
+
+        if ($request->filled('to_date')) {
+            $query->where('end_time', '<=', Carbon::parse($request->input('to_date')));
+        }
+
+        $schedules = $query->paginate(25)->withQueryString();
+
+        return view('admin.ads.schedules.overview', [
+            'pageName' => Lang::t('admin.pages.schedules.overview', 'الجداول الزمنية'),
+            'lang' => $lang,
+            'schedules' => $schedules,
+            'availableAds' => Ad::query()->orderBy('id')->get(['id', 'title']),
+            'availableScreens' => Screen::with('place')->orderBy('code')->get(),
+            'availablePlaces' => Place::orderBy('id')->get(['id', 'name']),
+            'states' => AdSchedule::states(),
+            'filters' => [
+                'ad_id' => $request->input('ad_id'),
+                'screen_id' => $request->input('screen_id'),
+                'place_id' => $request->input('place_id'),
+                'state' => $request->input('state'),
+                'from_date' => $request->input('from_date'),
+                'to_date' => $request->input('to_date'),
+            ],
+            'stats' => $this->overviewStats(),
+        ]);
+    }
+
+    /**
+     * Counts per state for the overview header. Four aggregate queries, not a
+     * hydrated collection.
+     *
+     * @return array<string, int>
+     */
+    private function overviewStats(): array
+    {
+        $stats = ['total' => AdSchedule::count()];
+
+        foreach (AdSchedule::states() as $state) {
+            $stats[$state] = AdSchedule::query()->inState($state)->count();
+        }
+
+        return $stats;
+    }
+
     public function store(string $lang, StoreScheduleRequest $request, Ad $ad): RedirectResponse
     {
         $data = $request->validated();
@@ -74,7 +169,6 @@ class ScheduleController extends Controller
         ]);
 
         $this->ensureScreenAttachment($ad, $schedule->screen_id);
-        $this->resolveScheduleConflicts($schedule);
 
         activity()
             ->performedOn($ad)
@@ -107,8 +201,6 @@ class ScheduleController extends Controller
         if ($originalScreen !== $schedule->screen_id) {
             $this->ensureScreenAttachment($ad, $schedule->screen_id);
         }
-
-        $this->resolveScheduleConflicts($schedule);
 
         activity()
             ->performedOn($ad)
@@ -151,41 +243,4 @@ class ScheduleController extends Controller
         }
     }
 
-    private function resolveScheduleConflicts(AdSchedule $schedule): void
-    {
-        $schedule->loadMissing('ad');
-
-        $conflicts = AdSchedule::query()
-            ->where('screen_id', $schedule->screen_id)
-            ->where('id', '!=', $schedule->id)
-            ->where(function (Builder $builder) use ($schedule) {
-                $builder->whereBetween('start_time', [$schedule->start_time, $schedule->end_time])
-                    ->orWhereBetween('end_time', [$schedule->start_time, $schedule->end_time])
-                    ->orWhere(function (Builder $nested) use ($schedule) {
-                        $nested->where('start_time', '<=', $schedule->start_time)
-                            ->where('end_time', '>=', $schedule->end_time);
-                    });
-            })
-            ->get();
-
-        $deactivated = [];
-
-        foreach ($conflicts as $conflict) {
-            if ($conflict->is_active) {
-                $conflict->update(['is_active' => false]);
-                $deactivated[] = $conflict->id;
-            }
-        }
-
-        if ($deactivated) {
-            activity()
-                ->performedOn($schedule->ad)
-                ->causedBy(Auth::guard('admin')->user())
-                ->withProperties([
-                    'schedule' => $schedule->id,
-                    'deactivated_conflicts' => $deactivated,
-                ])
-                ->log('Resolved schedule conflicts');
-        }
-    }
 }

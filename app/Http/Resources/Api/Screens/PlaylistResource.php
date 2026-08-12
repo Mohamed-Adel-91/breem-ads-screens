@@ -2,10 +2,18 @@
 
 namespace App\Http\Resources\Api\Screens;
 
-use App\Http\Resources\Api\ScreenResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 
+/**
+ * A screen's playback manifest.
+ *
+ * `screen` is the stable PlaylistScreenResource, not the general ScreenResource:
+ * the manifest must not carry operational telemetry, because the ETag validates
+ * these bytes and telemetry changes on every heartbeat. `meta.expires_at` is
+ * boundary-aware — it is never later than the next instant at which eligibility
+ * can change, so a device that refetches at that time never plays stale content.
+ */
 class PlaylistResource extends JsonResource
 {
     /**
@@ -23,7 +31,7 @@ class PlaylistResource extends JsonResource
         }
 
         return [
-            'screen' => ScreenResource::make($this->resource['screen']),
+            'screen' => PlaylistScreenResource::make($this->resource['screen']),
             'meta' => [
                 'etag' => $this->resource['etag'],
                 'generated_at' => optional($this->resource['generated_at'])->toAtomString(),

@@ -39,7 +39,15 @@ class AdSchedulerServiceTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_for_screen_returns_scheduled_and_fallback_items(): void
+    /**
+     * The payload shape, plus the three eligibility outcomes side by side.
+     *
+     * The `$futureAd` case is the Phase 12 correction: it used to be emitted as an
+     * "unscheduled" item because an ad whose schedules all lay outside now fell
+     * through to always-on playback. An ad with schedule rows may only play inside
+     * one of them.
+     */
+    public function test_for_screen_returns_only_currently_eligible_items(): void
     {
         $now = Carbon::create(2024, 1, 1, 12, 0, 0);
         Carbon::setTestNow($now);
@@ -67,12 +75,26 @@ class AdSchedulerServiceTest extends TestCase
             'start_date' => $now->copy()->subDay(),
             'end_date' => $now->copy()->addDay(),
         ]);
-        $fallbackAd = Ad::create([
-            'title' => ['en' => 'Fallback'],
-            'description' => ['en' => 'Fallback Ad'],
-            'file_path' => 'upload/ads/fallback.png',
+        // No schedule rows at all: assignment-only, always-on content.
+        $alwaysOnAd = Ad::create([
+            'title' => ['en' => 'Always On'],
+            'description' => ['en' => 'Unscheduled Ad'],
+            'file_path' => 'upload/ads/always-on.png',
             'file_type' => 'image',
             'duration_seconds' => 15,
+            'status' => AdStatus::Active,
+            'created_by' => $user->id,
+            'approved_by' => $user->id,
+            'start_date' => $now->copy()->subHours(2),
+            'end_date' => $now->copy()->addHours(6),
+        ]);
+        // Scheduled, but the window has not opened yet.
+        $futureAd = Ad::create([
+            'title' => ['en' => 'Future'],
+            'description' => ['en' => 'Future Ad'],
+            'file_path' => 'upload/ads/future.png',
+            'file_type' => 'image',
+            'duration_seconds' => 12,
             'status' => AdStatus::Active,
             'created_by' => $user->id,
             'approved_by' => $user->id,
@@ -93,8 +115,9 @@ class AdSchedulerServiceTest extends TestCase
         ]);
 
         $screen->ads()->attach($scheduledAd->id, ['play_order' => 1]);
-        $screen->ads()->attach($fallbackAd->id, ['play_order' => 2]);
-        $screen->ads()->attach($inactiveAd->id, ['play_order' => 3]);
+        $screen->ads()->attach($alwaysOnAd->id, ['play_order' => 2]);
+        $screen->ads()->attach($futureAd->id, ['play_order' => 3]);
+        $screen->ads()->attach($inactiveAd->id, ['play_order' => 4]);
 
         $scheduledAd->schedules()->create([
             'screen_id' => $screen->id,
@@ -102,7 +125,7 @@ class AdSchedulerServiceTest extends TestCase
             'end_time' => $now->copy()->addHour(),
             'is_active' => true,
         ]);
-        $fallbackAd->schedules()->create([
+        $futureAd->schedules()->create([
             'screen_id' => $screen->id,
             'start_time' => $now->copy()->addHour(),
             'end_time' => $now->copy()->addHours(2),
@@ -120,21 +143,26 @@ class AdSchedulerServiceTest extends TestCase
         $this->assertNotSame('', $payload['etag']);
 
         $items = Collection::make($payload['items']);
-        $this->assertCount(2, $items); // inactive ad excluded
+
+        // Pending status and an unopened window are both excluded; ordering is by
+        // pivot play_order.
+        $this->assertSame(
+            [$scheduledAd->id, $alwaysOnAd->id],
+            $items->pluck('ad_id')->all()
+        );
         $this->assertSame([1, 2], $items->pluck('play_order')->all());
 
         $scheduledItem = $items->firstWhere('ad_id', $scheduledAd->id);
-        $this->assertNotNull($scheduledItem);
         $this->assertNotNull($scheduledItem['schedule']);
         $this->assertSame($scheduledAd->file_url, $scheduledItem['file_url']);
         $this->assertSame($scheduledAd->schedules()->first()->start_time->toAtomString(), $scheduledItem['valid_from']);
         $this->assertSame($scheduledAd->start_date->toAtomString(), $scheduledItem['ad_valid_from']);
 
-        $fallbackItem = $items->firstWhere('ad_id', $fallbackAd->id);
-        $this->assertNotNull($fallbackItem);
-        $this->assertNull($fallbackItem['schedule']);
-        $this->assertSame($fallbackAd->start_date->toAtomString(), $fallbackItem['valid_from']);
-        $this->assertSame($fallbackAd->end_date->toAtomString(), $fallbackItem['valid_until']);
+        // With no schedule rows the ad's own window is the effective window.
+        $alwaysOnItem = $items->firstWhere('ad_id', $alwaysOnAd->id);
+        $this->assertNull($alwaysOnItem['schedule']);
+        $this->assertSame($alwaysOnAd->start_date->toAtomString(), $alwaysOnItem['valid_from']);
+        $this->assertSame($alwaysOnAd->end_date->toAtomString(), $alwaysOnItem['valid_until']);
 
         $this->assertTrue($payload['generated_at']->eq($now));
         $this->assertTrue($payload['expires_at']->eq($now->copy()->addSeconds(config('services.screens.playlist_ttl'))));
