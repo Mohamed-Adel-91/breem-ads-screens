@@ -75,7 +75,9 @@ Agent entry point: [`AGENTS.md`](AGENTS.md).
   self-hosted from `public/admin-assets/fonts/thmanyah/` — never from a CDN.
 - **Public site** — Blade, assets in `public/frontend/`. That directory name is a
   runtime contract, not a preference: it is the layout's `<base href>` and the default
-  prefix `media_path()` applies to stored media paths.
+  prefix `media_path()` applies to stored media paths. Typeface is **Thmanyah Sans**,
+  self-hosted from `public/frontend/fonts/thmanyah/` — the same family as the admin, in
+  both Arabic and English, but its own runtime copies.
 - **Persistent media** — `public/cms/` (CMS uploads) and `public/upload/` (ad
   creatives, served to devices). Database-addressed: never rename, never move.
 - **Locales** — `en` and `ar`, carried in the URL as `{lang?}`; Arabic renders RTL.

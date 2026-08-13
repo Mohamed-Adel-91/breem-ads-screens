@@ -81,33 +81,57 @@ few first-party files is the whole fix.
 
 ## Typography — Thmanyah Sans
 
-The admin renders in **Thmanyah Sans**, served from this repository.
+**Both surfaces are set in Thmanyah Sans**, served from this repository, in Arabic and
+English alike. Each surface owns its own runtime copies so neither depends on the
+other's directory:
 
-| Concern | Where |
-|---|---|
-| Font files (WOFF2) | `public/admin-assets/fonts/thmanyah/` |
-| `@font-face` — the only place | `public/admin-assets/css/fonts.css` |
-| Applied to the UI | `--breem-font-sans` in `public/admin-assets/css/breem-admin.css` |
-| Full supplied package, licence, design guide | `resources/fonts/thmanyah/` (outside the web root) |
+| Concern | Admin | Public website |
+|---|---|---|
+| Font files (WOFF2) | `public/admin-assets/fonts/thmanyah/` | `public/frontend/fonts/thmanyah/` |
+| `@font-face` — the only place | `public/admin-assets/css/fonts.css` | `public/frontend/css/fonts.css` |
+| Applied to the UI | `--breem-font-sans` in `css/breem-admin.css` | `--breem-font-family` in `css/master.css` |
+| Weights shipped | 300 / 400 / 500 / 700 | 300 / 400 / 500 / 700 |
+| Preloaded | 400, 500 | 400, 700 |
+
+The complete supplied package — three families, OTF and WOFF2, both licences and the
+design guide — lives outside the web root at `resources/fonts/thmanyah/`. Take any new
+weight or family from there.
+
+The four WOFF2 files are byte-identical across the two surfaces, and that duplication is
+deliberate: ownership is explicit, the public site never acquires a semantic dependency
+on an admin directory, and it costs ~300 KB of repository. A test asserts the bytes match
+so they cannot silently diverge.
 
 Rules:
 
 1. **Local only.** Never `font.thmanyah.com`, never Google Fonts, never a CDN. The files
    are here; a remote font adds an external dependency, a privacy dependency, latency and
    an outage risk for nothing.
-2. **One declaration.** `body.breem-admin` sets the family and everything inherits it,
-   including form controls (Bootstrap's reboot gives them `font-family: inherit`). Do not
-   restate the family on components. The only exceptions already in `breem-admin.css` are
-   the handful of vendor selectors that hardcode a family and so cannot inherit
-   (`.tooltip`, `.popover`, the gauge label).
-3. **Never override `.fe`.** Feather is an icon font declaring
-   `font-family: "feather" !important`; catching that selector turns every icon in the
-   admin into a tofu box. `code`/`pre`/`kbd`/`samp` keep monospace.
+2. **One declaration per surface.** The admin sets the family on `body.breem-admin`; the
+   public site sets it on `html, body` in `master.css`. Everything else inherits, form
+   controls included. Do not restate the family on components. The only exceptions are
+   the vendor selectors that hardcode a family and therefore cannot inherit — in the
+   admin, `.tooltip`, `.popover` and the gauge label.
+3. **Never use `* { font-family: … }`,** and never override an icon-font selector. The
+   admin's Feather declares `font-family: "feather" !important`; the public site loads
+   Font Awesome. Catching either turns every icon into a tofu box. `code`/`pre`/`kbd`/
+   `samp` keep monospace.
 4. **Weights 300/400/500/700 only** — those are the faces shipped. Rules asking for 600
    resolve upward to the real 700 file, which is why no synthetic 600 face is declared.
    Adding a weight means adding both the file and its `@font-face`.
-5. **The public website keeps its own typeface.** Thmanyah is an admin decision; the two
-   surfaces share no stylesheet.
+5. **Arabic and English use the same family, on both surfaces.** There is no
+   per-direction font stack and there must not be one; the fallbacks exist only for a
+   glyph Thmanyah cannot render. Do not add Latin-oriented `letter-spacing` to shared
+   text rules — the public stylesheet currently declares none, and Arabic should not
+   inherit tracking designed for Latin.
+6. **Changing a stylesheet does not invalidate a visitor's cache.** There is no build
+   pipeline, so no content hashes: after deploying a typography change, a returning
+   visitor can keep the previous CSS and font until their cache expires. Expect to hard
+   refresh when checking, and purge the CDN/web-server cache for
+   `frontend/css/*` and `admin-assets/css/*` as a deploy step. Do **not** add a manifest,
+   a build step or Node for this; if it ever needs solving in the application, a
+   config-driven version query on the few first-party stylesheets is the whole fix
+   (`filemtime()` in Blade is not an option — rule 1 forbids filesystem calls in views).
 
 ## Rules
 

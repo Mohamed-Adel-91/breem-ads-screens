@@ -1,60 +1,73 @@
+/* ==========================================================================
+   Typography
+   ==========================================================================
+
+   The public site is set in Thmanyah Sans, in BOTH Arabic and English — one family
+   for both scripts, by explicit product decision. There is no per-direction font
+   stack, and there must not be one: the fallbacks below only ever come into play for
+   a glyph Thmanyah cannot render.
+
+   @font-face lives in fonts.css, which the layout loads before this file. Nothing in
+   here may declare a font face.
+
+   WHAT THIS REPLACED. The site was set in Cairo through a single @font-face that
+   loaded only Cairo-Regular.ttf, so every `font-weight: 600`/`700` rule below was
+   rendered as a browser-synthesised fake bold. Alongside it sat five commented-out
+   Inter @font-face blocks pointing at ../css/fonts/*.ttf — files that do not exist in
+   this repository — and one rule asking for "GE SS Two", a family nothing ever
+   loaded. All of that is gone; the weights are real now.
+
+   The Cairo binaries are still in ../fonts/ with their OFL licence. They are simply
+   no longer loaded.
+   ========================================================================== */
+
+:root {
+  /*
+   * The one public type stack. Fallbacks are platform UI faces so a slow font fetch
+   * or a cache miss shows native-looking text rather than Times New Roman, and
+   * 'Noto Sans Arabic' keeps the Arabic fallback sane on systems that have it.
+   */
+  --breem-font-family: 'Thmanyah Sans', system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans Arabic', sans-serif;
+
+  /* Bootstrap 5 (loaded from CDN) reads these; overriding them here catches every
+     vendor rule that uses them instead of chasing each one individually. */
+  --bs-body-font-family: var(--breem-font-family);
+  --bs-font-sans-serif: var(--breem-font-family);
+}
+
 /*
-@font-face {
-    font-family: 'Inter';
-    src: url('../css/fonts/Inter_18pt-Medium.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Inter';
-    src: url('../css/fonts/Inter_24pt-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Inter';
-    src:  url('../css/fonts/Inter_18pt-Light.ttf') format('truetype');
-    font-weight: 300;
-    font-style: normal;
-    font-display: swap;
-}
-@font-face {
-    font-family: 'Inter';
-    src:  url('../css/fonts/Inter_24pt-Light.ttf') format('truetype');
-    font-weight: 300;
-    font-style: normal;
-    font-display: swap;
-}
-@font-face {
-    font-family: 'Inter';
-    src: url("../css/fonts/Inter-Bold.ttf");
-    font-weight: 300;
-    font-style: bold;
-    font-display: swap;
-} */
-
-/* ////////////////////// */
-
-@font-face {
-  font-family: 'cairo';
-  src: url('../fonts/Cairo-Regular.ttf') format('truetype');
-}
-
-/* @font-face {
-  font-family: 'Inter';
-  src: url('../css/fonts/Inter_18pt-Regular.ttf') format('truetype');
-} */
-
-/* @font-face {
-    font-family: 'Inter';
-     src:   url('../css/fonts/Inter_18pt-SemiBold.ttf') format('truetype');
-} */
+ * THE PUBLIC TYPOGRAPHY RULE.
+ *
+ * One declaration for the whole site. Headings, paragraphs, navigation, the mobile
+ * sidebar, links, cards, sections, the footer, modals and all CMS-rendered text
+ * inherit from here.
+ *
+ * Deliberately NOT `* { font-family: ... }`. A universal selector would also hit
+ * Font Awesome's .fa/.fas/.far/.fab elements and their ::before pseudo-elements and
+ * turn every icon on the site into a tofu box.
+ */
+html,
 body {
-  font-family: "cairo";
+  font-family: var(--breem-font-family);
+}
+
+/*
+ * Form controls do not inherit font-family by default — browsers give them a
+ * platform UI font. Bootstrap's reboot normally fixes this, but it is loaded from a
+ * CDN here, so the site states it itself rather than depending on a third party
+ * continuing to. `option` is included because Bootstrap's own list omits it.
+ *
+ * Only font-family is set: nothing here touches the platform rendering of date,
+ * colour or file inputs.
+ */
+button,
+input,
+optgroup,
+select,
+option,
+textarea {
+  font-family: inherit;
 }
 
 header {
@@ -72,7 +85,7 @@ a {
 
 header .pages li a {
   position: relative;
-  font-family: "cairo";
+  /* Family inherited from the html/body rule — see Typography above. */
   font-weight: 700;
   font-size: 16px;
   color: white;
@@ -272,16 +285,20 @@ header .pages li a:hover::after {
 }
 
 .media .box span {
-  font-family: "GE SS Two";
+  /* Was "GE SS Two", a family this site never loaded, so it silently fell back to the
+     platform sans-serif. Now inherits Thmanyah Sans, and 500 is a real Medium face. */
   font-weight: 500;
   font-size: 3rem;
   color: white;
 }
 
 .media .box .desc p {
-  font-family: "cairo";
+  /* 600 has no face in the family; CSS matching resolves it upward to the real Bold
+     700. Previously this was synthesised from Cairo Regular, so it will read heavier
+     than before — that is the rule finally getting what it asks for. */
   font-weight: 600;
-  font-style: SemiBold;
+  /* `font-style: SemiBold` was never valid CSS — font-style takes normal/italic/oblique
+     — so it was discarded by the parser. Removed rather than left as noise. */
   font-size: 1.7rem;
   color: white;
   margin: 0;
@@ -390,8 +407,13 @@ header .pages li a:hover::after {
   font-weight: bold;
 }
 
+/*
+ * The CTA section — heading, paragraph and the pill link. All three inherit
+ * Thmanyah Sans from the html/body rule; the family is no longer restated here.
+ * `.your_ads .link` below never declared a family, so the button already followed
+ * whatever body was set to.
+ */
 .your_ads h3 {
-  font-family: "cairo";
   font-weight: 700;
   font-size: 50px;
   /* text-align: right; */
@@ -400,7 +422,6 @@ header .pages li a:hover::after {
 
 .your_ads p {
   margin: 2rem 0;
-  font-family: Cairo;
   font-weight: 400;
   font-size: 22px;
   /* text-align: right; */

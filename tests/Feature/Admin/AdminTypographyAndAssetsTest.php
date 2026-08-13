@@ -435,23 +435,47 @@ class AdminTypographyAndAssetsTest extends TestCase
      * contain `admin-assets`. Testing the rendered 404 would report the opposite of the
      * truth. The partials are what actually changed, so they are what is pinned.
      */
-    public function test_the_public_website_typography_was_not_changed(): void
+    public function test_the_public_website_never_loads_admin_assets(): void
     {
-        // The request was to change the ADMIN font. The public site keeps its own
-        // typeface and must not start pulling the admin's stylesheets.
+        /*
+         * SUPERSEDED ASSERTION, KEPT AS THE INVARIANT THAT SURVIVED IT.
+         *
+         * This test used to assert that the public website did NOT use Thmanyah — the
+         * admin was the only surface that had it. The project owner has since made
+         * Thmanyah Sans the primary typeface for the public site too, in Arabic and
+         * English, so asserting the two differ would now pin a rule that no longer
+         * exists. The test was not deleted, because what it was really protecting is
+         * still true and still worth protecting: **the two surfaces are independent.**
+         *
+         * Each owns its own runtime font copies — the admin under
+         * `admin-assets/fonts/thmanyah/`, the website under `frontend/fonts/thmanyah/` —
+         * so the public site never acquires a semantic dependency on an admin directory,
+         * and reorganising one surface's assets cannot break the other. The public side
+         * is covered in full by Tests\Feature\Web\WebTypographyAndAssetsTest.
+         */
         foreach (['scripts/css.blade.php', 'master.blade.php', 'scripts/js.blade.php'] as $partial) {
             $contents = file_get_contents(resource_path('views/web/layouts/' . $partial));
 
-            $this->assertStringNotContainsString('Thmanyah', $contents, "[{$partial}] must not load the admin typeface.");
-            $this->assertStringNotContainsString('admin-assets', $contents, "[{$partial}] must not load admin assets.");
+            $this->assertStringNotContainsString(
+                'admin-assets',
+                $contents,
+                "[{$partial}] must not load anything from the admin asset root."
+            );
         }
 
-        // The public site's own typeface declarations are untouched.
-        $this->assertFileExists($this->publicPath('frontend/css/master.css'));
-        $this->assertStringNotContainsString(
-            'Thmanyah',
-            file_get_contents($this->publicPath('frontend/css/master.css'))
-        );
+        // The website's typeface comes from its own directory, not the admin's. Comments
+        // are stripped: both public stylesheets document the separation in prose, and that
+        // prose names `admin-assets` precisely to say it is not used.
+        $stripComments = static fn (string $css): string => preg_replace('!/\*.*?\*/!s', '', $css);
+
+        $master = $stripComments(file_get_contents($this->publicPath('frontend/css/master.css')));
+        $fonts = $stripComments(file_get_contents($this->publicPath('frontend/css/fonts.css')));
+
+        $this->assertStringContainsString('Thmanyah Sans', $master, 'The public site should be set in Thmanyah Sans.');
+        $this->assertStringNotContainsString('admin-assets', $master);
+
+        $this->assertStringContainsString('../fonts/thmanyah/', $fonts);
+        $this->assertStringNotContainsString('admin-assets', $fonts);
     }
 
     public function test_the_public_website_favicon_is_generated_with_the_asset_helper(): void
