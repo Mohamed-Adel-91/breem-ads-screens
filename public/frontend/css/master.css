@@ -180,9 +180,80 @@ samp {
   font-family: var(--breem-font-ui);
 }
 
+/* ==========================================================================
+   Layout — one container, one set of gutters, one vertical rhythm
+   ==========================================================================
+
+   The site had no governing content width. Bootstrap's `.container` did the job up
+   to 1400px, and then a `@media (min-width: 1600px)` rule replaced its max-width
+   with `-webkit-fill-available` and a 3rem margin, so from 1600px up the measure
+   simply tracked the viewport — 1824px of content at 1920px. That is what made the
+   header look sparse and the sections look pulled apart on a large monitor.
+
+   Everything now resolves through the tokens below.
+
+   `.site-container` is the canonical name and the one the public Blade views use.
+   `.container` is kept as an ALIAS of it — same declarations, same rule — so that any
+   Bootstrap-shaped markup this application does not author (CMS-embedded HTML, a
+   third-party widget, a future partial written from muscle memory) still lands on the
+   site's measure instead of Bootstrap's. Bootstrap's own breakpoint max-widths are
+   overridden rather than fought.
+
+   WHY 1320px: it is Bootstrap's own xxl measure, so the site keeps exactly the width
+   it already had between 1400px and 1600px. Nothing below 1400px moves at all — only
+   the runaway above 1600px is removed. A wider choice would have been a redesign.
+
+   Note on the gutter: it lives in the width formula, not in padding, so `.container`
+   drops Bootstrap's 12px inline padding here. Bootstrap's `.row` still pulls out by
+   12px and `.col-*` pads 12px back in, which lands column content exactly on the
+   gutter. The gutter floor (16px) is above that 12px, so a row can never reach the
+   viewport edge.
+   ========================================================================== */
+
+:root {
+  --site-container-max: 1320px;
+
+  /* 16px on a phone, 40px on a desktop, fluid between. One value used everywhere,
+     so changing the site's breathing room is a one-line change. */
+  --site-gutter: clamp(1rem, 3vw, 2.5rem);
+
+  /* Vertical rhythm. The site mixed 2rem, 3rem, 4rem and 4.5rem section margins with
+     no discernible pattern; these three cover every section on the site. */
+  --section-space-sm: clamp(2rem, 4vw, 3rem);
+  --section-space-md: clamp(2.5rem, 5vw, 4rem);
+  --section-space-lg: clamp(3rem, 7vw, 5.5rem);
+}
+
+.site-container,
+.container {
+  width: min(100% - (var(--site-gutter) * 2), var(--site-container-max));
+  max-width: none;
+  margin-inline: auto;
+  padding-inline: 0;
+}
+
 header {
   box-shadow: 0px 4px 25px 0px #00000026;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(255, 255, 255, 0.2) 100%);
+  /*
+    Scrim for the home hero. The previous gradient faded to white at the bottom —
+    exactly where the nav links sit — so white text landed on a white wash over a
+    bright sky (~1.1:1 contrast, effectively invisible).
+
+    Dark the whole way down now, easing off toward the bottom so the bar still blends
+    into the hero rather than reading as a solid band.
+
+    These stops are tuned for appearance rather than for a contrast target: at the link
+    band the wash lands near 0.45, which is roughly 3.2:1 against a pale hero frame.
+    The links therefore carry a text-shadow (see `header:not(.secondheader) .pages li a`
+    below) to make up the difference. Darkening the gradient instead would also work,
+    and would be the change to make if the shadow is ever removed.
+
+    Inner pages are unaffected: .secondheader overrides this background with white.
+  */
+  background: linear-gradient(180deg,
+      rgba(0, 0, 0, 0.6) 0%,
+      rgba(0, 0, 0, 0.4) 70%,
+      rgba(0, 0, 0, 0.12) 100%);
   position: absolute;
   top: 0;
   width: 100%;
@@ -191,6 +262,65 @@ header {
 
 a {
   text-decoration: none;
+}
+
+/* ==========================================================================
+   Navbar
+   ==========================================================================
+
+   Three groups on one row — brand, primary navigation, phone + language — all
+   aligned to the same `.site-container` boundaries as the content below.
+
+   Before: `header > .container > nav.navbar > .container-fluid`. The inner
+   `.container-fluid` re-expanded to 100% of the outer `.container`, so the only
+   thing governing the navbar's width was the `.container` rule that ran away
+   above 1600px — hence "too spread across the full viewport".
+
+   Layout is flex rather than `space-around` plus margin hacks. `.pages` used to be
+   positioned with `margin-right: auto` and a mirrored `[lang="en"]` override; one
+   logical `margin-inline` replaces both.
+   ========================================================================== */
+
+.site-navbar {
+  padding-block: clamp(0.5rem, 1.2vw, 1rem);
+}
+
+/*
+ * Below lg the collapse keeps Bootstrap's `flex-basis: 100%`, so `flex-wrap` is what
+ * drops it onto its own row under [brand] [toggler]. `space-between` is what pins the
+ * toggler to the trailing edge — no margin hack involved.
+ */
+.site-navbar__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.75rem, 2vw, 2rem);
+}
+
+.site-navbar__brand {
+  flex: 0 0 auto;
+  padding: 0;
+  margin: 0;
+}
+
+/*
+ * The logo is a 120x34 raster, so it is capped at its intrinsic height and only ever
+ * scales DOWN. Growing it on a large monitor would visibly soften it; that needs a
+ * higher-resolution or vector asset, not a CSS change.
+ */
+.site-navbar__brand img {
+  display: block;
+  width: auto;
+  height: clamp(26px, 2.4vw, 34px);
+}
+
+header .pages {
+  /* Bootstrap's .navbar-nav resets these; restated so the lists carry no stray
+     browser padding when the collapse is a plain flex column on mobile. */
+  margin-bottom: 0;
+  padding-inline-start: 0;
+  list-style: none;
 }
 
 header .pages li a {
@@ -208,11 +338,22 @@ header .pages li a:hover {
   color: white;
 }
 
-/* الخط اللي بيظهر */
+/*
+ * The home header's scrim is deliberately light (see the `header` rule above), which
+ * leaves the links around 3.2:1 against a pale hero frame. A soft shadow carries the
+ * remaining legibility without darkening the bar any further. Not applied to
+ * `.secondheader`, whose teal links sit on solid white and would just look smudged.
+ */
+header:not(.secondheader) .pages li a {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+/* الخط اللي بيظهر — grows from the text's start edge, so it runs the correct way
+   in both directions without a mirrored override. */
 header .pages li a::after {
   content: "";
   position: absolute;
-  right: 0;
+  inset-inline-start: 0;
   bottom: 0;
   width: 0%;
   height: 2px;
@@ -220,10 +361,149 @@ header .pages li a::after {
   transition: width 0.3s ease;
 }
 
-/* وقت الهوفر الخط يتمدد للشمال */
+/* وقت الهوفر الخط يتمدد */
 header .pages li a:hover::after {
   width: 100%;
-  left: 0;
+}
+
+/* ------------------------------------------------------------- desktop (lg and up) */
+
+@media (min-width: 992px) {
+  /*
+   * The collapse holds both lists. `margin-inline: auto` on the primary list centres
+   * it in the space between the brand and the meta group, which is what puts the
+   * navigation in the middle of the container rather than hard against the logo.
+   */
+  .site-navbar__collapse {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    gap: clamp(1rem, 2vw, 2.5rem);
+  }
+
+  .site-navbar__pages {
+    margin-inline: auto;
+    gap: clamp(1rem, 2.2vw, 2.25rem);
+  }
+
+  .site-navbar__meta {
+    flex: 0 0 auto;
+    align-items: center;
+    gap: clamp(0.75rem, 1.5vw, 1.5rem);
+  }
+}
+
+/* --------------------------------------------------- tablet and mobile (below lg) */
+
+@media (max-width: 991.98px) {
+  /*
+   * The open menu sits over the hero video, so it needs its own surface — white
+   * links on a moving video are unreadable at any scrim strength. Solid header gets
+   * a light panel instead, because its links are teal.
+   */
+  .site-navbar__collapse {
+    background: rgba(1, 71, 71, 0.97);
+    border-radius: 14px;
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem 1rem;
+  }
+
+  .secondheader .site-navbar__collapse {
+    background: #fff;
+    box-shadow: 0px 4px 25px 0px #00000026;
+  }
+
+  .site-navbar__pages,
+  .site-navbar__meta {
+    width: 100%;
+  }
+
+  /* A menu row is a tap target, not a line of text: 44px minimum. */
+  header .pages li a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding-block: 0.5rem;
+  }
+
+  /* The animated underline is a pointer affordance; on a stacked touch menu it
+     reads as a stray rule under every row. */
+  header .pages li a::after {
+    display: none;
+  }
+
+  .site-navbar__meta {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.22);
+  }
+
+  .secondheader .site-navbar__meta {
+    border-top-color: rgba(65, 168, 166, 0.28);
+  }
+}
+
+/* ----------------------------------------------------------------------- toggler */
+
+/*
+ * Bootstrap's default toggler icon is a dark data-URI, which is invisible against the
+ * hero. Each surface gets a stroke colour that matches its own links.
+ */
+.site-navbar .navbar-toggler {
+  padding: 0.4rem 0.55rem;
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.site-navbar .navbar-toggler:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.3);
+}
+
+.site-navbar .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255,255,255,0.92%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.secondheader .navbar-toggler {
+  border-color: rgba(65, 168, 166, 0.5);
+}
+
+.secondheader .navbar-toggler:focus {
+  box-shadow: 0 0 0 0.2rem rgba(65, 168, 166, 0.25);
+}
+
+.secondheader .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%2341A8A6' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* ------------------------------------------------------------- language switcher */
+
+/*
+ * The control names the language it switches TO, so the flag is the target country's:
+ * an English page offers العربية behind a Saudi flag, an Arabic page offers English
+ * behind a US flag. The pairing is decided in the Blade partial; this only styles it.
+ */
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lang-switch__flag {
+  display: block;
+  flex: 0 0 auto;
+  width: 20px;
+  height: auto;
+  border-radius: 3px;
+  /* A white flag edge on a white header would otherwise dissolve. */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+/*
+ * The label is the only Arabic word on an English page (and the reverse). Isolating it
+ * keeps the bidi algorithm from reordering the flag and the word relative to each
+ * other, without touching the page's own direction.
+ */
+.lang-switch__label {
+  unicode-bidi: isolate;
 }
 
 .sidebar {
@@ -309,21 +589,31 @@ header .pages li a:hover::after {
   fill: #fff;
 }
 
-@media (min-width: 1600px) {
-  .container {
-    margin: 0 3rem;
-    padding: 0;
-    max-width: -webkit-fill-available;
-  }
-}
+/*
+ * A `@media (min-width: 1600px)` block used to sit here and reset `.container` to
+ * `max-width: -webkit-fill-available` with a 3rem margin, which is what made the page
+ * track the viewport on large monitors. The container system at the top of this file
+ * replaces it; nothing needs to reopen this breakpoint.
+ */
+
 @media (max-width: 768px) {
 .sidebar{
   display: none;
 }
 }
 
+/*
+ * The hero stays edge to edge — it is the one section that should. Only its height is
+ * governed:
+ *   - `dvh` because a phone's `100vh` includes browser chrome that slides away on
+ *     scroll, which made the video jump;
+ *   - capped at 820px so a tall desktop monitor gets a hero and a glimpse of the
+ *     section below it, rather than a full screen of video;
+ *   - the plain `vh` line stays first as the fallback for browsers without `dvh`.
+ */
 .banner {
   height: 100vh;
+  height: min(100dvh, 820px);
 }
 
 .banner_video {
@@ -332,24 +622,43 @@ header .pages li a:hover::after {
 }
 
 .banner_video video {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 .slider {
-  margin: 4rem 0;
+  margin-block: var(--section-space-md);
+}
+
+/*
+ * Partner logos. They are CMS uploads of unknown intrinsic size, so the row is
+ * normalised by bounding the height and letting `contain` preserve every aspect
+ * ratio — five logos are never squeezed to fit one row.
+ */
+.slider .swiper-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slider .swiper-slide img {
+  width: auto;
+  max-width: 100%;
+  height: clamp(42px, 4.5vw, 68px);
+  object-fit: contain;
 }
 
 .Knowmore {
   background-image: url('../img/background.png');
-  padding: 4rem 0;
+  padding-block: var(--section-space-lg);
 }
 
 .Knowmore h3 {
   font-weight: 700;
   font-style: Bold;
-  font-size: 3.5rem;
+  font-size: clamp(1.9rem, 4.4vw, 3.5rem);
   /* text-align: right; */
   color: #41A8A6;
 
@@ -357,8 +666,10 @@ header .pages li a:hover::after {
 
 .Knowmore .desc {
   font-weight: 400;
-  font-size: 1.2rem;
-  line-height: 35px;
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  /* Unitless, so the leading follows the clamped font-size instead of staying at the
+     35px that was set for one specific width. */
+  line-height: 1.8;
   /* text-align: right; */
 }
 
@@ -375,31 +686,42 @@ header .pages li a:hover::after {
 
 .media {
   /* background-color: #41A8A6; */
-  padding: 2rem 0;
+  padding-block: var(--section-space-md);
   background-image: url('../img/backkk.png');
   background-size: cover;
 
 }
 
+/*
+ * Four metrics: 4 across on desktop, 2x2 on tablet, one per row on a phone — the
+ * column classes in the Blade do that. What was missing was the centring and the
+ * row gap: `justify-self` was set on a block-level child, where it does nothing, so
+ * the icon and figure were left-aligned inside each cell and the rows collided when
+ * they wrapped.
+ */
 .media .box {
-  /* background-image: url('../img/backkk.png'); */
-}
-
-.media .box div {
-  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding-block: var(--section-space-sm);
 }
 
 .media .box .image {
-  width: 152px;
-  height: 152px;
+  width: clamp(88px, 10vw, 152px);
+  height: clamp(88px, 10vw, 152px);
 }
 
 .media .box span {
   /* Was "GE SS Two", a family this site never loaded, so it silently fell back to the
      platform sans-serif. Now inherits Thmanyah Sans, and 500 is a real Medium face. */
   font-weight: 500;
-  font-size: 3rem;
+  font-size: clamp(2.1rem, 3.4vw, 3rem);
   color: white;
+  /* The figure is a number; keeping it on one line stops "+٦٥٨" from breaking after
+     the sign when the column narrows. */
+  white-space: nowrap;
 }
 
 .media .box .desc p {
@@ -409,17 +731,19 @@ header .pages li a:hover::after {
   font-weight: 600;
   /* `font-style: SemiBold` was never valid CSS — font-style takes normal/italic/oblique
      — so it was discarded by the parser. Removed rather than left as noise. */
-  font-size: 1.7rem;
+  font-size: clamp(1.05rem, 1.9vw, 1.7rem);
   color: white;
   margin: 0;
+  /* The caption is the part that has to wrap; the figure above it must not. */
+  text-wrap: balance;
 }
 
 .where_us {
-  margin: 4rem 0;
+  margin-block: var(--section-space-md);
 }
 
 .where_us h3 {
-  font-size: 2.5rem;
+  font-size: clamp(1.6rem, 3.2vw, 2.5rem);
   font-weight: bold;
   color: #41A8A6;
   margin-bottom: 2rem;
@@ -432,8 +756,12 @@ header .pages li a:hover::after {
 }
 
 .location-card img {
+  display: block;
   width: 100%;
-  height: 468px;
+  /* Was a flat 468px, which is taller than a 390px phone is wide — the card became a
+     portrait tower on mobile. `cover` still fills whatever box this resolves to, so
+     the crop stays correct at every size. */
+  height: clamp(240px, 30vw, 468px);
   object-fit: cover;
   border-radius: 15px;
   transition: transform 0.5s ease;
@@ -523,9 +851,21 @@ header .pages li a:hover::after {
  * `.your_ads .link` below never declared a family, so the button already followed
  * whatever body was set to.
  */
+.your_ads {
+  margin-block: var(--section-space-md);
+}
+
+/* Text and visual sit side by side from lg up and stack below it — the column classes
+   in the Blade do that. This keeps the two halves optically aligned when they are
+   side by side, and gives them room when they stack. */
+.your_ads .row {
+  align-items: center;
+  row-gap: var(--section-space-sm);
+}
+
 .your_ads h3 {
   font-weight: 700;
-  font-size: 50px;
+  font-size: clamp(1.75rem, 3.6vw, 50px);
   /* text-align: right; */
   color: #41A8A6;
 }
@@ -533,7 +873,7 @@ header .pages li a:hover::after {
 .your_ads p {
   margin: 2rem 0;
   font-weight: 400;
-  font-size: 22px;
+  font-size: clamp(1rem, 1.6vw, 22px);
   /* text-align: right; */
 }
 
@@ -543,22 +883,67 @@ header .pages li a:hover::after {
   padding: 0.5rem 1.5rem;
   border-radius: 2rem;
   color: white;
+  /* A pill is a tap target. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
+.your_ads img {
+  max-width: 100%;
+  height: auto;
+}
+
+/*
+ * The overlay screen inside the device bezel.
+ *
+ * These offsets stay PHYSICAL on purpose. They track the artwork underneath, which
+ * does not mirror between Arabic and English, so `inset-inline-start` would move the
+ * screen out of the bezel on one of the two locales.
+ *
+ * They were 6px flat, which stopped matching the bezel as soon as the image scaled;
+ * expressed as a percentage of the same box, the inset now scales with the artwork.
+ * 0.9% is 6px at the width this was originally set at.
+ */
 .your_ads .second_image {
-  left: 6px;
+  left: 0.9%;
+  top: 0.9%;
   width: 89%;
-  top: 6px;
 }
 
-/* الفوتر الأساسي */
+/* الفوتر الأساسي — background stays viewport-wide, inner content uses the container */
 footer .footer {
   position: relative;
-  padding: 4rem 0;
+  padding-block: var(--section-space-lg);
   background-image: url("../img/footer.png");
   background-size: cover;
   background-position: center;
   color: #fff;
+}
+
+/* The embed is CMS HTML with its own width/height attributes, so it needs a ceiling
+   at every width rather than only under the 1120px breakpoint below. */
+footer .footer iframe {
+  max-width: 100%;
+  border: 0;
+}
+
+footer .footer .logo-footer img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Social icons are tap targets before they are decoration. */
+footer .footer .linkss a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+footer .footer .linkss img {
+  max-width: 100%;
+  height: auto;
 }
 
 /* أوفرلاي */
@@ -572,6 +957,8 @@ footer .footer .overlay {
   z-index: 1;
 }
 
+/* Lifts the footer's content above the `.overlay` tint that covers the background. */
+footer .footer .site-container,
 footer .footer .container {
   position: relative;
   z-index: 2;
@@ -599,7 +986,7 @@ footer .footer .linkss {
 
 footer .footer .linkss .pagess {
   display: flex;
-  gap: 3rem;
+  gap: clamp(1.25rem, 3vw, 3rem);
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -664,29 +1051,41 @@ footer .footer .linkss .pagess a {
   transition: width 0.3s ease;
 }
 
-header .pages li a:hover {
+/*
+ * Teal hover belongs to the SOLID header only. This rule was written unscoped as
+ * `header .pages li a:hover` and sits after the `color: white` rule at equal
+ * specificity, so it also won on the home page — hovering a link over the hero turned
+ * it teal at about 2:1 against the scrim, i.e. harder to read than not hovering.
+ */
+.secondheader .pages li a:hover {
   color: #41A8A6;
 }
 
+/*
+ * The inner-page banner. `margin-top` clears the absolutely positioned header, so it
+ * tracks the header's own clamped height rather than sitting at a flat 4rem that was
+ * only ever right at one width.
+ */
 .banner_image {
-  height: 410px;
-  margin-top: 4rem;
+  height: clamp(180px, 30vw, 410px);
+  margin-top: clamp(64px, 7vw, 84px);
 }
 
 .banner_image img {
+  display: block;
   height: 100%;
   width: 100%;
   object-fit: cover;
 }
 
 .who_we {
-  margin: 3rem 0;
+  margin-block: var(--section-space-md);
 }
 
 .who_we h2 {
   color: #41A8A6;
   font-weight: 700;
-  font-size: 40px;
+  font-size: clamp(1.6rem, 3vw, 40px);
   /* text-align: right; */
   margin-bottom: 1rem;
 
@@ -695,46 +1094,55 @@ header .pages li a:hover {
 .who_we p {
   color: #1D1D1D;
   font-weight: 400;
-  font-size: 22px;
+  font-size: clamp(1rem, 1.6vw, 22px);
   /* text-align: right; */
   text-align: justify;
 }
 
 .who_we h4 {
   font-weight: 700;
-  font-size: 20px;
+  font-size: clamp(1.05rem, 1.5vw, 20px);
   /* text-align: right; */
   color: #1D1D1D;
 }
 
+/*
+ * The icon precedes its label, so the gap belongs on the END side in both directions —
+ * one logical declaration instead of a physical value plus a mirrored override. The
+ * rotation stays in the `[lang="en"]` rule because the arrow genuinely points the
+ * other way in English; that is direction, not spacing.
+ */
 .h4image {
-  margin-left: 1.5rem;
+  margin-inline-end: 1.5rem;
 }
 
 [lang="en"] .h4image {
-  margin-right: 1.5rem;
-  margin-left: auto;
   transform: rotate(180deg);
 }
 
 .who_we ul li {
   font-weight: 400;
-  font-size: 20px;
+  font-size: clamp(1rem, 1.5vw, 20px);
   /* text-align: right; */
   color: #1D1D1D;
   list-style: square;
 }
 
 
+/*
+ * Indent from the reading edge. This was `margin-right: 2rem`, which is the start side
+ * in Arabic and the END side in English — so the English page indented these blocks
+ * away from the text they belong to.
+ */
 .who_we .bottom-desc p,
 .who_we ul {
-  margin-right: 2rem;
+  margin-inline-start: 2rem;
 }
 
 .port_image img {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
 }
 
 
@@ -746,26 +1154,26 @@ header .pages li a:hover {
   position: relative;
 }
 
+/*
+ * The accent rule above the heading. One logical inset replaces `right: 0` plus a
+ * mirrored `[lang="en"]` override, and a fixed length replaces `width: 3%` — 3% of the
+ * heading measured 37px on a desktop and 10px on a phone, where it read as a speck.
+ */
 .contact_us h2::after {
   content: "";
   position: absolute;
   top: -1rem;
-  right: 0;
-  width: 3%;
+  inset-inline-start: 0;
+  width: 40px;
   height: 4px;
   background: #00000080;
   border-radius: 10px;
 }
 
-[lang="en"] .contact_us h2::after {
-  left: 0;
-  right: auto;
-}
-
 .contact_us h2 {
   color: #41A8A6;
   font-weight: 700;
-  font-size: 40px;
+  font-size: clamp(1.6rem, 3vw, 40px);
   /* text-align: right; */
   margin-bottom: 1rem;
   position: relative;
@@ -774,7 +1182,7 @@ header .pages li a:hover {
 .contact_us p {
   color: #1D1D1D;
   font-weight: 400;
-  font-size: 22px;
+  font-size: clamp(1rem, 1.6vw, 22px);
   /* text-align: right; */
   text-align: justify;
   transition: transform 0.5s ease-in-out;
@@ -790,7 +1198,13 @@ header .pages li a:hover {
   padding-bottom: 2rem;
   padding-left: 2rem;
   margin: 3rem 0;
-  height: -webkit-fill-available;
+  /*
+   * Equalises the card heights across the row. Was `-webkit-fill-available`, which is
+   * non-standard and does nothing outside WebKit/Blink — so on Firefox these cards were
+   * ragged. The column is a flex item of `.row` and therefore already stretches to the
+   * tallest sibling, which gives `100%` something definite to resolve against.
+   */
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -807,14 +1221,19 @@ header .pages li a:hover {
   text-align: start;
 }
 
+/*
+ * `justify-self: anchor-center` was doing nothing — the box is a block-level child, and
+ * the value is unsupported outside recent Chrome besides. The parent `.contact_box` is
+ * already a centred flex column, so centring needs no declaration at all here.
+ */
 .contact_us .image {
-  justify-self: anchor-center;
-  height: 155px;
+  height: clamp(110px, 12vw, 155px);
 }
 
 .contact_us .image img {
+  max-width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .contact_us .contact_box .imagetwo {
@@ -886,7 +1305,8 @@ header .pages li a:hover {
   padding: 0.375rem 0.75rem !important;
   font-size: 1rem !important;
   width: 100% !important;
-  text-align: right !important;
+  /* Was `right`, which forced Arabic alignment on the English form too. */
+  text-align: start !important;
   color: #212529 !important;
       display: flex
 ;
@@ -926,16 +1346,27 @@ header .pages li a:hover {
   color: #fff !important;
 }
 
+/*
+ * The caret belongs on the trailing edge. `float` has no widely supported logical
+ * keyword, so this stays physical with an explicit English mirror rather than using
+ * `float: inline-end`, which Safari only learned in 17.
+ */
 .contact_us .multiselect .caret {
   float: left !important;
   margin-left: 0 !important;
   margin-right: 8px !important;
 }
 
+[lang="en"] .contact_us .multiselect .caret {
+  float: right !important;
+  margin-right: 0 !important;
+  margin-left: 8px !important;
+}
+
 .map .back_image {
   position: relative;
   width: 100%;
-  height: 520px;
+  height: clamp(320px, 38vw, 520px);
   overflow: hidden;
 }
 
@@ -957,38 +1388,40 @@ header .pages li a:hover {
   background: linear-gradient(275deg, rgba(0, 0, 0, 0) 23.58%, rgba(1, 71, 71, 0.86) 64.73%);
 }
 
+/*
+ * The panel sits on the reading side in both locales — `right: 5%` in Arabic and
+ * `left: 5%` in English are the same logical edge, so one `inset-inline-start` replaces
+ * the rule and its mirror. The explicit `direction` declarations went with it: the
+ * panel inherits the page's direction, which is what set them in the first place.
+ *
+ * The gradient overlay above keeps its physical 90deg/275deg pair — that one really
+ * does mirror.
+ */
 .map .map_content {
   position: absolute;
   top: 50%;
-  right: 5%;
+  inset-inline-start: 5%;
   transform: translateY(-50%);
   color: #fff;
   max-width: 40%;
-  direction: rtl;
   z-index: 40;
-}
-
-[lang="en"] .map .map_content {
-  left: 5%;
-  direction: ltr;
-  right: auto;
 }
 
 .map .map_content h3 {
   font-weight: 700;
-  font-size: 40px;
+  font-size: clamp(1.5rem, 2.8vw, 40px);
   margin-bottom: 24px;
 }
 
 .map .map_content p {
   font-weight: 500;
-  font-size: 1.5rem;
+  font-size: clamp(1rem, 1.7vw, 1.5rem);
 
 }
 
 .map .map_content .contact {
   font-weight: 400;
-  font-size: 24px;
+  font-size: clamp(1rem, 1.8vw, 24px);
 }
 
 @media (max-width: 768px) {
@@ -1027,17 +1460,12 @@ header .pages li a:hover {
   }
 }
 
-.pages {
-  margin-right: auto;
-  margin-left: 0;
-
-}
-
-[lang="en"] .pages {
-  margin-left: auto;
-  margin-right: 0;
-
-}
+/*
+ * `.pages` used to be pushed around here with `margin-right: auto; margin-left: 0` plus
+ * a mirrored `[lang="en"]` override. Both are gone: the navbar rules near the top of
+ * this file place the two lists with one logical `margin-inline`, so there is nothing
+ * left to mirror.
+ */
 
 textarea {
       background: #fff !important;
@@ -1046,6 +1474,7 @@ textarea {
     padding: 0.375rem 0.75rem !important;
     font-size: 1rem !important;
     width: 100% !important;
-    text-align: right !important;
+    /* Was `right`, which forced Arabic alignment on the English form too. */
+    text-align: start !important;
     color: #212529 !important;
 }

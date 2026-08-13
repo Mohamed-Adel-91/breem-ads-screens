@@ -1,5 +1,15 @@
 <?php
 return [
+    /*
+     * Chrome shared by every public page. `switch_language` is the accessible name of
+     * the language control, so it is written in THIS file's language and describes where
+     * the link goes: an English reader is being offered Arabic.
+     */
+    'layout' => [
+        'switch_language' => 'Switch language to Arabic',
+        'toggle_navigation' => 'Toggle navigation',
+    ],
+
     'homepage' => [
         'buttons' => [
             'read_more' => 'Read More',

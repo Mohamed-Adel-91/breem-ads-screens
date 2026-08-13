@@ -14,12 +14,18 @@
 @endphp
 
 <section class="Knowmore">
-    <div class="container">
+    <div class="site-container">
         <div class="row">
-            <div class="col-12 col-md-3">
+            {{--
+                25/75 from 992px up, stacked below it. The split itself is unchanged —
+                only the breakpoint moved from md (768px) to lg, because a 25% heading
+                column is about 180px on a 768px tablet, which broke a two-word title
+                onto four lines.
+            --}}
+            <div class="col-12 col-lg-3">
                 <h3>{!! nl2br(e($section_data['title'] ?? '')) !!}</h3>
             </div>
-            <div class="col-12 col-md-9">
+            <div class="col-12 col-lg-9">
                 <p class="desc">
                     {{ $section_data['desc'] ?? '' }}
                 </p>

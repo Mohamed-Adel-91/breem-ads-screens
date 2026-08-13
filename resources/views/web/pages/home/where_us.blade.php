@@ -14,7 +14,7 @@
 @endphp
 
 <section class="where_us">
-    <div class="container">
+    <div class="site-container">
         <h3 class="text-center mb-5">{{ $section_data['title'] ?? '' }}</h3>
         <div class="swiper whereSwiper">
             <div class="swiper-wrapper">

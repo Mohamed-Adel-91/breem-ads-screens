@@ -23,7 +23,7 @@
         @endif
 
         <section class="contact_us mt-5">
-            <div class="container">
+            <div class="site-container">
                 <h2>{{ data_get($heading?->getTranslations('section_data'), "$locale.title") }}</h2>
                 <p>{{ data_get($heading?->getTranslations('section_data'), "$locale.subtitle") }}</p>
                 <div class="row">

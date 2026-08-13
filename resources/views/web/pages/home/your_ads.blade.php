@@ -14,14 +14,22 @@
 @endphp
 
 <section class="your_ads my-4">
-    <div class="container">
+    <div class="site-container">
         <div class="row">
-            <div class="col-12 col-sm-6">
+            {{--
+                col-lg-6, not col-sm-6: two columns from 992px up, stacked below it. At
+                576px the old breakpoint put a 50-character heading and the device image
+                side by side in about 260px each.
+
+                Source order is text then image, which is also the order the brief asks
+                for when they stack — no `order-*` utility needed.
+            --}}
+            <div class="col-12 col-lg-6">
                 <h3>{{ $section_data['title'] ?? '' }}</h3>
                 <p>{{ $section_data['text'] ?? '' }}</p>
                 <a href="{{ $section_data['link_url'] ?? '#' }}" class="link">{{ $section_data['link_text'] ?? '' }}</a>
             </div>
-            <div class="col-12 col-sm-6">
+            <div class="col-12 col-lg-6">
                 <div class="position-relative w-100">
                     @if(!empty($section_data['image_path']))
                         <img src="{{ asset(media_path($section_data['image_path'])) }}" alt="" class="w-100">

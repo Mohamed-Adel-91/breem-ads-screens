@@ -32,8 +32,20 @@
         },
     });
 
-    var swiper = new Swiper(".whereSwiper", {
-        slidesPerView: 3.5,
+    /*
+     * Locations carousel.
+     *
+     * The carousel is CONTAINED, not edge to edge: its wrapper is `.site-container`, so
+     * Swiper measures the site's measure rather than the viewport. Before, `.container`
+     * ran away above 1600px, which is what made the end cards look cut off by the window
+     * — the clipping was accidental, not a design hint.
+     *
+     * Desktop shows 3 WHOLE cards. The previous 3.5 put a half card on one side only,
+     * which reads as a rendering fault rather than an affordance; the arrows and bullets
+     * below already say the row scrolls. The fractional peek is kept where it is a real
+     * convention and symmetry is not expected — a phone, and the tablet step between.
+     */
+    var whereSwiper = new Swiper(".whereSwiper", {
         spaceBetween: 35,
         loop: true,
         autoplay: {
@@ -50,13 +62,20 @@
         },
         breakpoints: {
             0: {
-                slidesPerView: 1,
+                slidesPerView: 1.15,
+                spaceBetween: 16,
+            },
+            576: {
+                slidesPerView: 2,
+                spaceBetween: 20,
             },
             768: {
-                slidesPerView: 2,
+                slidesPerView: 2.5,
+                spaceBetween: 24,
             },
             992: {
-                slidesPerView: 3.5,
+                slidesPerView: 3,
+                spaceBetween: 35,
             }
         }
     });

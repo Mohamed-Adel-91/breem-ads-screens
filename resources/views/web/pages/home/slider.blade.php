@@ -3,7 +3,7 @@
 @endphp
 
 <section class="slider">
-    <div class="container">
+    <div class="site-container">
         <div class="swiper mySwiper">
             <div class="swiper-wrapper">
                 @foreach ($section->items as $item)

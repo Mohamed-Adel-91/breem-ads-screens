@@ -1,59 +1,9 @@
-<header class="secondheader">
-    <div class="container">
-        <nav class="navbar navbar-expand-lg ">
-            <div class="container-fluid">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarTogglerDemo03" aria-controls="navbarTogglerDemo03" aria-expanded="false"
-                    aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <a class="navbar-brand" href="#">
-                    <img src="img/logo.png" alt=""></a>
-                <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
-                    <ul class="navbar-nav mb-2 mb-lg-0 gap-4 pages">
-                        @php $locale = app()->getLocale(); @endphp
-                        @foreach ($headerMenu?->items ?? [] as $item)
-                            @php $target = $item->target ?? '_self'; @endphp
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url($locale . $item->url) }}" target="{{ $target }}">
-                                    {{ $item->label }}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-                <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
-                    <ul class="navbar-nav mb-2 mb-lg-0 pages">
-                        <li class="nav-item">
-                            {{--
-                                Visible phone digits follow the page locale. Safe here
-                                because the href is "#", not a tel: link — if this ever
-                                becomes tel:, the href must keep ASCII digits or the
-                                dialler breaks. Localize the label, never the target.
-                            --}}
-                            <a class="nav-link" href="#">{{ localized_digits($layoutSettings['phone'] ?? '') }}</a>
-                        </li>
-                        <li class="nav-item">
-                            @php
-                                $switchTo = request()->segment(1) === 'ar' ? 'en' : 'ar';
-                                $params = Route::current()?->parameters() ?? [];
-                                $params['lang'] = $switchTo;
-                                $url = Route::currentRouteName()
-                                    ? route(Route::currentRouteName(), $params)
-                                    : url('/' . $switchTo);
-                                $qs = request()->getQueryString();
-                                if ($qs) {
-                                    $url .= '?' . $qs;
-                                }
-                            @endphp
+{{--
+    The inner-page header: opaque white with teal links, used on every page that has no
+    hero video behind its navigation.
 
-                            <a class="nav-link" aria-current="page" href="{{ $url }}">
-                                {{ app()->getLocale() === 'ar' ? 'English' : 'العربية' }}
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </div>
-</header>
+    master.blade.php still chooses between this file and transparent-header, so the
+    include contract either side of it is unchanged. The markup itself lives in one
+    shared partial — see components/navbar.blade.php for why.
+--}}
+@include('web.layouts.components.navbar', ['solid' => true])

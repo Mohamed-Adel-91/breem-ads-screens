@@ -23,7 +23,7 @@
 
         @if ($who)
             <section class="who_we">
-                <div class="container">
+                <div class="site-container">
                     <h2>{{ data_get($who->getTranslations('section_data'), "$locale.title") }}</h2>
                     <p>
                         {{ data_get($who->getTranslations('section_data'), "$locale.description") }}
