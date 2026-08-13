@@ -22,7 +22,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content p-4 position-relative">
 
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
+                <button type="button" class="btn-close position-absolute modal-close-corner m-3" data-bs-dismiss="modal"
                     aria-label="Close" style="z-index: 30;">X</button>
 
                 <div class="modal-header border-0">
@@ -53,7 +53,9 @@
 
                         <div class="mb-3">
                             <label class="form-label">{{ data_get($data, 'labels.have_screens') }}</label>
-                            <div class="d-flex gap-3">
+                            {{-- flex-wrap: see ads-subscribe — the options wrap rather than
+                                 compress when the modal is narrow. --}}
+                            <div class="d-flex gap-3 flex-wrap">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="have_screens" value="yes" id="soption1">
                                     <label class="form-check-label" for="soption1">{{ data_get($data, 'radio.have_screens_yes') }}</label>
@@ -82,7 +84,7 @@
 
                         <div class="mb-3 d-flex flex-column">
                             <label class="form-label">{{ data_get($data, 'labels.details') }}</label>
-                            <textarea id="w3review" name="details" rows="4" cols="50"></textarea>
+                            <textarea id="details-screens" name="details" rows="4" cols="50"></textarea>
                         </div>
 
                         <div class="text-center mt-4">

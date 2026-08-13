@@ -22,7 +22,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content p-4 position-relative">
 
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
+                <button type="button" class="btn-close position-absolute modal-close-corner m-3" data-bs-dismiss="modal"
                     aria-label="Close" style="z-index: 30;">X</button>
 
                 <div class="modal-header border-0">
@@ -49,7 +49,7 @@
 
                         <div class="mb-3 d-flex flex-column">
                             <label class="form-label">{{ data_get($data, 'labels.question') }}</label>
-                            <textarea id="w3review" name="question" rows="4" cols="50"></textarea>
+                            <textarea id="details-faqs" name="question" rows="4" cols="50"></textarea>
                         </div>
 
                         <div class="text-center mt-4">

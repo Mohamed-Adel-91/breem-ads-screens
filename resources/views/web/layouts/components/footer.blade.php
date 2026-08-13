@@ -1,6 +1,6 @@
 <footer>
     <section class="footer">
-        <div class="overlay"></div> <!-- أوفرلاي -->
+        <div class="overlay"></div> 
         <div class="site-container">
             <div class="row">
                 <div class="col-md-4 d-flex justify-content-center align-items-center flex-column">

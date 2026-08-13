@@ -1173,6 +1173,33 @@ footer .footer .linkss .pagess a {
   border-radius: 10px;
 }
 
+/*
+ * The card row.
+ *
+ * Scoped to the DIRECT child row on purpose: the four modals each contain their own
+ * `.row` of form fields, and a bare `.contact_us .row` would put a 3rem gap between
+ * every pair of inputs.
+ *
+ * `align-items: stretch` is the flex default and is stated here because it is the thing
+ * doing the work — it is what gives each column a height for the card to fill.
+ */
+.contact_us > .site-container > .row {
+  align-items: stretch;
+  row-gap: 3rem;
+  margin-block: 3rem;
+}
+
+/*
+ * `column`, not the default `row`: the four form partials do not agree on where the modal
+ * lives — ads-subscribe emits it as a sibling of the column, screens-subscribe nests it
+ * inside. A column axis means the card fills the height either way, and anything else in
+ * the column stacks under it rather than sitting beside it.
+ */
+.contact_us > .site-container > .row > [class*="col-"] {
+  display: flex;
+  flex-direction: column;
+}
+
 .contact_us h2 {
   color: #41A8A6;
   font-weight: 700;
@@ -1200,14 +1227,22 @@ footer .footer .linkss .pagess a {
   padding-right: 2rem;
   padding-bottom: 2rem;
   padding-left: 2rem;
-  margin: 3rem 0;
   /*
-   * Equalises the card heights across the row. Was `-webkit-fill-available`, which is
-   * non-standard and does nothing outside WebKit/Blink — so on Firefox these cards were
-   * ragged. The column is a flex item of `.row` and therefore already stretches to the
-   * tallest sibling, which gives `100%` something definite to resolve against.
+   * Equal-height cards, done with flex rather than a height.
+   *
+   * This was `height: -webkit-fill-available`, which is non-standard (ragged cards on
+   * Firefox). Replacing it with `height: 100%` was wrong in a way worth recording:
+   * `fill-available` resolves to the containing block MINUS margins, `100%` does not, so
+   * the card's `margin: 3rem 0` was added on top of a full-height box and every column
+   * overflowed by 6rem — which is what pushed the cards underneath the map section.
+   *
+   * The column is now the flex container and the card grows to fill it, so the row's own
+   * stretch does the equalising with no percentage and no margin to double-count. The
+   * 3rem of breathing room moved to the row as a gap; see `.contact_us > .site-container
+   * > .row` below.
    */
-  height: 100%;
+  margin: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1282,19 +1317,66 @@ footer .footer .linkss .pagess a {
   font-weight: 500;
 }
 
+/*
+ * The dismiss control sits in the trailing top corner in both locales.
+ *
+ * It used to be placed with Bootstrap's `top-0 end-0` utilities. `.end-0` is a PHYSICAL
+ * `right: 0` in the LTR build this site loads, so on the Arabic page the close button sat
+ * on the reading-start side, in the corner the eye lands on first.
+ *
+ * The utilities were swapped for this class rather than overridden: Bootstrap's position
+ * utilities carry `!important`, so beating them from here would have meant `!important` on
+ * both declarations to win a fight that did not need to happen.
+ */
+.contact_us .modal-close-corner {
+  top: 0;
+  inset-inline-end: 0;
+}
+
 .contact_us .btn-close {
   background: none;
   border: none;
+  /* It is a 1-character button; give it a real tap target. */
+  min-width: 44px;
+  min-height: 44px;
 }
 
+/*
+ * Radio options inside the modals.
+ *
+ * The control and its label are flex siblings so the label can sit on the reading side of
+ * the button without Bootstrap's float. Three things were wrong:
+ *
+ *   - no `align-items`, so a label that wrapped to two lines left its radio stretched
+ *     against the top of the block instead of beside the text;
+ *   - `gap: 1rem` put a visible hole between a radio and the words it belongs to, which
+ *     on a narrow modal read as two unrelated elements;
+ *   - Bootstrap's `.form-check` keeps `padding-left: 1.5em` to make room for the floated
+ *     input it no longer has, indenting every option.
+ *
+ * `flex-shrink: 0` on the input matters: without it the radio itself was being squeezed
+ * below 16px in the narrow columns.
+ */
 .contact_us .form-check {
-  gap: 1rem;
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline-start: 0;
+  margin-bottom: 0;
+  /* Whole option is one tap target. */
+  min-height: 44px;
 }
 
 .contact_us .form-check .form-check-input {
   float: none;
   margin-left: unset;
+  margin-top: 0;
+  flex: 0 0 auto;
+}
+
+.contact_us .form-check .form-check-label {
+  /* The label is the wrapping part; it must not drag the radio out of line. */
+  line-height: 1.4;
 }
 
 .contact_us .form-check label {
@@ -1441,9 +1523,7 @@ footer .footer .linkss .pagess a {
     max-width: 100%;
     padding: 20px;
     background: rgba(1, 71, 71, 0.85);
-    /* عشان النص يبقى واضح */
     margin-top: -4px;
-    /* يركب على الصورة */
   }
 
   .map .map_content h3 {

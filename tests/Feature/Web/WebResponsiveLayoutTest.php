@@ -643,6 +643,141 @@ class WebResponsiveLayoutTest extends TestCase
         );
     }
 
+    // ---------------------------------------------------------- the contact forms
+
+    public function test_the_service_cards_equalise_without_a_percentage_height(): void
+    {
+        /*
+         * The bug this guards: the card carried `margin: 3rem 0` AND a full height.
+         * `-webkit-fill-available` subtracts margins, `height: 100%` does not, so every
+         * column overflowed by 6rem and the cards were drawn over the map section below.
+         * The card must therefore own no height at all — the column stretches, the card
+         * grows into it.
+         */
+        $css = $this->activeCss();
+
+        $this->assertSame(
+            1,
+            preg_match('/\.contact_us \.contact_box\s*\{([^}]*)\}/s', $css, $block),
+            'The service card rule is missing.'
+        );
+
+        $this->assertDoesNotMatchRegularExpression(
+            '/(?<![-\w])height:/',
+            $block[1],
+            'The card must not set a height; the column stretch equalises it.'
+        );
+        $this->assertMatchesRegularExpression('/flex:\s*1/', $block[1], 'The card must grow into its column.');
+        $this->assertMatchesRegularExpression(
+            '/margin:\s*0/',
+            $block[1],
+            'The card margin moved to the row as a gap; as a margin it double-counted against the height.'
+        );
+
+        // The row spaces the cards, and is scoped to the direct child row so the modals'
+        // own field rows are untouched.
+        $this->assertMatchesRegularExpression(
+            '/\.contact_us > \.site-container > \.row\s*\{[^}]*row-gap/s',
+            $css
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.contact_us > \.site-container > \.row > \[class\*="col-"\]\s*\{[^}]*display:\s*flex/s',
+            $css
+        );
+    }
+
+    public function test_each_contact_form_field_id_is_unique_across_the_page(): void
+    {
+        // All four modals live on the same document. They shared `id="w3review"` on their
+        // details textarea, which is invalid and makes any future `for=`/JS hook ambiguous.
+        $html = $this->get('/ar/contact-us')->getContent();
+
+        preg_match_all('/<(?:input|select|textarea)[^>]*\sid="([^"]+)"/', $html, $ids);
+
+        $duplicates = array_filter(array_count_values($ids[1]), fn ($n) => $n > 1);
+
+        $this->assertSame(
+            [],
+            $duplicates,
+            'Duplicate form field id: ' . implode(', ', array_keys($duplicates))
+        );
+
+        // Every label's target exists exactly once, so clicking a label selects its own
+        // control rather than an identically-named one in another modal.
+        preg_match_all('/<label[^>]*\sfor="([^"]+)"/', $html, $fors);
+
+        foreach (array_unique($fors[1]) as $target) {
+            $this->assertSame(
+                1,
+                preg_match_all('/\sid="' . preg_quote($target, '/') . '"/', $html),
+                "label[for={$target}] must resolve to exactly one control."
+            );
+        }
+    }
+
+    public function test_the_radio_options_can_wrap_and_stay_beside_their_control(): void
+    {
+        // On a narrow modal `d-flex gap-3` squeezed two options into columns one word
+        // wide, and the radio drifted away from the label it belongs to.
+        foreach (['ads-subscribe', 'screens-subscribe'] as $partial) {
+            $contents = file_get_contents(
+                resource_path("views/web/pages/contact-forms/{$partial}.blade.php")
+            );
+
+            $this->assertMatchesRegularExpression(
+                '/<div class="d-flex gap-3 flex-wrap">/',
+                $contents,
+                "[{$partial}] radio row must be allowed to wrap."
+            );
+        }
+
+        $css = $this->activeCss();
+
+        $this->assertSame(
+            1,
+            preg_match('/\.contact_us \.form-check\s*\{([^}]*)\}/s', $css, $block),
+            'The option rule is missing.'
+        );
+
+        $this->assertMatchesRegularExpression('/align-items:\s*center/', $block[1]);
+        $this->assertMatchesRegularExpression('/min-height:\s*44px/', $block[1], 'An option is a tap target.');
+
+        // The control must not be squeezed when the row narrows.
+        $this->assertMatchesRegularExpression(
+            '/\.contact_us \.form-check \.form-check-input\s*\{[^}]*flex:\s*0 0 auto/s',
+            $css
+        );
+    }
+
+    public function test_the_modal_dismiss_control_sits_on_the_trailing_corner(): void
+    {
+        // `.end-0` is a physical `right: 0` in the LTR Bootstrap build this site loads, so
+        // on the Arabic page it put the close button in the corner the eye starts from.
+        foreach (glob(resource_path('views/web/pages/contact-forms/*.blade.php')) as $partial) {
+            $contents = file_get_contents($partial);
+
+            if (! str_contains($contents, 'btn-close')) {
+                continue;
+            }
+
+            $this->assertStringContainsString(
+                'modal-close-corner',
+                $contents,
+                basename($partial) . ' must position its close button logically.'
+            );
+            $this->assertStringNotContainsString(
+                'top-0 end-0',
+                $contents,
+                basename($partial) . ' still uses physical position utilities.'
+            );
+        }
+
+        $this->assertMatchesRegularExpression(
+            '/\.contact_us \.modal-close-corner\s*\{[^}]*inset-inline-end:\s*0/s',
+            $this->activeCss()
+        );
+    }
+
     // ------------------------------------------------------- contracts left alone
 
     #[DataProvider('publicPageProvider')]

@@ -22,7 +22,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content p-4 position-relative">
 
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
+                <button type="button" class="btn-close position-absolute modal-close-corner m-3" data-bs-dismiss="modal"
                     aria-label="Close" style="z-index: 30;">X</button>
 
                 <div class="modal-header border-0">
@@ -52,7 +52,7 @@
                         </div>
                         <div class="mb-3 d-flex flex-column">
                             <label class="form-label">{{ data_get($data, 'labels.details') }}</label>
-                            <textarea id="w3review" name="details" rows="4" cols="50"></textarea>
+                            <textarea id="details-creating" name="details" rows="4" cols="50"></textarea>
                         </div>
                         <div class="text-center mt-4">
                             <button type="submit" class="btn px-5" style="background:#41A8A6; color:white; border-radius:10px;">{{ $data['submit_text'] ?? 'Send' }}</button>
