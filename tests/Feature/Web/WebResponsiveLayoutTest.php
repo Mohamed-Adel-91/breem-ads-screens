@@ -164,15 +164,23 @@ class WebResponsiveLayoutTest extends TestCase
         // a content container.
         $css = $this->declarationsOnly();
 
+        $this->assertNotEmpty($css, 'The stylesheet scan produced nothing to check.');
+
         preg_match_all('/max-width:\s*(\d+)px/', $css, $matches);
 
-        foreach ($matches[1] as $literal) {
-            $this->assertLessThan(
-                1000,
-                (int) $literal,
-                "A max-width of {$literal}px looks like a second content container; use --site-container-max."
-            );
-        }
+        // Asserted as a set rather than in a loop, so the test still proves something when
+        // there is nothing to iterate.
+        $competing = array_values(array_filter(
+            $matches[1],
+            fn (string $literal): bool => (int) $literal >= 1000
+        ));
+
+        $this->assertSame(
+            [],
+            $competing,
+            'These px max-widths look like second content containers; use --site-container-max: '
+                . implode('px, ', $competing) . 'px'
+        );
     }
 
     #[DataProvider('publicPageProvider')]

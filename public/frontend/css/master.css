@@ -689,6 +689,9 @@ header .pages li a:hover::after {
   padding-block: var(--section-space-md);
   background-image: url('../img/backkk.png');
   background-size: cover;
+  /* Anchored top-left by default, so on a narrow viewport the band showed the corner of
+     the photo. Centred, as `footer .footer` already does with its own background. */
+  background-position: center;
 
 }
 
