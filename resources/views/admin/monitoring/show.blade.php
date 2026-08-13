@@ -68,7 +68,9 @@
                              not the old online-log-count ratio. --}}
                         <span class="admin-stat-label">{{ __('admin.monitoring.show.availability') }}</span>
                         <span class="admin-stat-value">
-                            {{ $availability['availability'] !== null ? $availability['availability'] . '%' : '—' }}
+                            {{ $availability['availability'] !== null
+                                ? localized_digits($availability['availability']) . '%'
+                                : '—' }}
                         </span>
                         <small class="d-block text-muted mt-1">
                             {{ $availability['availability'] !== null
@@ -82,7 +84,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.monitoring.show.active_schedules') }}</span>
-                        <span class="admin-stat-value">{{ $activeScheduleCount }}</span>
+                        <span class="admin-stat-value">{{ localized_digits($activeScheduleCount) }}</span>
                     </div>
                 </div>
             </div>

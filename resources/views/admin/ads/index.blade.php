@@ -133,7 +133,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.ads.stats.total') }}</span>
-                        <span class="admin-stat-value">{{ $stats['total'] ?? 0 }}</span>
+                        <span class="admin-stat-value">{{ localized_digits($stats['total'] ?? 0) }}</span>
                     </div>
                 </div>
             </div>
@@ -141,7 +141,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.ads.stats.active') }}</span>
-                        <span class="admin-stat-value text-success">{{ $stats['active'] ?? 0 }}</span>
+                        <span class="admin-stat-value text-success">{{ localized_digits($stats['active'] ?? 0) }}</span>
                     </div>
                 </div>
             </div>
@@ -149,7 +149,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.ads.stats.pending') }}</span>
-                        <span class="admin-stat-value text-warning">{{ $stats['pending'] ?? 0 }}</span>
+                        <span class="admin-stat-value text-warning">{{ localized_digits($stats['pending'] ?? 0) }}</span>
                     </div>
                 </div>
             </div>
@@ -157,7 +157,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.ads.stats.expired') }}</span>
-                        <span class="admin-stat-value text-danger">{{ $stats['expired'] ?? 0 }}</span>
+                        <span class="admin-stat-value text-danger">{{ localized_digits($stats['expired'] ?? 0) }}</span>
                     </div>
                 </div>
             </div>

@@ -149,7 +149,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.schedules.stats.total') }}</span>
-                        <span class="admin-stat-value">{{ $stats['total'] ?? 0 }}</span>
+                        <span class="admin-stat-value">{{ localized_digits($stats['total'] ?? 0) }}</span>
                     </div>
                 </div>
             </div>
@@ -157,7 +157,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.schedules.states.current') }}</span>
-                        <span class="admin-stat-value text-success">{{ $stats['current'] ?? 0 }}</span>
+                        <span class="admin-stat-value text-success">{{ localized_digits($stats['current'] ?? 0) }}</span>
                     </div>
                 </div>
             </div>
@@ -165,7 +165,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.schedules.states.upcoming') }}</span>
-                        <span class="admin-stat-value text-info">{{ $stats['upcoming'] ?? 0 }}</span>
+                        <span class="admin-stat-value text-info">{{ localized_digits($stats['upcoming'] ?? 0) }}</span>
                     </div>
                 </div>
             </div>
@@ -173,7 +173,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.schedules.states.inactive') }}</span>
-                        <span class="admin-stat-value text-danger">{{ $stats['inactive'] ?? 0 }}</span>
+                        <span class="admin-stat-value text-danger">{{ localized_digits($stats['inactive'] ?? 0) }}</span>
                     </div>
                 </div>
             </div>

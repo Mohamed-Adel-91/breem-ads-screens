@@ -149,7 +149,7 @@
                         @php($hours = fn ($seconds) => round($seconds / 3600, 1))
 
                         @if (! is_null($availability['availability']))
-                            <p class="admin-stat-value text-success mb-1">{{ $availability['availability'] }}%</p>
+                            <p class="admin-stat-value text-success mb-1">{{ localized_digits($availability['availability']) }}%</p>
                             <p class="text-muted small">{{ __('admin.screens.show.availability_help') }}</p>
                         @else
                             <p class="text-muted small">{{ __('admin.screens.show.availability_empty') }}</p>

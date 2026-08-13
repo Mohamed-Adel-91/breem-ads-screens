@@ -1,5 +1,18 @@
 /*
- * Thmanyah Sans — locally hosted admin typeface.
+ * The Thmanyah type system — admin.
+ *
+ * THE ADMIN IS A DIGITAL TOOL, so it is Sans-first and stays that way. Serif is used
+ * sparingly and on purpose:
+ *
+ *   Thmanyah Sans           the default: sidebar, navbar, tables, forms, buttons,
+ *                           filters, badges, pagination, metrics and every numeral
+ *   Thmanyah Serif Display  page titles and the major dashboard heading only
+ *   Thmanyah Serif Text     descriptive copy under a page title, and opt-in prose
+ *
+ * Turning admin tables and filters into serif would make an operations console harder
+ * to scan, which is the opposite of the point. Selectors use the semantic tokens
+ * --breem-font-ui / --breem-font-display / --breem-font-text declared in
+ * breem-admin.css; nothing downstream names a family.
  *
  * THE ONLY PLACE @font-face IS DECLARED FOR THE ADMIN. Keep it that way: font-face
  * definitions scattered across stylesheets are how a project ends up loading the same
@@ -10,18 +23,23 @@
  * dependency, a privacy dependency for every admin page view, extra latency, a CSP
  * allowance and an outage risk — in exchange for nothing.
  *
- * WOFF2 ONLY, and only the weights the admin actually asks for. See
- * ../fonts/thmanyah/README.md for the file/weight table and where the rest of the
- * supplied package lives.
+ * WOFF2 ONLY, and only the weights the admin actually asks for. The four Sans weights
+ * are all consumed by the theme (a census of app-light.css/app-rtl.css/breem-admin.css
+ * finds 300, 400, 500 and 700). Display ships Bold alone because `.page-title` is 700
+ * and nothing else uses the family; Text ships Regular alone because admin prose is
+ * escaped Blade output that cannot contain <strong>. See ../fonts/thmanyah/README.md.
  *
  * Paths are relative to THIS stylesheet (public/admin-assets/css/), so they resolve to
  * /admin-assets/fonts/thmanyah/… whatever host or sub-path the app is served from. Never
  * put an absolute or filesystem path in here.
  *
  * font-display: swap — the admin is a working tool, so readable fallback text
- * immediately beats a blank screen waiting on 300 KB of fonts. The typeface is not the
- * product.
+ * immediately beats a blank screen waiting on fonts. The typeface is not the product.
  */
+
+/* ===================================================================
+   Thmanyah Sans — the admin default
+   =================================================================== */
 
 /* Light */
 @font-face {
@@ -63,6 +81,37 @@
     font-family: 'Thmanyah Sans';
     src: url('../fonts/thmanyah/thmanyah-sans-bold.woff2') format('woff2');
     font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ===================================================================
+   Thmanyah Serif Display — page titles only
+   ===================================================================
+   Bold alone. `.page-title` and the dashboard welcome heading are 700, and no other
+   admin rule uses this family. A Regular face would be an unused public download.
+   =================================================================== */
+
+@font-face {
+    font-family: 'Thmanyah Serif Display';
+    src: url('../fonts/thmanyah/thmanyah-serif-display-bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ===================================================================
+   Thmanyah Serif Text — descriptive copy
+   ===================================================================
+   Regular alone, and that is provable rather than optimistic: admin prose is escaped
+   Blade output built from translation strings, so it cannot contain <strong> or <em>
+   and never requests a bold or italic face.
+   =================================================================== */
+
+@font-face {
+    font-family: 'Thmanyah Serif Text';
+    src: url('../fonts/thmanyah/thmanyah-serif-text-regular.woff2') format('woff2');
+    font-weight: 400;
     font-style: normal;
     font-display: swap;
 }

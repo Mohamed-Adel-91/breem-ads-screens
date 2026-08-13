@@ -1,14 +1,25 @@
-# Thmanyah Sans — Breem admin runtime font
+# Thmanyah type system — Breem admin runtime fonts
 
 These are the **runtime** font files the admin actually loads. They are served publicly,
 so only what a browser needs lives here.
 
-| File | CSS `font-weight` | Named weight |
-|---|---:|---|
-| `thmanyah-sans-light.woff2` | 300 | Light |
-| `thmanyah-sans-regular.woff2` | 400 | Regular |
-| `thmanyah-sans-medium.woff2` | 500 | Medium |
-| `thmanyah-sans-bold.woff2` | 700 | Bold |
+The admin is Sans-first: it is an operations console read by scanning, so serif appears in
+exactly two places — `.page-title` / `.dashboard-welcome h2` (Display) and
+`.admin-page-header p` / `.admin-prose` (Text). Tables, filters, badges, pagination, the
+sidebar and `.card-title` stay Sans.
+
+| File | Family | CSS `font-weight` | Used by |
+|---|---|---:|---|
+| `thmanyah-sans-light.woff2` | Sans | 300 | vendor theme rules |
+| `thmanyah-sans-regular.woff2` | Sans | 400 | the admin body default |
+| `thmanyah-sans-medium.woff2` | Sans | 500 | sidebar, table headers, labels |
+| `thmanyah-sans-bold.woff2` | Sans | 700 | emphasis, and 600 resolves here |
+| `thmanyah-serif-display-bold.woff2` | Serif Display | 700 | page titles |
+| `thmanyah-serif-text-regular.woff2` | Serif Text | 400 | descriptive copy |
+
+Display ships Bold alone because nothing else uses the family. Text ships Regular alone
+because admin prose is escaped Blade output built from translation strings — it cannot
+contain `<strong>` or `<em>`, so no bold or italic face is ever requested.
 
 The admin stylesheets declare weights 300, 400, 500, 600 and 700. There is **no 600
 file**, and that is deliberate rather than an omission: CSS font matching resolves a

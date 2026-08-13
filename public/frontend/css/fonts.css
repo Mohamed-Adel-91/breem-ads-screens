@@ -1,41 +1,100 @@
 /*
- * Thmanyah Sans — locally hosted public-website typeface.
+ * The Thmanyah type system — public website.
  *
- * THE ONLY PLACE @font-face IS DECLARED FOR THE PUBLIC SITE. master.css previously
- * carried its own font-face blocks; keeping them in one file is what stops the same
- * family being loaded twice under two spellings, which is exactly what had happened
- * with "cairo" and Cairo.
+ * THREE FAMILIES, THREE JOBS. The package ships three families and they are not
+ * interchangeable; using only Sans everywhere ignored the system it was designed as:
  *
- * LOCAL FILES ONLY. Nothing here reaches font.thmanyah.com, Google Fonts, gstatic or
- * any CDN. The binaries are in this repository, so a remote request would buy an
- * external dependency, a privacy dependency for every public visitor, extra latency and
- * an outage risk in exchange for nothing.
+ *   Thmanyah Serif Display  → display typography: hero and section headings
+ *   Thmanyah Serif Text     → reading typography: paragraphs, prose, CMS body copy
+ *   Thmanyah Sans           → digital typography: navigation, controls, labels, NUMBERS
  *
- * WEBSITE-OWNED COPIES. These files are served from public/frontend/fonts/thmanyah/,
- * not from public/admin-assets/. The two surfaces are deliberately independent: the
- * public site must not acquire a semantic dependency on an admin directory, and the
- * duplication is four WOFF2 files. The complete original package — three families, OTF
- * and WOFF2, licences and the design guide — lives outside the web root at
- * resources/fonts/thmanyah/.
+ * Selectors never name these families directly. master.css maps them onto the semantic
+ * tokens --breem-font-display / --breem-font-text / --breem-font-ui, and everything
+ * downstream uses the token. Change the mapping in one place, not in fifty selectors.
  *
- * Paths are relative to THIS stylesheet (public/frontend/css/), so they resolve
- * correctly whatever host or sub-path the site is served from, and independently of the
- * layout's <base href>. Never put an absolute or filesystem path in here.
+ * THE ONLY PLACE @font-face IS DECLARED FOR THE PUBLIC SITE.
  *
- * font-display: swap — a visitor reads text, not a typeface. Show the fallback
- * immediately rather than a blank hero while ~300 KB of fonts arrives.
+ * LOCAL FILES ONLY. Nothing here reaches font.thmanyah.com, Google Fonts, gstatic or any
+ * CDN. The binaries are in this repository, so a remote request would buy an external
+ * dependency, a privacy dependency for every visitor, latency and an outage risk for
+ * nothing.
+ *
+ * WEBSITE-OWNED COPIES, served from public/frontend/fonts/thmanyah/ — never from
+ * public/admin-assets/. The two surfaces are deliberately independent. The complete
+ * original package (all three families, OTF and WOFF2, licences, design guide) lives
+ * outside the web root at resources/fonts/thmanyah/.
+ *
+ * WHICH WEIGHTS ARE HERE, AND WHY ONLY THESE. Derived from a census of every
+ * font-weight in master.css, not from the package contents:
+ *
+ *   Display  400, 700   every public display heading is 700; 400 is the family base
+ *   Text     400, 500   prose is 400; the map block asks for 500
+ *   Text     700        for <strong> inside CMS-authored prose
+ *   Sans     400, 500   buttons/links 400; form labels and the statistic numbers 500
+ *   Sans     700        navigation and footer links
+ *
+ * Not shipped, because nothing asks for them: any Light (300) — no public rule requests
+ * weight 300 — and any Black (900). Take them from resources/fonts/thmanyah/ if that
+ * changes, and add the @font-face at the same time.
+ *
+ * Paths are relative to THIS stylesheet, so they resolve whatever host or sub-path the
+ * site is served from and independently of the layout's <base href>.
+ *
+ * font-display: swap on every face — a visitor reads words, not typefaces.
  */
 
-/* Light */
+/* ===================================================================
+   Thmanyah Serif Display — headings
+   =================================================================== */
+
 @font-face {
-    font-family: 'Thmanyah Sans';
-    src: url('../fonts/thmanyah/thmanyah-sans-light.woff2') format('woff2');
-    font-weight: 300;
+    font-family: 'Thmanyah Serif Display';
+    src: url('../fonts/thmanyah/thmanyah-serif-display-regular.woff2') format('woff2');
+    font-weight: 400;
     font-style: normal;
     font-display: swap;
 }
 
-/* Regular — body copy, paragraphs, CMS content */
+@font-face {
+    font-family: 'Thmanyah Serif Display';
+    src: url('../fonts/thmanyah/thmanyah-serif-display-bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ===================================================================
+   Thmanyah Serif Text — prose
+   =================================================================== */
+
+@font-face {
+    font-family: 'Thmanyah Serif Text';
+    src: url('../fonts/thmanyah/thmanyah-serif-text-regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Thmanyah Serif Text';
+    src: url('../fonts/thmanyah/thmanyah-serif-text-medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Thmanyah Serif Text';
+    src: url('../fonts/thmanyah/thmanyah-serif-text-bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ===================================================================
+   Thmanyah Sans — interface, controls and numerals
+   =================================================================== */
+
 @font-face {
     font-family: 'Thmanyah Sans';
     src: url('../fonts/thmanyah/thmanyah-sans-regular.woff2') format('woff2');
@@ -44,7 +103,6 @@
     font-display: swap;
 }
 
-/* Medium */
 @font-face {
     font-family: 'Thmanyah Sans';
     src: url('../fonts/thmanyah/thmanyah-sans-medium.woff2') format('woff2');
@@ -54,16 +112,10 @@
 }
 
 /*
- * Bold. Declared at 700 only.
- *
- * master.css also asks for 600 in one place and the family has no 600 face. That is
- * left to CSS font matching on purpose: a requested 600 resolves upward to this real
- * 700 file, so the rule renders in genuine Bold. Declaring this file as
- * `font-weight: 600 700` would flatten the two to identical rendering.
- *
- * Note this is a visible improvement rather than only a change: the previous setup
- * loaded a single Cairo Regular face, so every bold on the site was a browser-
- * synthesised fake. They are real weights now.
+ * Bold at 700 only. master.css asks for 600 once (.media .box .desc p) and no family
+ * here has a 600 face; CSS matching resolves that upward to this real 700 file rather
+ * than synthesising. Declaring `font-weight: 600 700` would flatten the two and is not
+ * the same thing as having a 600.
  */
 @font-face {
     font-family: 'Thmanyah Sans';
@@ -74,6 +126,6 @@
 }
 
 /*
- * No italic face exists in the package, so italic text gets a browser-synthesised
- * oblique. That is correct for Latin, and Arabic does not use italics.
+ * No italic face exists in any of the three families, so italics get a synthesised
+ * oblique. Correct for Latin; Arabic does not use italics.
  */

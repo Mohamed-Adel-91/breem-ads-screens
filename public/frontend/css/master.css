@@ -1,73 +1,183 @@
 /* ==========================================================================
-   Typography
+   Typography — the Thmanyah type system
    ==========================================================================
 
-   The public site is set in Thmanyah Sans, in BOTH Arabic and English — one family
-   for both scripts, by explicit product decision. There is no per-direction font
-   stack, and there must not be one: the fallbacks below only ever come into play for
-   a glyph Thmanyah cannot render.
+   Three families, three jobs. The same system applies to Arabic and English; there is
+   no per-direction font stack and there must not be one. The fallbacks below only ever
+   come into play for a glyph Thmanyah cannot render.
+
+     DISPLAY  Thmanyah Serif Display  hero and section headings
+     TEXT     Thmanyah Serif Text     paragraphs, prose, CMS body copy — the body default
+     UI       Thmanyah Sans           navigation, controls, labels, and all NUMBERS
+
+   Selectors below use the SEMANTIC token, never a family name. If the mapping ever
+   changes, it changes in the three declarations under :root and nowhere else.
 
    @font-face lives in fonts.css, which the layout loads before this file. Nothing in
    here may declare a font face.
 
-   WHAT THIS REPLACED. The site was set in Cairo through a single @font-face that
-   loaded only Cairo-Regular.ttf, so every `font-weight: 600`/`700` rule below was
-   rendered as a browser-synthesised fake bold. Alongside it sat five commented-out
-   Inter @font-face blocks pointing at ../css/fonts/*.ttf — files that do not exist in
-   this repository — and one rule asking for "GE SS Two", a family nothing ever
-   loaded. All of that is gone; the weights are real now.
+   HISTORY, so nobody re-adds any of it. The site was originally set in Cairo through a
+   single @font-face that loaded only Cairo-Regular.ttf, so every bold was synthesised.
+   Alongside it sat five commented-out Inter @font-face blocks pointing at files that do
+   not exist here, and one rule asking for "GE SS Two", a family nothing ever loaded.
+   A first pass replaced all of that with Thmanyah Sans everywhere, which fixed the fake
+   weights but flattened three families into one. This is the full system.
 
-   The Cairo binaries are still in ../fonts/ with their OFL licence. They are simply
-   no longer loaded.
+   The Cairo binaries are still in ../fonts/ with their OFL licence, simply not loaded.
    ========================================================================== */
 
 :root {
   /*
-   * The one public type stack. Fallbacks are platform UI faces so a slow font fetch
-   * or a cache miss shows native-looking text rather than Times New Roman, and
-   * 'Noto Sans Arabic' keeps the Arabic fallback sane on systems that have it.
+   * Shared fallbacks. Platform faces, so a slow fetch or a cache miss shows
+   * native-looking text rather than Times New Roman. 'Noto Sans Arabic' keeps the
+   * Arabic fallback sane on systems that have it.
    */
-  --breem-font-family: 'Thmanyah Sans', system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans Arabic', sans-serif;
+  --breem-font-fallback-serif: 'Times New Roman', 'Noto Naskh Arabic', Georgia, serif;
+  --breem-font-fallback-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, 'Noto Sans Arabic', sans-serif;
 
-  /* Bootstrap 5 (loaded from CDN) reads these; overriding them here catches every
-     vendor rule that uses them instead of chasing each one individually. */
-  --bs-body-font-family: var(--breem-font-family);
-  --bs-font-sans-serif: var(--breem-font-family);
+  /* The three semantic tokens. Everything downstream references these. */
+  --breem-font-display: 'Thmanyah Serif Display', var(--breem-font-fallback-serif);
+  --breem-font-text: 'Thmanyah Serif Text', var(--breem-font-fallback-serif);
+  --breem-font-ui: 'Thmanyah Sans', var(--breem-font-fallback-sans);
+
+  /* Bootstrap 5 (loaded from CDN) reads these. Bootstrap's own rules are chrome and
+     controls, so they map to the UI face, not to the reading face. */
+  --bs-body-font-family: var(--breem-font-text);
+  --bs-font-sans-serif: var(--breem-font-ui);
 }
 
 /*
- * THE PUBLIC TYPOGRAPHY RULE.
+ * THE BODY DEFAULT IS THE READING FACE.
  *
- * One declaration for the whole site. Headings, paragraphs, navigation, the mobile
- * sidebar, links, cards, sections, the footer, modals and all CMS-rendered text
- * inherit from here.
+ * Prose is the majority of the page, so Text is the default and the other two are
+ * applied where they belong. Paragraphs, list copy, CMS body content and anything
+ * unclassified inherit from here and need no rule of their own.
  *
- * Deliberately NOT `* { font-family: ... }`. A universal selector would also hit
+ * Deliberately NOT `* { font-family: … }`. A universal selector would also capture
  * Font Awesome's .fa/.fas/.far/.fab elements and their ::before pseudo-elements and
  * turn every icon on the site into a tofu box.
  */
 html,
 body {
-  font-family: var(--breem-font-family);
+  font-family: var(--breem-font-text);
 }
 
 /*
- * Form controls do not inherit font-family by default — browsers give them a
- * platform UI font. Bootstrap's reboot normally fixes this, but it is loaded from a
- * CDN here, so the site states it itself rather than depending on a third party
- * continuing to. `option` is included because Bootstrap's own list omits it.
+ * DISPLAY — headings that function as display typography.
  *
- * Only font-family is set: nothing here touches the platform rendering of date,
- * colour or file inputs.
+ * h1–h3 are display by default because on this site they are always section or page
+ * headings. h4–h6 are deliberately NOT included: on this site they behave as compact
+ * labels (`.who_we h4` is an icon-prefixed feature label), and forcing them to serif
+ * would make a UI label look like a headline. Anything that needs it can opt in with
+ * `.font-display`.
  */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--breem-font-display);
+}
+
+/*
+ * UI / DIGITAL — navigation, controls, labels, metadata and numerals.
+ *
+ * These are interface, not prose. Grouped in one rule rather than scattered so the
+ * boundary between "reading" and "operating" stays visible in one place.
+ *
+ * `input`/`select`/`textarea`/`option` are here for two reasons: they are controls, and
+ * browsers give them a platform UI font unless told otherwise. Bootstrap's reboot
+ * normally handles the second, but it is loaded from a CDN, so the site states it
+ * itself rather than trusting a third party to keep shipping it. Only font-family is
+ * set — nothing here touches the platform rendering of date, colour or file inputs.
+ */
+header,
+footer,
+nav,
 button,
 input,
 optgroup,
 select,
 option,
-textarea {
-  font-family: inherit;
+textarea,
+label,
+.btn,
+.link,
+.link_button,
+.breadcrumb,
+.pagination,
+.badge,
+.form-label,
+.swiper-button-prev,
+.swiper-button-next,
+.navbar-toggler,
+.font-ui {
+  font-family: var(--breem-font-ui);
+}
+
+/*
+ * Explicit prose opt-in, for a block that sits inside a UI container but is reading
+ * copy — and for CMS-rendered HTML where the markup is not ours to classify.
+ */
+.font-text,
+.prose {
+  font-family: var(--breem-font-text);
+}
+
+/*
+ * Monospace is not part of the Thmanyah system. Code and preformatted text keep a
+ * monospace stack so digits and identifiers stay column-aligned.
+ */
+code,
+kbd,
+pre,
+samp {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+}
+
+/* --------------------------------------------------------------------------
+   Section-specific classification
+   --------------------------------------------------------------------------
+   Elements whose tag says one thing and whose job says another. Each of these was
+   decided by looking at what the element actually is on the page, not at its tag —
+   which is the whole point of having three families rather than one.
+   -------------------------------------------------------------------------- */
+
+/*
+ * STATISTICS. The number is a digital metric, so it is Sans — a serif reading face is
+ * the wrong tool for a counter, and Sans is also where the numerals are designed to
+ * live. The label beneath it is a compact statistic caption, not a heading and not
+ * prose: at 1.7rem directly under a 3rem figure in a four-column grid it reads as part
+ * of the metric, so it is Sans too. It is a <p>, so it would otherwise inherit the
+ * reading face.
+ */
+.media .box span,
+.media .box .desc p {
+  font-family: var(--breem-font-ui);
+}
+
+/*
+ * Icon-prefixed feature label. An <h4> by tag, a compact UI label in practice — which
+ * is exactly why h4–h6 are not in the display rule above.
+ */
+.who_we h4 {
+  font-family: var(--breem-font-ui);
+}
+
+/*
+ * Controls and metadata that the general rule above cannot reach by element name.
+ * `.button_book a` is a booking button; `.overlay` is a label sitting on a location
+ * card; `.contact` is phone/email metadata; `.modal-title` is dialog chrome; the
+ * multiselect is a third-party control.
+ */
+.where_us .button_book a,
+.location-card .overlay,
+.map .map_content .contact,
+.contact_us .modal-title,
+.contact_us .multiselect,
+.contact_us .multiselect-container > li > a {
+  font-family: var(--breem-font-ui);
 }
 
 header {

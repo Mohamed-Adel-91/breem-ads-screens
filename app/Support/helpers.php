@@ -1,7 +1,25 @@
 <?php
 
+use App\Support\LocalizedDigits;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+
+if (! function_exists('localized_digits')) {
+    /**
+     * Render a value's digits for the current locale: Arabic-Indic in `ar`, ASCII in `en`.
+     *
+     * A one-word Blade call so views read as `{{ localized_digits($count) }}` rather than
+     * importing a class. All behaviour, and the list of things it must never be used on,
+     * lives in App\Support\LocalizedDigits — this is only the shorthand.
+     *
+     * PRESENTATION ONLY. Never wrap a route parameter, a query value, an href, a screen
+     * code, an API field or anything written back to the database.
+     */
+    function localized_digits(mixed $value, ?string $locale = null): string
+    {
+        return LocalizedDigits::format($value, $locale);
+    }
+}
 
 if (! function_exists('media_path')) {
     function media_path(?string $path): ?string

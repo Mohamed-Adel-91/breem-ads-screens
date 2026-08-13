@@ -79,28 +79,43 @@ accepted: the admin is a small internal audience. **Do not add a manifest, a bui
 or Node to solve it** — if it ever becomes a real problem, a query-string version on the
 few first-party files is the whole fix.
 
-## Typography — Thmanyah Sans
+## Typography — the Thmanyah type system
 
-**Both surfaces are set in Thmanyah Sans**, served from this repository, in Arabic and
-English alike. Each surface owns its own runtime copies so neither depends on the
-other's directory:
+**Three families, three jobs.** Both surfaces use all three, in Arabic and English alike.
+Semantic purpose decides the family, never the HTML tag:
+
+| Token | Family | Job |
+|---|---|---|
+| `--breem-font-display` | Thmanyah **Serif Display** | hero and section headings, admin page titles |
+| `--breem-font-text` | Thmanyah **Serif Text** | paragraphs, prose, CMS body copy, admin descriptive copy |
+| `--breem-font-ui` | Thmanyah **Sans** | navigation, controls, labels, metadata, **and every numeral** |
+
+Selectors reference the **token**, never a family name. The mapping lives in three
+declarations under `:root` in each surface's main stylesheet and nowhere else.
 
 | Concern | Admin | Public website |
 |---|---|---|
 | Font files (WOFF2) | `public/admin-assets/fonts/thmanyah/` | `public/frontend/fonts/thmanyah/` |
 | `@font-face` — the only place | `public/admin-assets/css/fonts.css` | `public/frontend/css/fonts.css` |
-| Applied to the UI | `--breem-font-sans` in `css/breem-admin.css` | `--breem-font-family` in `css/master.css` |
-| Weights shipped | 300 / 400 / 500 / 700 | 300 / 400 / 500 / 700 |
-| Preloaded | 400, 500 | 400, 700 |
+| Tokens applied | `css/breem-admin.css` | `css/master.css` |
+| Body default | **Sans** — it is an operations console | **Serif Text** — prose is most of the page |
+| Faces shipped | Sans 300/400/500/700 · Display 700 · Text 400 (6 files, 460 KB) | Display 400/700 · Text 400/500/700 · Sans 400/500/700 (8 files, 626 KB) |
+| Preloaded | Sans 400, Sans 500, Display 700 | Text 400, Display 700, Sans 700 |
 
-The complete supplied package — three families, OTF and WOFF2, both licences and the
+**The two surfaces differ on purpose.** The public site is editorial, so its body is the
+reading face and headings are display. The admin is a data console: Sans is the default
+and serif appears in exactly two places — `.page-title` / `.dashboard-welcome h2`
+(Display) and `.admin-page-header p` / `.admin-prose` (Text). **Do not make admin tables,
+filters, badges, pagination, the sidebar or `.card-title` serif** — a test asserts serif
+never reaches them.
+
+The complete supplied package — all three families, OTF and WOFF2, both licences and the
 design guide — lives outside the web root at `resources/fonts/thmanyah/`. Take any new
-weight or family from there.
+weight or family from there; never download another copy.
 
-The four WOFF2 files are byte-identical across the two surfaces, and that duplication is
+Shared faces are byte-identical across the two surfaces, and that duplication is
 deliberate: ownership is explicit, the public site never acquires a semantic dependency
-on an admin directory, and it costs ~300 KB of repository. A test asserts the bytes match
-so they cannot silently diverge.
+on an admin directory. A test asserts the bytes match so they cannot silently diverge.
 
 Rules:
 
@@ -119,19 +134,60 @@ Rules:
 4. **Weights 300/400/500/700 only** — those are the faces shipped. Rules asking for 600
    resolve upward to the real 700 file, which is why no synthetic 600 face is declared.
    Adding a weight means adding both the file and its `@font-face`.
-5. **Arabic and English use the same family, on both surfaces.** There is no
+5. **Arabic and English use the same families, on both surfaces.** There is no
    per-direction font stack and there must not be one; the fallbacks exist only for a
    glyph Thmanyah cannot render. Do not add Latin-oriented `letter-spacing` to shared
    text rules — the public stylesheet currently declares none, and Arabic should not
    inherit tracking designed for Latin.
-6. **Changing a stylesheet does not invalidate a visitor's cache.** There is no build
+6. **Classify by job, not by tag.** `h1`–`h3` are Display; `h4`–`h6` are deliberately
+   not, because on this site they are compact labels (`.who_we h4` is an icon-prefixed
+   feature label). A statistic figure is Sans because it is a metric, and its caption is
+   Sans because it belongs to the metric — **never Serif Text on a counter.** Use
+   `.font-display` / `.font-text` / `.font-ui` for the exceptions rather than restating a
+   family.
+7. **Changing a stylesheet does not invalidate a visitor's cache.** There is no build
    pipeline, so no content hashes: after deploying a typography change, a returning
    visitor can keep the previous CSS and font until their cache expires. Expect to hard
    refresh when checking, and purge the CDN/web-server cache for
    `frontend/css/*` and `admin-assets/css/*` as a deploy step. Do **not** add a manifest,
    a build step or Node for this; if it ever needs solving in the application, a
    config-driven version query on the few first-party stylesheets is the whole fix
-   (`filemtime()` in Blade is not an option — rule 1 forbids filesystem calls in views).
+   (`filemtime()` in Blade is not an option — rule 1 below forbids filesystem calls in
+   views).
+
+## Numerals — Arabic-Indic in Arabic, Western in English
+
+Arabic presentation shows `٠١٢٣٤٥٦٧٨٩`; English shows `0123456789`. A font does not do
+this — U+0031 is "1" in every typeface — so it is an explicit presentation transform.
+
+**One formatter: `App\Support\LocalizedDigits`,** with `localized_digits($value)` as the
+Blade shorthand. Locale comes from `App::getLocale()` (set by `SetLocaleFromRequest`) and
+there is no second locale source. Do not scatter `strtr()` maps through views.
+
+| Use it for | Never use it on |
+|---|---|
+| visible counters and statistics | route parameters, query strings (`?page=2`) |
+| result totals, pagination **labels** | `href` / `tel:` values |
+| stat cards, displayed durations | API or JSON output |
+| a date already formatted for a human | screen codes (`SCR-001`), device UIDs, UUIDs, tokens |
+| the visible part of a phone number | filenames, media paths, CSS classes, HTML ids, `data-*` |
+
+The rule of thumb: **if a computer will read it again, leave it alone.** Digits are
+substituted; separators, `+`, `-`, `%` and `/` are not — Arabic has its own separator
+marks but choosing them is an unmade product decision, and guessing would change what
+every decimal means.
+
+Never localize by walking the DOM and replacing text nodes. That corrupts codes, copied
+values and structured data. Localize server-side at the rendering boundary.
+
+Where it is applied today: the public statistics figures, the header phone label, admin
+`.admin-stat-value` cards, the shared results-summary and pagination partials, and the
+published `resources/views/vendor/pagination/bootstrap-4.blade.php` — where the **label**
+is localized and `$url` is untouched.
+
+**Known limit:** numerals an editor typed inside rich CMS HTML are left as authored.
+Localizing them safely would need HTML parsing, and a blind replacement would corrupt
+URLs, iframe sources and element ids. Application-generated numbers are covered.
 
 ## Rules
 

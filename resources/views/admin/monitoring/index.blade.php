@@ -114,7 +114,7 @@
                                 'text-success' => $status === 'online',
                                 'text-danger' => $status === 'offline',
                                 'text-warning' => $status === 'maintenance',
-                            ])>{{ $count }}</span>
+                            ])>{{ localized_digits($count) }}</span>
                         </div>
                     </div>
                 </div>

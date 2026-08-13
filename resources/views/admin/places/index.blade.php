@@ -91,7 +91,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.places.stats.total') }}</span>
-                        <span class="admin-stat-value">{{ $stats['total'] }}</span>
+                        <span class="admin-stat-value">{{ localized_digits($stats['total']) }}</span>
                     </div>
                 </div>
             </div>
@@ -99,7 +99,7 @@
                 <div class="card admin-stat-card mb-4">
                     <div class="card-body">
                         <span class="admin-stat-label">{{ __('admin.places.stats.with_screens') }}</span>
-                        <span class="admin-stat-value text-primary">{{ $stats['with_screens'] }}</span>
+                        <span class="admin-stat-value text-primary">{{ localized_digits($stats['with_screens']) }}</span>
                     </div>
                 </div>
             </div>

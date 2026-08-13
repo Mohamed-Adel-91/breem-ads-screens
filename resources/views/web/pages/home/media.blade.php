@@ -26,7 +26,14 @@
                             <img class="w-100 h-100  object-contain;" src="{{ asset(media_path($itemData['icon_path'] ?? '')) }}" alt="">
                         </div>
                         <div>
-                            <span>{{ $itemData['number'] ?? '' }}</span>
+                            {{--
+                                The statistic figure. CMS-authored text such as "+658",
+                                so localized_digits() substitutes only the digits and
+                                leaves the "+" where it is — the browser's bidi algorithm
+                                places the sign for the paragraph direction. Arabic reads
+                                "+٦٥٨"; English is unchanged.
+                            --}}
+                            <span>{{ localized_digits($itemData['number'] ?? '') }}</span>
                         </div>
                         <div class="desc">
                             <p>{{ $itemData['label'] ?? '' }}</p>

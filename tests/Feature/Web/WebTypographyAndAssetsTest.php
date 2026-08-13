@@ -34,16 +34,40 @@ class WebTypographyAndAssetsTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * The public runtime font files and the weight each is declared at.
+     * The public runtime font files, per family, and the weight each is declared at.
      *
-     * @var array<string, int>
+     * Three families with three jobs: Display for headings, Text for prose, Sans for
+     * interface and numerals. Only the weights the site actually asks for are shipped —
+     * the census behind that choice is documented in public/frontend/css/fonts.css.
+     *
+     * @var array<string, array<string, int>>
      */
     private const FONT_FILES = [
-        'thmanyah-sans-light.woff2' => 300,
-        'thmanyah-sans-regular.woff2' => 400,
-        'thmanyah-sans-medium.woff2' => 500,
-        'thmanyah-sans-bold.woff2' => 700,
+        'Thmanyah Serif Display' => [
+            'thmanyah-serif-display-regular.woff2' => 400,
+            'thmanyah-serif-display-bold.woff2' => 700,
+        ],
+        'Thmanyah Serif Text' => [
+            'thmanyah-serif-text-regular.woff2' => 400,
+            'thmanyah-serif-text-medium.woff2' => 500,
+            'thmanyah-serif-text-bold.woff2' => 700,
+        ],
+        'Thmanyah Sans' => [
+            'thmanyah-sans-regular.woff2' => 400,
+            'thmanyah-sans-medium.woff2' => 500,
+            'thmanyah-sans-bold.woff2' => 700,
+        ],
     ];
+
+    /**
+     * Flattened file => weight map.
+     *
+     * @return array<string, int>
+     */
+    private static function allFontFiles(): array
+    {
+        return array_merge(...array_values(self::FONT_FILES));
+    }
 
     protected function setUp(): void
     {
@@ -160,39 +184,91 @@ class WebTypographyAndAssetsTest extends TestCase
         );
     }
 
-    public function test_the_two_common_weights_are_preloaded(): void
+    public function test_one_face_per_family_is_preloaded_and_no_more(): void
     {
-        // Regular carries body copy and Bold carries navigation and headings. Light and
-        // Medium are used rarely enough that preloading them would just compete for
-        // bandwidth on first paint.
+        /*
+         * Three preloads, one per family, chosen from what actually paints first:
+         *   Serif Text 400     the body default, first face on every page
+         *   Serif Display 700  the first heading
+         *   Sans 700           the navigation links
+         *
+         * The other five faces load on discovery. Preloading a face because it exists is
+         * how a font system turns into a bandwidth problem, so the count is asserted too.
+         */
         $html = $this->get('/ar')->getContent();
 
-        $this->assertStringContainsString('rel="preload"', $html);
         $this->assertStringContainsString('as="font"', $html);
         $this->assertStringContainsString('type="font/woff2"', $html);
-        $this->assertStringContainsString('thmanyah-sans-regular.woff2', $html);
-        $this->assertStringContainsString('thmanyah-sans-bold.woff2', $html);
+
+        foreach ([
+            'thmanyah-serif-text-regular.woff2',
+            'thmanyah-serif-display-bold.woff2',
+            'thmanyah-sans-bold.woff2',
+        ] as $preloaded) {
+            $this->assertMatchesRegularExpression(
+                '/rel="preload"[^>]*' . preg_quote($preloaded, '/') . '/',
+                $html,
+                "[{$preloaded}] must be preloaded."
+            );
+        }
+
+        $this->assertSame(
+            3,
+            preg_match_all('/rel="preload"[^>]*as="font"/', $html),
+            'Exactly three font faces should be preloaded — one per family.'
+        );
+
+        foreach ([
+            'thmanyah-serif-display-regular.woff2',
+            'thmanyah-serif-text-medium.woff2',
+            'thmanyah-serif-text-bold.woff2',
+            'thmanyah-sans-regular.woff2',
+            'thmanyah-sans-medium.woff2',
+        ] as $lazy) {
+            $this->assertDoesNotMatchRegularExpression(
+                '/rel="preload"[^>]*' . preg_quote($lazy, '/') . '/',
+                $html,
+                "[{$lazy}] is not above the fold and must not be preloaded."
+            );
+        }
     }
 
     // ------------------------------------------------------------------ the font files
 
     public function test_the_website_owns_its_own_font_binaries(): void
     {
-        foreach (array_keys(self::FONT_FILES) as $file) {
+        foreach (array_keys(self::allFontFiles()) as $file) {
             $path = $this->publicPath('frontend/fonts/thmanyah/' . $file);
 
             $this->assertFileExists($path, "The public site is missing [{$file}].");
             $this->assertGreaterThan(1000, filesize($path), "[{$file}] looks truncated.");
         }
 
-        // Independent of the admin copies on purpose: the public site must not depend on
-        // an admin directory. Identical bytes, separate ownership.
-        foreach (array_keys(self::FONT_FILES) as $file) {
-            $this->assertFileExists($this->publicPath('admin-assets/fonts/thmanyah/' . $file));
+        // Nothing unused sits in a public directory.
+        $shipped = array_map('basename', glob($this->publicPath('frontend/fonts/thmanyah/') . '*.woff2'));
+
+        $this->assertEqualsCanonicalizing(
+            array_keys(self::allFontFiles()),
+            $shipped,
+            'public/frontend/fonts/thmanyah holds a .woff2 no stylesheet declares, or is missing one it does.'
+        );
+    }
+
+    public function test_the_two_surfaces_share_binaries_but_not_directories(): void
+    {
+        // Where a face is used by both surfaces it must be the same bytes — otherwise the
+        // two can silently drift. But each surface serves from its own directory, so the
+        // public site never depends on an admin path.
+        foreach (['thmanyah-sans-regular.woff2', 'thmanyah-sans-medium.woff2', 'thmanyah-sans-bold.woff2', 'thmanyah-serif-display-bold.woff2'] as $shared) {
+            $admin = $this->publicPath('admin-assets/fonts/thmanyah/' . $shared);
+            $web = $this->publicPath('frontend/fonts/thmanyah/' . $shared);
+
+            $this->assertFileExists($admin);
+            $this->assertFileExists($web);
             $this->assertSame(
-                md5_file($this->publicPath('admin-assets/fonts/thmanyah/' . $file)),
-                md5_file($this->publicPath('frontend/fonts/thmanyah/' . $file)),
-                "[{$file}] differs between the two surfaces; they must be the same binary."
+                md5_file($admin),
+                md5_file($web),
+                "[{$shared}] differs between the two surfaces; they must be the same binary."
             );
         }
     }
@@ -203,7 +279,11 @@ class WebTypographyAndAssetsTest extends TestCase
 
         preg_match_all('/url\(\s*[\'"]?([^\'")]+)[\'"]?\s*\)/', $css, $matches);
 
-        $this->assertCount(count(self::FONT_FILES), $matches[1], 'fonts.css must declare exactly the shipped weights.');
+        $this->assertCount(
+            count(self::allFontFiles()),
+            $matches[1],
+            'fonts.css must declare exactly the shipped faces.'
+        );
 
         foreach ($matches[1] as $reference) {
             $this->assertStringNotContainsString('://', $reference, "Remote font reference [{$reference}].");
@@ -215,27 +295,59 @@ class WebTypographyAndAssetsTest extends TestCase
         }
     }
 
-    public function test_each_weight_is_declared_against_the_right_file(): void
+    public function test_all_three_families_are_declared_with_the_right_files_and_weights(): void
     {
         $css = $this->fontsCss();
+        $stripped = preg_replace('!/\*.*?\*/!s', '', $css);
 
-        foreach (self::FONT_FILES as $file => $weight) {
-            $this->assertMatchesRegularExpression(
-                '/' . preg_quote($file, '/') . '.*?font-weight:\s*' . $weight . '\b/s',
-                $css,
-                "[{$file}] must be declared at font-weight {$weight}."
+        foreach (self::FONT_FILES as $family => $files) {
+            $this->assertStringContainsString(
+                "font-family: '{$family}'",
+                $stripped,
+                "[{$family}] has no @font-face at all."
             );
+
+            foreach ($files as $file => $weight) {
+                // The file, and the weight it is declared at, in the same block.
+                $this->assertMatchesRegularExpression(
+                    '/' . preg_quote($file, '/') . '.*?font-weight:\s*' . $weight . '\b/s',
+                    $stripped,
+                    "[{$file}] must be declared at font-weight {$weight}."
+                );
+            }
         }
 
-        $this->assertStringContainsString('font-display: swap', $css);
+        $this->assertStringContainsString('font-display: swap', $stripped);
 
-        // Comments stripped: the file's own header explains that it is the only place
-        // @font-face is declared, and that prose is not a declaration.
         $this->assertSame(
-            count(self::FONT_FILES),
-            substr_count(preg_replace('!/\*.*?\*/!s', '', $css), '@font-face'),
-            'fonts.css must hold one @font-face per shipped weight and nothing else.'
+            count(self::allFontFiles()),
+            substr_count($stripped, '@font-face'),
+            'fonts.css must hold one @font-face per shipped face and nothing else.'
         );
+    }
+
+    public function test_no_synthetic_weight_is_faked(): void
+    {
+        // master.css asks for 600 once and no family ships a 600 face. That must be left
+        // to CSS matching, not papered over by declaring the Bold file at `600 700` —
+        // which would flatten the two weights to identical rendering.
+        $stripped = preg_replace('!/\*.*?\*/!s', '', $this->fontsCss());
+
+        $this->assertDoesNotMatchRegularExpression(
+            '/font-weight:\s*\d+\s+\d+/',
+            $stripped,
+            'A weight range would fake a face the family does not have.'
+        );
+
+        preg_match_all('/font-weight:\s*(\d+)/', $stripped, $weights);
+
+        foreach (array_unique($weights[1]) as $declared) {
+            $this->assertContains(
+                (int) $declared,
+                [300, 400, 500, 700, 900],
+                "Weight [{$declared}] does not correspond to a supplied Thmanyah face."
+            );
+        }
     }
 
     public function test_font_faces_are_declared_in_one_place_only(): void
@@ -251,21 +363,100 @@ class WebTypographyAndAssetsTest extends TestCase
 
     // ------------------------------------------------------------- the typography rule
 
-    public function test_the_global_typography_rule_uses_thmanyah_sans(): void
+    public function test_the_three_semantic_tokens_are_defined(): void
     {
         $css = $this->masterCss();
 
-        $this->assertStringContainsString('--breem-font-family', $css);
-        $this->assertStringContainsString("'Thmanyah Sans'", $css);
-        $this->assertMatchesRegularExpression(
-            '/html,\s*body\s*\{[^}]*font-family:\s*var\(--breem-font-family\)/s',
-            $css,
-            'The site-wide rule must set the family on html/body from the variable.'
-        );
+        foreach ([
+            '--breem-font-display' => 'Thmanyah Serif Display',
+            '--breem-font-text' => 'Thmanyah Serif Text',
+            '--breem-font-ui' => 'Thmanyah Sans',
+        ] as $token => $family) {
+            $this->assertMatchesRegularExpression(
+                '/' . preg_quote($token, '/') . ':\s*\'' . preg_quote($family, '/') . '\'/',
+                $css,
+                "[{$token}] must map to [{$family}]."
+            );
+        }
 
-        // A fallback stack, so a cold cache shows platform UI text rather than a serif.
+        // Fallbacks, so a cold cache shows platform text rather than something arbitrary.
         $this->assertStringContainsString('system-ui', $css);
         $this->assertStringContainsString('sans-serif', $css);
+        $this->assertStringContainsString('serif', $css);
+    }
+
+    public function test_the_body_default_is_the_reading_face(): void
+    {
+        // Prose is the majority of a marketing page, so Text is the default and the other
+        // two are applied where they belong.
+        $this->assertMatchesRegularExpression(
+            '/html,\s*body\s*\{[^}]*font-family:\s*var\(--breem-font-text\)/s',
+            $this->masterCss(),
+            'html/body must default to the reading face.'
+        );
+    }
+
+    public function test_major_headings_use_the_display_face(): void
+    {
+        $css = preg_replace('!/\*.*?\*/!s', '', $this->masterCss());
+
+        $this->assertMatchesRegularExpression(
+            '/(^|\})\s*h1,\s*h2,\s*h3,\s*\.font-display\s*\{[^}]*font-family:\s*var\(--breem-font-display\)/s',
+            $css,
+            'h1–h3 must use the display face.'
+        );
+
+        // h4–h6 are deliberately absent: on this site they behave as compact labels, and
+        // `.who_we h4` is an icon-prefixed feature label rather than a headline.
+        $this->assertDoesNotMatchRegularExpression(
+            '/(^|\})\s*h1,\s*h2,\s*h3,\s*h4/s',
+            $css,
+            'h4–h6 must not be swept into the display rule by tag alone.'
+        );
+    }
+
+    public function test_interface_elements_use_the_sans_face(): void
+    {
+        $css = preg_replace('!/\*.*?\*/!s', '', $this->masterCss());
+
+        // One grouped rule, so the boundary between reading and operating stays visible.
+        $this->assertMatchesRegularExpression(
+            '/font-family:\s*var\(--breem-font-ui\)/',
+            $css,
+            'Nothing uses the UI face.'
+        );
+
+        foreach (['header', 'footer', 'nav', 'button', 'label', '\.pagination', '\.badge', '\.breadcrumb'] as $selector) {
+            $this->assertMatchesRegularExpression(
+                '/(^|,|\})\s*' . $selector . '\s*,[\s\S]{0,600}?font-family:\s*var\(--breem-font-ui\)/s',
+                $css,
+                "[{$selector}] must be classified as interface."
+            );
+        }
+    }
+
+    public function test_the_statistics_number_uses_the_sans_face(): void
+    {
+        // A counter is a digital metric, and Sans is where the numerals are designed to
+        // live. Serif Text on a counter is explicitly wrong.
+        $css = preg_replace('!/\*.*?\*/!s', '', $this->masterCss());
+
+        $this->assertMatchesRegularExpression(
+            '/\.media \.box span,\s*\.media \.box \.desc p\s*\{[^}]*font-family:\s*var\(--breem-font-ui\)/s',
+            $css,
+            'The statistic figure and its caption must both be Sans.'
+        );
+    }
+
+    public function test_semantic_helper_classes_exist_for_exceptions(): void
+    {
+        // Defaults handle the common cases; classes exist so a Blade author can override
+        // one block without decorating every paragraph on the site.
+        $css = preg_replace('!/\*.*?\*/!s', '', $this->masterCss());
+
+        $this->assertStringContainsString('.font-display', $css);
+        $this->assertStringContainsString('.font-ui', $css);
+        $this->assertStringContainsString('.font-text', $css);
     }
 
     public function test_the_typography_rule_does_not_use_a_universal_selector(): void
@@ -281,27 +472,31 @@ class WebTypographyAndAssetsTest extends TestCase
         );
     }
 
-    public function test_form_controls_inherit_the_site_typeface(): void
+    public function test_form_controls_use_the_interface_face(): void
     {
         // Browsers give native controls a platform UI font unless told otherwise, and
-        // Bootstrap's reboot — which normally fixes this — is loaded from a CDN here.
+        // Bootstrap's reboot — which normally fixes this — is loaded from a CDN here. They
+        // are also controls, so they belong to the UI face rather than merely inheriting.
         $css = preg_replace('!/\*.*?\*/!s', '', $this->masterCss());
 
-        $this->assertMatchesRegularExpression(
-            '/button,\s*input,\s*optgroup,\s*select,\s*option,\s*textarea\s*\{[^}]*font-family:\s*inherit/s',
-            $css,
-            'Public form controls must inherit the site typeface.'
-        );
+        foreach (['button', 'input', 'optgroup', 'select', 'option', 'textarea'] as $control) {
+            $this->assertMatchesRegularExpression(
+                '/(^|,|\})\s*' . $control . '\s*,[\s\S]{0,600}?font-family:\s*var\(--breem-font-ui\)/s',
+                $css,
+                "[{$control}] must use the interface face."
+            );
+        }
     }
 
-    public function test_bootstrap_font_variables_are_overridden(): void
+    public function test_bootstrap_font_variables_are_mapped_to_the_right_faces(): void
     {
-        // Bootstrap 5 is loaded from a CDN and reads these; overriding them catches every
-        // vendor rule that uses them instead of chasing each one.
+        // Bootstrap 5 is loaded from a CDN and reads these. Body copy is prose, so
+        // --bs-body-font-family is the reading face; everything else Bootstrap styles is
+        // chrome or a control, so --bs-font-sans-serif is the interface face.
         $css = $this->masterCss();
 
-        $this->assertStringContainsString('--bs-body-font-family: var(--breem-font-family)', $css);
-        $this->assertStringContainsString('--bs-font-sans-serif: var(--breem-font-family)', $css);
+        $this->assertStringContainsString('--bs-body-font-family: var(--breem-font-text)', $css);
+        $this->assertStringContainsString('--bs-font-sans-serif: var(--breem-font-ui)', $css);
     }
 
     public function test_no_legacy_primary_font_remains_active(): void
@@ -318,10 +513,10 @@ class WebTypographyAndAssetsTest extends TestCase
             );
         }
 
-        // And every font-family DECLARATION left in the file resolves through the one
-        // variable. The lookbehind skips custom-property definitions such as
-        // `--breem-font-family:` and `--bs-body-font-family:`, which are the source of
-        // the value rather than a consumer of it.
+        // And every font-family DECLARATION resolves through one of the three tokens (or
+        // is the monospace stack, which is outside the Thmanyah system by design). The
+        // lookbehind skips custom-property definitions, which are the source of the values
+        // rather than consumers of them.
         preg_match_all('/(?<![-\w])font-family:\s*([^;}]+)/', $css, $matches);
 
         $this->assertNotEmpty($matches[1], 'master.css declares no font-family at all.');
@@ -329,10 +524,12 @@ class WebTypographyAndAssetsTest extends TestCase
         foreach ($matches[1] as $value) {
             $value = trim($value);
 
-            $this->assertTrue(
-                str_contains($value, '--breem-font-family') || $value === 'inherit',
-                "Unexplained font-family [{$value}] in master.css."
-            );
+            $allowed = str_contains($value, '--breem-font-display')
+                || str_contains($value, '--breem-font-text')
+                || str_contains($value, '--breem-font-ui')
+                || str_contains($value, 'monospace');
+
+            $this->assertTrue($allowed, "Unexplained font-family [{$value}] in master.css.");
         }
     }
 

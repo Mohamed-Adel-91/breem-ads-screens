@@ -1,18 +1,46 @@
 :root {
     /*
-     * The one admin type stack. Everything below inherits it; nothing should restate it.
+     * THE ADMIN TYPE SYSTEM. Three semantic tokens, same names as the public site so a
+     * developer moving between the two surfaces does not have to relearn them.
+     *
+     *   --breem-font-ui        Thmanyah Sans — THE ADMIN DEFAULT. Sidebar, navbar,
+     *                          tables, forms, buttons, filters, badges, pagination,
+     *                          metrics, and every numeral.
+     *   --breem-font-display   Thmanyah Serif Display — page titles only.
+     *   --breem-font-text      Thmanyah Serif Text — descriptive copy under a page
+     *                          title, and `.admin-prose` where opted in.
+     *
+     * The admin is an operations console: data density and scannability beat editorial
+     * character, so serif is the exception here and Sans is the rule. Do not make tables
+     * or filters serif.
+     *
+     * Selectors reference the token, never a family name.
      *
      * `--font-family-sans-serif` is Bootstrap 4's own variable, declared as
      * "Overpass", sans-serif in app-light.css — a family this project never shipped, so
      * it silently fell through to the platform sans-serif. Overriding the variable here
-     * catches every vendor rule that reads it, rather than chasing each one.
+     * catches every vendor rule that reads it, rather than chasing each one. It maps to
+     * the UI face because everything Bootstrap styles is chrome or a control.
      *
      * Fallbacks are the platform UI faces, so a slow font fetch or a cache miss shows
      * native chrome-matching text instead of Times New Roman.
      */
-    --breem-font-sans: 'Thmanyah Sans', system-ui, -apple-system, BlinkMacSystemFont,
+    --breem-font-fallback-sans: system-ui, -apple-system, BlinkMacSystemFont,
         'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans Arabic', sans-serif;
-    --font-family-sans-serif: var(--breem-font-sans);
+    --breem-font-fallback-serif: 'Times New Roman', 'Noto Naskh Arabic', Georgia, serif;
+
+    --breem-font-ui: 'Thmanyah Sans', var(--breem-font-fallback-sans);
+    --breem-font-display: 'Thmanyah Serif Display', var(--breem-font-fallback-serif);
+    --breem-font-text: 'Thmanyah Serif Text', var(--breem-font-fallback-serif);
+
+    /*
+     * Retained alias. The previous single-family implementation exposed
+     * `--breem-font-sans`, and it is kept pointing at the UI token so any rule or future
+     * edit written against the old name still resolves to the right face instead of to
+     * nothing.
+     */
+    --breem-font-sans: var(--breem-font-ui);
+    --font-family-sans-serif: var(--breem-font-ui);
 
     --breem-primary: #41a8a6;
     --breem-primary-hover: #399997;
@@ -47,12 +75,50 @@ body {
  */
 html,
 body.breem-admin {
-    font-family: var(--breem-font-sans);
+    font-family: var(--breem-font-ui);
 }
 
 body.breem-admin {
     background: var(--breem-page-bg);
     color: #64748b;
+}
+
+/* --------------------------------------------------------------------------
+   Where the admin uses serif — and only here
+   --------------------------------------------------------------------------
+   Two narrow surfaces. Everything else stays Sans, deliberately: an operations console
+   is read by scanning, and `.card-title`, `.quick-link-card h3`, table headers, filters,
+   badges and pagination are all operational chrome even when their tag says "heading".
+   -------------------------------------------------------------------------- */
+
+/*
+ * DISPLAY — the page-level title, and the dashboard's welcome heading.
+ *
+ * `.page-title` is the <h1> rendered by admin/layouts/page-header.blade.php on every
+ * admin screen, so this is the one place a visitor's eye lands first. 700 is the only
+ * Display weight shipped, which is what this rule asks for.
+ */
+body.breem-admin .page-title,
+body.breem-admin .dashboard-welcome h2,
+body.breem-admin .font-display {
+    font-family: var(--breem-font-display);
+}
+
+/*
+ * TEXT — descriptive copy.
+ *
+ * The subtitle paragraph directly under a page title is explanatory prose, which is what
+ * the reading face is for. Scoped to `.admin-page-header > div > p` rather than to
+ * `.text-muted` generally: that class is used 61 times, mostly for inline metadata inside
+ * tables, and turning all of it serif would make data harder to scan.
+ *
+ * `.admin-prose` is the opt-in for a longer block — help text, instructions, a read-only
+ * CMS preview — so a Blade author does not have to decorate every paragraph, only the
+ * genuinely prose-like ones.
+ */
+body.breem-admin .admin-page-header p,
+body.breem-admin .admin-prose {
+    font-family: var(--breem-font-text);
 }
 
 /*
@@ -70,7 +136,7 @@ body.breem-admin {
 body.breem-admin .tooltip,
 body.breem-admin .popover,
 body.breem-admin .gauge-container > .gauge .value-text {
-    font-family: var(--breem-font-sans);
+    font-family: var(--breem-font-ui);
 }
 
 body.breem-admin a {

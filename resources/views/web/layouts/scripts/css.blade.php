@@ -8,21 +8,34 @@
 <link rel="shortcut icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
 
 {{--
-    Thmanyah Sans — the public site's typeface, served from this repository.
+    The Thmanyah type system — Serif Display for headings, Serif Text for prose,
+    Sans for interface and numerals. All served from this repository.
 
     asset(), not a relative href. Every other stylesheet below resolves through the
     layout's <base href=".../frontend/">, but the typeface is not something to make
     depend on that: if the base tag ever moves or changes, a broken component stylesheet
     is obvious and a silently un-registered @font-face is not.
 
-    Loaded FIRST so the @font-face rules are registered before any stylesheet that asks
-    for the family, and preloaded so the two weights this site actually uses — Regular
-    for body copy and Bold for navigation and headings — are already in flight rather
-    than being discovered after master.css parses.
+    fonts.css is loaded FIRST so the @font-face rules are registered before master.css
+    asks for a family.
 
-    No CDN. See frontend/fonts/thmanyah/ and docs/ai/frontend-blade.md.
+    PRELOADS — three files, one per family, chosen from what actually paints first:
+
+      Serif Text 400     the `body` default, so it is the first face on every page
+      Sans 700           the navigation links, above the fold on every page
+      Serif Display 700  the first heading — above the fold on /whoweare and
+                         /contact-us, just below it on the homepage, whose hero is a
+                         silent video with no text at all
+
+    Everything else loads on discovery: Display 400, Text 500/700, Sans 400/500. Five of
+    eight files are lazy. Do not preload a face because it exists — measure where it
+    paints. See public/frontend/css/fonts.css for the weight census this came from.
+
+    No CDN. See docs/ai/frontend-blade.md.
 --}}
-<link rel="preload" href="{{ asset('frontend/fonts/thmanyah/thmanyah-sans-regular.woff2') }}"
+<link rel="preload" href="{{ asset('frontend/fonts/thmanyah/thmanyah-serif-text-regular.woff2') }}"
+      as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{ asset('frontend/fonts/thmanyah/thmanyah-serif-display-bold.woff2') }}"
       as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="{{ asset('frontend/fonts/thmanyah/thmanyah-sans-bold.woff2') }}"
       as="font" type="font/woff2" crossorigin>

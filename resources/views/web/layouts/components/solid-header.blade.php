@@ -25,7 +25,13 @@
                 <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
                     <ul class="navbar-nav mb-2 mb-lg-0 pages">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">{{ $layoutSettings['phone'] ?? '' }}</a>
+                            {{--
+                                Visible phone digits follow the page locale. Safe here
+                                because the href is "#", not a tel: link — if this ever
+                                becomes tel:, the href must keep ASCII digits or the
+                                dialler breaks. Localize the label, never the target.
+                            --}}
+                            <a class="nav-link" href="#">{{ localized_digits($layoutSettings['phone'] ?? '') }}</a>
                         </li>
                         <li class="nav-item">
                             @php

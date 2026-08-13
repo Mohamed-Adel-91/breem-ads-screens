@@ -2,10 +2,10 @@
 
 @if ($paginator->hasPages())
     <div class="mt-6 space-y-3" dir="rtl">
-        {{-- Summary: "عرض ١–١٢ من ٢٣٤" --}}
+        {{-- Summary: "عرض ١–١٢ من ٢٣٤" — the comment finally matches the output. --}}
         @if ($paginator->total() > 0)
             <p class="text-sm text-gray-600">
-                عرض {{ $paginator->firstItem() }}–{{ $paginator->lastItem() }} من {{ $paginator->total() }}
+                عرض {{ localized_digits($paginator->firstItem()) }}–{{ localized_digits($paginator->lastItem()) }} من {{ localized_digits($paginator->total()) }}
             </p>
         @endif
 
@@ -38,16 +38,17 @@
                     {{-- Array Of Links --}}
                     @if (is_array($element))
                         @foreach ($element as $page => $url)
+                            {{-- Labels localized; $url keeps its ASCII ?page= value. --}}
                             @if ($page == $paginator->currentPage())
                                 <li>
                                     <span aria-current="page"
-                                        class="px-3 py-1.5 rounded-lg text-white bg-[#41A8A6]">{{ $page }}</span>
+                                        class="px-3 py-1.5 rounded-lg text-white bg-[#41A8A6]">{{ localized_digits($page) }}</span>
                                 </li>
                             @else
                                 <li>
                                     <a class="px-3 py-1.5 rounded-lg bg-white border hover:bg-gray-50"
                                         href="{{ $url }}"
-                                        aria-label="اذهب إلى الصفحة {{ $page }}">{{ $page }}</a>
+                                        aria-label="اذهب إلى الصفحة {{ localized_digits($page) }}">{{ localized_digits($page) }}</a>
                                 </li>
                             @endif
                         @endforeach

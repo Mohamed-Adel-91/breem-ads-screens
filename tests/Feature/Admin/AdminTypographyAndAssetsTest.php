@@ -154,11 +154,26 @@ class AdminTypographyAndAssetsTest extends TestCase
         }
     }
 
+    /**
+     * The admin's serif faces, beyond the four Sans weights in self::FONT_FILES.
+     *
+     * The admin is Sans-first: Display ships Bold alone because `.page-title` is 700 and
+     * nothing else uses the family, and Text ships Regular alone because admin prose is
+     * escaped Blade output that cannot contain <strong>.
+     *
+     * @var array<string, int>
+     */
+    private const SERIF_FILES = [
+        'thmanyah-serif-display-bold.woff2' => 700,
+        'thmanyah-serif-text-regular.woff2' => 400,
+    ];
+
     public function test_the_declared_weights_are_the_ones_shipped(): void
     {
         $css = file_get_contents($this->publicPath('admin-assets/css/fonts.css'));
+        $expected = self::FONT_FILES + self::SERIF_FILES;
 
-        foreach (self::FONT_FILES as $file => $weight) {
+        foreach ($expected as $file => $weight) {
             $this->assertFileExists($this->publicPath('admin-assets/fonts/thmanyah/' . $file));
             $this->assertStringContainsString($file, $css, "[{$file}] is shipped but never declared.");
             $this->assertMatchesRegularExpression(
@@ -168,13 +183,101 @@ class AdminTypographyAndAssetsTest extends TestCase
             );
         }
 
-        // Nothing unused sits in a public directory.
-        $shipped = glob($this->publicPath('admin-assets/fonts/thmanyah/') . '*.woff2');
+        // Nothing unused sits in a public directory, and nothing declared is missing.
+        $shipped = array_map('basename', glob($this->publicPath('admin-assets/fonts/thmanyah/') . '*.woff2'));
 
-        $this->assertCount(
-            count(self::FONT_FILES),
+        $this->assertEqualsCanonicalizing(
+            array_keys($expected),
             $shipped,
-            'public/admin-assets/fonts/thmanyah holds a .woff2 no stylesheet declares.'
+            'public/admin-assets/fonts/thmanyah holds a .woff2 no stylesheet declares, or is missing one it does.'
+        );
+    }
+
+    public function test_all_three_families_are_available_to_the_admin(): void
+    {
+        $css = preg_replace('!/\*.*?\*/!s', '', file_get_contents($this->publicPath('admin-assets/css/fonts.css')));
+
+        foreach (['Thmanyah Sans', 'Thmanyah Serif Display', 'Thmanyah Serif Text'] as $family) {
+            $this->assertStringContainsString(
+                "font-family: '{$family}'",
+                $css,
+                "[{$family}] has no @font-face in the admin."
+            );
+        }
+    }
+
+    public function test_the_admin_stays_sans_first(): void
+    {
+        /*
+         * The admin is an operations console: it is read by scanning, so Sans is the
+         * default and serif is the exception. This asserts the boundary rather than the
+         * appearance — that the body is Sans, and that the data-dense surfaces the brief
+         * names (tables, filters, badges, pagination, sidebar, card titles) are NOT
+         * swept into a serif rule.
+         */
+        $css = preg_replace('!/\*.*?\*/!s', '', file_get_contents($this->publicPath('admin-assets/css/breem-admin.css')));
+
+        $this->assertMatchesRegularExpression(
+            '/html,\s*body\.breem-admin\s*\{[^}]*font-family:\s*var\(--breem-font-ui\)/s',
+            $css,
+            'The admin body must default to the interface face.'
+        );
+
+        // Every serif declaration in the admin, and the complete list of what may carry
+        // one. If a new selector appears here it is a deliberate decision, not a drift.
+        preg_match_all('/([^{}]+)\{[^{}]*font-family:\s*var\(--breem-font-(display|text)\)[^{}]*\}/s', $css, $serif);
+
+        $selectors = array_map(
+            static fn (string $s): string => trim(preg_replace('/\s+/', ' ', $s)),
+            $serif[1]
+        );
+
+        $this->assertNotEmpty($selectors, 'The admin should use serif somewhere — page titles at least.');
+
+        foreach ($selectors as $selector) {
+            foreach (['table', '.filter', '.badge', '.pagination', '.sidebar', '.card-title', 'td', 'th'] as $dataSurface) {
+                $this->assertStringNotContainsString(
+                    $dataSurface,
+                    $selector,
+                    "Serif must not reach the data-dense surface [{$dataSurface}] — found in [{$selector}]."
+                );
+            }
+        }
+    }
+
+    public function test_the_admin_page_title_uses_the_display_face(): void
+    {
+        $css = preg_replace('!/\*.*?\*/!s', '', file_get_contents($this->publicPath('admin-assets/css/breem-admin.css')));
+
+        $this->assertMatchesRegularExpression(
+            '/\.page-title[\s\S]{0,200}?font-family:\s*var\(--breem-font-display\)/s',
+            $css,
+            'The page title is the one place an admin screen is display typography.'
+        );
+
+        // And it actually renders on a real page, with the class the rule targets.
+        $this->actingAs($this->admin, 'admin')
+            ->get(route('admin.reports.index', ['lang' => 'en']))
+            ->assertOk()
+            ->assertSee('page-title', false);
+    }
+
+    public function test_admin_descriptive_copy_uses_the_reading_face(): void
+    {
+        $css = preg_replace('!/\*.*?\*/!s', '', file_get_contents($this->publicPath('admin-assets/css/breem-admin.css')));
+
+        // Scoped to the page-header subtitle and an opt-in class — not to `.text-muted`
+        // generally, which is used 61 times for inline metadata inside tables.
+        $this->assertMatchesRegularExpression(
+            '/\.admin-page-header p,\s*body\.breem-admin \.admin-prose\s*\{[^}]*font-family:\s*var\(--breem-font-text\)/s',
+            $css,
+            'Admin prose surfaces must use the reading face.'
+        );
+
+        $this->assertStringNotContainsString(
+            '.text-muted {',
+            $css,
+            'Turning all .text-muted serif would make table metadata harder to scan.'
         );
     }
 

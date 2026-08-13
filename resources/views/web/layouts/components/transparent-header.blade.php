@@ -25,7 +25,8 @@
                 <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
                     <ul class="navbar-nav mb-2 mb-lg-0 pages">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">{{ $layoutSettings['phone'] ?? '' }}</a>
+                            {{-- See solid-header: label localized, href never. --}}
+                            <a class="nav-link" href="#">{{ localized_digits($layoutSettings['phone'] ?? '') }}</a>
                         </li>
                         <li class="nav-item">
                             @php

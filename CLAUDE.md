@@ -69,15 +69,25 @@ Agent entry point: [`AGENTS.md`](AGENTS.md).
 ## Quick facts
 
 - **PHP** 8.2+ (developed on 8.3) · **Laravel** 12
+- **Typography** — the **Thmanyah type system**, self-hosted on both surfaces, never from
+  a CDN. Three families by semantic job, referenced through tokens and never by name:
+  `--breem-font-display` (Serif Display — headings), `--breem-font-text` (Serif Text —
+  prose), `--breem-font-ui` (Sans — controls, labels, **numerals**). Same system for
+  Arabic and English. See [`docs/ai/frontend-blade.md`](docs/ai/frontend-blade.md#typography--the-thmanyah-type-system).
+- **Numerals** — Arabic presentation uses Arabic-Indic digits (`٠١٢٣٤٥٦٧٨٩`), English uses
+  Western. One formatter, `App\Support\LocalizedDigits` / `localized_digits()`.
+  **Presentation only:** never a route parameter, query string, `href`, API field, screen
+  code, UUID, filename or anything written to the database.
 - **Admin** — Blade + Bootstrap 4, assets served statically from
   `public/admin-assets/`. Canonical layout:
-  `resources/views/admin/layouts/master.blade.php`. Typeface is **Thmanyah Sans**,
-  self-hosted from `public/admin-assets/fonts/thmanyah/` — never from a CDN.
+  `resources/views/admin/layouts/master.blade.php`. Fonts in
+  `public/admin-assets/fonts/thmanyah/`; **Sans-first** — serif only on page titles and
+  descriptive copy, never on tables, filters or badges.
 - **Public site** — Blade, assets in `public/frontend/`. That directory name is a
   runtime contract, not a preference: it is the layout's `<base href>` and the default
-  prefix `media_path()` applies to stored media paths. Typeface is **Thmanyah Sans**,
-  self-hosted from `public/frontend/fonts/thmanyah/` — the same family as the admin, in
-  both Arabic and English, but its own runtime copies.
+  prefix `media_path()` applies to stored media paths. Fonts in
+  `public/frontend/fonts/thmanyah/` — its own runtime copies, so the site never depends
+  on an admin path.
 - **Persistent media** — `public/cms/` (CMS uploads) and `public/upload/` (ad
   creatives, served to devices). Database-addressed: never rename, never move.
 - **Locales** — `en` and `ar`, carried in the URL as `{lang?}`; Arabic renders RTL.
