@@ -12,6 +12,9 @@ framework.
 | Framework | Bootstrap 4 (+ jQuery, Popper, SimpleBar) |
 | Project styles | `public/admin-assets/css/breem-admin.css` |
 | Project scripts | `public/admin-assets/js/breem-admin.js`, `cms-admin.js` |
+| Typeface | **Thmanyah Sans**, self-hosted — `public/admin-assets/fonts/thmanyah/` |
+| Icon font | Feather — `public/admin-assets/fonts/feather.*` via `css/feather.css` |
+| Images / favicon | `public/admin-assets/images/` |
 | Build step | **none** |
 
 Every admin view starts:
@@ -29,6 +32,82 @@ include an alerts partial again inside a page.**
 
 Blade under `resources/views/web/**`, assets under `public/frontend/`. Content
 comes from the CMS — see [`cms.md`](cms.md).
+
+## Static assets — who owns what under `public/`
+
+Four roots, four different rules. **The distinction that matters is static-vs-persistent,
+not tidy-vs-untidy**: two of these directory names are runtime contracts and cannot be
+renamed for cosmetic reasons.
+
+| Root | Class | Rule |
+|---|---|---|
+| `public/admin-assets/` | static admin assets | **Canonical.** Never rename. `css/`, `js/`, `fonts/`, `images/` |
+| `public/frontend/` | static public-website assets | **Runtime contract — never rename.** See below |
+| `public/cms/` | persistent CMS media | Database-addressed. Never rename, never move files |
+| `public/upload/` | persistent application media | Ad creatives; the Device API serves these URLs. Never rename |
+
+`public/frontend/` is not just a folder of files. The web layout sets
+`<base href="{{ asset('frontend') }}/">`, so **every relative URL on the public site
+resolves through it**, and `media_path()` prefixes any bare stored path with `frontend/`
+— so a CMS row holding `img/logo.png` means `public/frontend/img/logo.png`. Renaming it
+breaks the whole public site and every CMS media row in one move.
+
+Also retained, deliberately:
+
+- `public/assets/` — a legacy theme tree still consumed by `404.blade.php` (particles JS).
+  Heavily coupled by relative `url()` references. Left in place; not a new home for anything.
+- `public/images/` — holds the ads fallback creative that `config('ads.fallback.image')`
+  points at and devices fetch.
+
+### Naming
+
+First-party static files: **lowercase kebab-case**, named for purpose —
+`breem-admin.css`, `breem-logo.png`, `thmanyah-sans-regular.woff2`. No `custom2.css`,
+no `final`, no `copy`, no bare numeric suffixes. Vendor filenames stay as the vendor
+shipped them. Uploaded media keeps whatever the upload service assigns — never
+mass-rename it.
+
+Reference assets with `asset('admin-assets/…')`. Never build a URL from `APP_URL`,
+`public_path()` or a hostname: a filesystem path and a browser URL are different things.
+
+### Caching
+
+No build pipeline means no content hashes, so static admin CSS/JS is cached by the
+browser under the web server's default headers and a changed file can be served stale
+until that expires. A deploy that changes a stylesheet may need a hard reload. This is
+accepted: the admin is a small internal audience. **Do not add a manifest, a build step
+or Node to solve it** — if it ever becomes a real problem, a query-string version on the
+few first-party files is the whole fix.
+
+## Typography — Thmanyah Sans
+
+The admin renders in **Thmanyah Sans**, served from this repository.
+
+| Concern | Where |
+|---|---|
+| Font files (WOFF2) | `public/admin-assets/fonts/thmanyah/` |
+| `@font-face` — the only place | `public/admin-assets/css/fonts.css` |
+| Applied to the UI | `--breem-font-sans` in `public/admin-assets/css/breem-admin.css` |
+| Full supplied package, licence, design guide | `resources/fonts/thmanyah/` (outside the web root) |
+
+Rules:
+
+1. **Local only.** Never `font.thmanyah.com`, never Google Fonts, never a CDN. The files
+   are here; a remote font adds an external dependency, a privacy dependency, latency and
+   an outage risk for nothing.
+2. **One declaration.** `body.breem-admin` sets the family and everything inherits it,
+   including form controls (Bootstrap's reboot gives them `font-family: inherit`). Do not
+   restate the family on components. The only exceptions already in `breem-admin.css` are
+   the handful of vendor selectors that hardcode a family and so cannot inherit
+   (`.tooltip`, `.popover`, the gauge label).
+3. **Never override `.fe`.** Feather is an icon font declaring
+   `font-family: "feather" !important`; catching that selector turns every icon in the
+   admin into a tofu box. `code`/`pre`/`kbd`/`samp` keep monospace.
+4. **Weights 300/400/500/700 only** — those are the faces shipped. Rules asking for 600
+   resolve upward to the real 700 file, which is why no synthetic 600 face is declared.
+   Adding a weight means adding both the file and its `@font-face`.
+5. **The public website keeps its own typeface.** Thmanyah is an admin decision; the two
+   surfaces share no stylesheet.
 
 ## Rules
 

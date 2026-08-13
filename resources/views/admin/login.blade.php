@@ -29,7 +29,7 @@
                         <a class="auth-logo"
                            href="{{ route('admin.login', ['lang' => app()->getLocale()]) }}"
                            aria-label="Breem">
-                            <img src="{{ asset('admin-assets/assets/images/breem-logo.png') }}" alt="Breem">
+                            <img src="{{ asset('admin-assets/images/breem-logo.png') }}" alt="Breem">
                         </a>
 
                         <div class="text-center mb-4">

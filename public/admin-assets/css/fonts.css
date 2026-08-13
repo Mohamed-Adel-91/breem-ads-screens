@@ -1,0 +1,74 @@
+/*
+ * Thmanyah Sans — locally hosted admin typeface.
+ *
+ * THE ONLY PLACE @font-face IS DECLARED FOR THE ADMIN. Keep it that way: font-face
+ * definitions scattered across stylesheets are how a project ends up loading the same
+ * family three times under two slightly different names.
+ *
+ * LOCAL FILES ONLY. Nothing here reaches font.thmanyah.com, Google Fonts or any CDN.
+ * The application owns these files, so a remote request would buy an external
+ * dependency, a privacy dependency for every admin page view, extra latency, a CSP
+ * allowance and an outage risk — in exchange for nothing.
+ *
+ * WOFF2 ONLY, and only the weights the admin actually asks for. See
+ * ../fonts/thmanyah/README.md for the file/weight table and where the rest of the
+ * supplied package lives.
+ *
+ * Paths are relative to THIS stylesheet (public/admin-assets/css/), so they resolve to
+ * /admin-assets/fonts/thmanyah/… whatever host or sub-path the app is served from. Never
+ * put an absolute or filesystem path in here.
+ *
+ * font-display: swap — the admin is a working tool, so readable fallback text
+ * immediately beats a blank screen waiting on 300 KB of fonts. The typeface is not the
+ * product.
+ */
+
+/* Light */
+@font-face {
+    font-family: 'Thmanyah Sans';
+    src: url('../fonts/thmanyah/thmanyah-sans-light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Regular — body copy */
+@font-face {
+    font-family: 'Thmanyah Sans';
+    src: url('../fonts/thmanyah/thmanyah-sans-regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Medium — table headers, labels, sidebar */
+@font-face {
+    font-family: 'Thmanyah Sans';
+    src: url('../fonts/thmanyah/thmanyah-sans-medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+/*
+ * Bold. Declared at 700 only.
+ *
+ * The admin stylesheets also ask for 600 in a dozen places and the package has no 600
+ * face. That is left to CSS font matching on purpose: a requested 600 resolves upward to
+ * this real 700 file, so those rules render in genuine Bold. Declaring this file at
+ * `font-weight: 600 700` would flatten 600 and 700 to the identical rendering and lose
+ * the distinction the theme intends.
+ */
+@font-face {
+    font-family: 'Thmanyah Sans';
+    src: url('../fonts/thmanyah/thmanyah-sans-bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/*
+ * No italic face exists in the package. Italic text therefore gets a browser-synthesised
+ * oblique, which is correct for Latin and is why no `font-style: italic` block is faked
+ * here. Arabic does not use italics, and the admin uses them only for incidental emphasis.
+ */

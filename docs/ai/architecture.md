@@ -132,9 +132,21 @@ placeholder:
 | `postcss.config.js` | tooling configuration |
 | `resources/js/` | Laravel scaffold |
 | `resources/css/` | Laravel scaffold |
+| `public/cms/` | persistent CMS media — database-addressed |
+| `public/upload/` | persistent ad creatives — served to devices |
+| `public/frontend/` | runtime contract: the public layout's `<base href>` and `media_path()`'s default prefix |
+| `resources/fonts/thmanyah/` | licensed font package, incl. licence PDFs |
 
-These carry no runtime dependency: Breem's admin runtime does not use Vite,
-Tailwind, Alpine, Node or any frontend build step, and production deploys with
+The last four rows are protected for the opposite reason to the first six: they are
+**load-bearing**. `public/cms/` and `public/upload/` are addressed by paths stored in the
+database, `public/frontend/` is the public layout's `<base href>` and the prefix
+`media_path()` applies to bare stored paths, and `resources/fonts/thmanyah/` holds the
+licence for a font the admin ships. Renaming any of them breaks running behaviour
+silently — no exception, just missing media. See
+[`frontend-blade.md`](frontend-blade.md#static-assets--who-owns-what-under-public).
+
+The **scaffold** rows above carry no runtime dependency: Breem's admin runtime does not
+use Vite, Tailwind, Alpine, Node or any frontend build step, and production deploys with
 Composer alone. Keeping the files does not change that, and restoring them must
 never be read as licence to wire a build step back in — see
 [frontend-blade.md](frontend-blade.md#prohibited).

@@ -56,7 +56,7 @@
                                         <x-admin.media-preview
                                             :url="$item->image_path"
                                             :alt="trim($item->first_name . ' ' . $item->last_name)"
-                                            :fallback="asset('admin-assets/assets/images/default-avatar.jpg')"
+                                            :fallback="asset('admin-assets/images/default-avatar.jpg')"
                                             :linkable="false"
                                             max-height="40px" />
                                     </td>

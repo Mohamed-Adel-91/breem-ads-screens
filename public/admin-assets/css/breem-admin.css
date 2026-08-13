@@ -1,4 +1,19 @@
 :root {
+    /*
+     * The one admin type stack. Everything below inherits it; nothing should restate it.
+     *
+     * `--font-family-sans-serif` is Bootstrap 4's own variable, declared as
+     * "Overpass", sans-serif in app-light.css — a family this project never shipped, so
+     * it silently fell through to the platform sans-serif. Overriding the variable here
+     * catches every vendor rule that reads it, rather than chasing each one.
+     *
+     * Fallbacks are the platform UI faces, so a slow font fetch or a cache miss shows
+     * native chrome-matching text instead of Times New Roman.
+     */
+    --breem-font-sans: 'Thmanyah Sans', system-ui, -apple-system, BlinkMacSystemFont,
+        'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans Arabic', sans-serif;
+    --font-family-sans-serif: var(--breem-font-sans);
+
     --breem-primary: #41a8a6;
     --breem-primary-hover: #399997;
     --breem-primary-soft: rgba(65, 168, 166, 0.1);
@@ -17,10 +32,45 @@ body {
     min-height: 100%;
 }
 
+/*
+ * THE ADMIN TYPOGRAPHY RULE.
+ *
+ * One declaration for the whole interface. Sidebar, navbar, breadcrumbs, headings,
+ * tables, cards, modals, pagination, badges, filters and validation messages all inherit
+ * from here, and Bootstrap's reboot sets `font-family: inherit` on
+ * `button, input, optgroup, select, textarea`, so form controls follow too. Do NOT restate
+ * the family on individual components — the only additions below are the handful of
+ * vendor selectors that hardcode a family and therefore cannot inherit.
+ *
+ * `html` is included so the root box and anything escaping `body` (native validation
+ * bubbles, print) match.
+ */
+html,
+body.breem-admin {
+    font-family: var(--breem-font-sans);
+}
+
 body.breem-admin {
     background: var(--breem-page-bg);
     color: #64748b;
-    font-family: Tahoma, Arial, "Segoe UI", sans-serif;
+}
+
+/*
+ * Vendor rules that set font-family explicitly and so never see the inherited value.
+ * This list is exhaustive for the active admin stylesheets (app-light.css, app-rtl.css,
+ * simplebar.css) — verified by extracting every rule block containing "Overpass". Keep it
+ * that way: add to it only when a vendor selector genuinely hardcodes a family.
+ *
+ * Deliberately NOT overridden:
+ *   - `.fe` (Feather icon font) sets `font-family: "feather" !important`, and overriding
+ *     it would turn every icon in the admin into a tofu box or a stray letter.
+ *   - `code`, `pre`, `kbd`, `samp` keep the monospace stack; Thmanyah Sans is not a
+ *     monospace face and ad ids / JSON payloads need column alignment.
+ */
+body.breem-admin .tooltip,
+body.breem-admin .popover,
+body.breem-admin .gauge-container > .gauge .value-text {
+    font-family: var(--breem-font-sans);
 }
 
 body.breem-admin a {

@@ -8,7 +8,7 @@
     $adminName = trim(($admin->first_name ?? '') . ' ' . ($admin->last_name ?? ''));
     $avatarUrl = $admin?->profile_picture
         ? $admin->image_path
-        : asset('admin-assets/assets/images/default-avatar.jpg');
+        : asset('admin-assets/images/default-avatar.jpg');
 @endphp
 
 <nav class="topnav navbar navbar-light">

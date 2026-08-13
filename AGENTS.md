@@ -17,6 +17,7 @@ device API. No Node build in the runtime. Start with [`CLAUDE.md`](CLAUDE.md).
 |---|---|
 | Controllers, models, migrations, jobs, requests | [`docs/ai/backend-laravel.md`](docs/ai/backend-laravel.md) |
 | Any Blade view, admin UI, layout, component, CSS/JS | [`docs/ai/frontend-blade.md`](docs/ai/frontend-blade.md) |
+| Anything under `public/` — static assets, fonts, images, asset paths | [`docs/ai/frontend-blade.md`](docs/ai/frontend-blade.md#static-assets--who-owns-what-under-public) |
 | Pages, sections, items, website content, CMS media | [`docs/ai/cms.md`](docs/ai/cms.md) |
 | Screens, Ads, Schedules, Playlist, Playback, Heartbeat, Monitoring, Device API | [`docs/ai/digital-signage.md`](docs/ai/digital-signage.md) — **mandatory** |
 | Environment keys, config defaults, anything an operator must set | [`docs/production-env.md`](docs/production-env.md) |

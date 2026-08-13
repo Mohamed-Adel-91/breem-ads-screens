@@ -71,8 +71,13 @@ Agent entry point: [`AGENTS.md`](AGENTS.md).
 - **PHP** 8.2+ (developed on 8.3) · **Laravel** 12
 - **Admin** — Blade + Bootstrap 4, assets served statically from
   `public/admin-assets/`. Canonical layout:
-  `resources/views/admin/layouts/master.blade.php`.
-- **Public site** — Blade, assets in `public/frontend/`.
+  `resources/views/admin/layouts/master.blade.php`. Typeface is **Thmanyah Sans**,
+  self-hosted from `public/admin-assets/fonts/thmanyah/` — never from a CDN.
+- **Public site** — Blade, assets in `public/frontend/`. That directory name is a
+  runtime contract, not a preference: it is the layout's `<base href>` and the default
+  prefix `media_path()` applies to stored media paths.
+- **Persistent media** — `public/cms/` (CMS uploads) and `public/upload/` (ad
+  creatives, served to devices). Database-addressed: never rename, never move.
 - **Locales** — `en` and `ar`, carried in the URL as `{lang?}`; Arabic renders RTL.
 - **Auth** — custom admin guard (`auth:admin`) with OTP; roles/permissions via
   spatie/laravel-permission.

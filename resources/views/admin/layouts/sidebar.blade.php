@@ -17,7 +17,7 @@
     <nav class="vertnav navbar navbar-light">
         <div class="sidebar-brand w-100 d-flex align-items-center justify-content-center">
             <a href="{{ route('admin.dashboard', ['lang' => app()->getLocale()]) }}">
-                <img src="{{ asset('admin-assets/assets/images/breem-logo.png') }}"
+                <img src="{{ asset('admin-assets/images/breem-logo.png') }}"
                      alt="Breem">
             </a>
         </div>
