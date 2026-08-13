@@ -148,6 +148,10 @@ return [
     'ulid' => 'The :attribute must be a valid ULID.',
     'uuid' => 'The :attribute must be a valid UUID.',
 
+    // Application rule, not a framework one: the report period ceiling enforced by
+    // GenerateReportRequest. See config/reports.php.
+    'report_period_too_long' => 'The report period may not be longer than :max days. Narrow the date range and generate again.',
+
     /*
     |--------------------------------------------------------------------------
     | Custom Validation Language Lines

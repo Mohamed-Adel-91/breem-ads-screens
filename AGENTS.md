@@ -19,6 +19,8 @@ device API. No Node build in the runtime. Start with [`CLAUDE.md`](CLAUDE.md).
 | Any Blade view, admin UI, layout, component, CSS/JS | [`docs/ai/frontend-blade.md`](docs/ai/frontend-blade.md) |
 | Pages, sections, items, website content, CMS media | [`docs/ai/cms.md`](docs/ai/cms.md) |
 | Screens, Ads, Schedules, Playlist, Playback, Heartbeat, Monitoring, Device API | [`docs/ai/digital-signage.md`](docs/ai/digital-signage.md) — **mandatory** |
+| Environment keys, config defaults, anything an operator must set | [`docs/production-env.md`](docs/production-env.md) |
+| Deployment, migrations against live data, backups, queue/scheduler supervision | [`docs/production-deployment.md`](docs/production-deployment.md) |
 
 ## Hard limits
 

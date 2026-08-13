@@ -219,3 +219,55 @@ side effect of adding a row to the `settings` table.
 
 Retries must re-sign with a **new** nonce and a current timestamp. Replaying a
 stored request will always fail.
+
+## Production requirements for a player
+
+### HTTPS is mandatory
+
+Use `https://` for every call. The bearer token and the HMAC signature prove **who**
+sent a request; they do not conceal it. Over plaintext HTTP an observer still reads the
+playlist, the creative URLs, and the token itself on its way past — and a token replayed
+from a captured request is only stopped by the nonce, not by the transport.
+
+- Pin or at least validate the server certificate. Do not ship a player that accepts any
+  certificate; that discards the entire benefit of TLS.
+- Do not follow a redirect from `https://` to `http://`.
+- Expect `http://` to answer `301` and redirect. Treat a plaintext `200` as a
+  misconfigured server and refuse to pair against it.
+
+### Creative URLs
+
+`data.items[].file_url` is an **absolute** URL and, on a correctly configured server, an
+`https://` one. It is built from the request scheme, so a server sitting behind a
+TLS-terminating proxy without trusted-proxy configuration will emit `http://` URLs —
+that is a server-side misconfiguration, documented in
+[production-env.md](production-env.md).
+
+A player should:
+
+- use `file_url` as given and never reconstruct a URL from `file_path`, which is an
+  internal relative path;
+- treat a non-`https://` `file_url` as a configuration error worth reporting;
+- cache by URL and re-download only when the URL or the playlist `ETag` changes;
+- trust `file_type` (`video`, `image`, `gif`) to choose a decoder — it is derived from the
+  uploaded file's own contents on the server, not from its filename.
+
+### Device clock
+
+A signed request is rejected outside ±`SCREENS_SIGNATURE_LEEWAY` (300 s by default), so
+**enable NTP on the device**. Clock drift is the most common field failure and it presents
+as `stale_timestamp`, not as a network error. Do not attempt to correct for drift by
+reusing a server timestamp; sign with the device's own synchronised clock.
+
+### Empty playlists are normal
+
+When nothing is eligible — outside every schedule window, or no approved ad assigned —
+the response is a well-formed `200` with an empty `data.items`. That is not an error and
+must not trigger a retry storm. Show the configured fallback, if there is one, or show
+nothing; keep heartbeating on the normal cadence.
+
+### Duration
+
+`duration_seconds` for a video is the value the server holds, and the server now refuses
+to store a video with an unknown duration — so a zero is not something a player needs to
+work around. Honour the value it is given rather than reading the container.

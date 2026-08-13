@@ -209,6 +209,14 @@ validation error; an ad row is never written with an unknown-duration video. The
 `resolveDurationSeconds()` and the `failDurationProbe()` methods it was the only
 caller of were removed.
 
+Step 3 applies only where zero is a legitimate answer — an image or a GIF. **For a
+video, "no duration available" now returns null rather than zero, whatever the reason.**
+Phase 15 closed the case where probing is switched off (`ADS_TRY_FFPROBE=false`, the
+shipped default): that used to fall through to zero and hand the player an unplayable
+item. A video of zero seconds is not a shorter advertisement, so it is treated as the
+same "duration required and unavailable" outcome as a broken binary and reported through
+the same validation error. Pinned by `ProductionGateTest`.
+
 ### Global validity dates
 
 `ads.start_date` / `ads.end_date` come from `type="date"` inputs, so they are
@@ -700,9 +708,11 @@ contract. What remains:
   web-server body limit, whichever is smallest, and raising a config value does
   nothing unless the platform allows it too. There is no check that the two agree, so
   a generous config value can silently be capped by a stricter `php.ini`.
-- ffprobe is off by default (`ADS_TRY_FFPROBE=false`). With it off, a video uploaded
-  without an explicit duration is stored with `duration_seconds = 0` and the playlist
-  will hand the player a zero duration.
+- ffprobe is off by default (`ADS_TRY_FFPROBE=false`). **Phase 15 fixed what that used
+  to mean:** a video uploaded without an explicit duration was stored with
+  `duration_seconds = 0` and the playlist handed the player a zero duration. It is now
+  refused at validation instead, so the operator supplies a duration or the ad is not
+  created. Zero remains legal for images and GIFs, where the playlist decides.
 - `Ad::scopeExpiringSoon()` (used by `CheckExpiringAdsJob` for notifications) compares
   the raw `end_date`, not the effective one from `AdValidity`, so the "expiring soon"
   email can fire up to a day early. It is a notification heuristic, not eligibility.
@@ -715,13 +725,16 @@ contract. What remains:
 **Reports** — the type mismatch, the in-memory generation and the unbounded payload
 were all fixed in Phase 14; see the Reports section above. What remains:
 
-- The reports index selects whole rows, so listing hydrates each `data` blob even
-  though the index renders none of it. Bounded by page size (20) and by the payload
-  now being aggregates rather than raw rows, so it is no longer a scaling risk — but a
-  `select` list excluding `data` would still be tidier.
+- ~~The reports index selects whole rows, so listing hydrates each `data` blob.~~
+  **Fixed in Phase 15:** the index names its columns
+  (`id, name, type, generated_by, created_at`), so no snapshot is read to render a table
+  that shows none of it. `show` and `download` still load the model in full.
 - `screen-uptime` walks the log timeline per screen. That is inherent to a duration
   measurement, not an N+1, but generation time grows with fleet size × logs in the
-  window. There is no upper bound on the requested period.
+  window. **Phase 15 bounded the requested period** at `REPORT_MAX_PERIOD_DAYS`
+  (default 366), enforced server-side in `GenerateReportRequest` via
+  `App\Support\ReportPeriod` — an open-ended `from_date` is measured to now, because the
+  builder measures to now. Empty/zero/negative restores the unbounded behaviour.
 - No drill-down from a report to the underlying log rows, by design — see the snapshot
   contract above.
 - Generation is synchronous. Fine while bounded; if a very large fleet or a very long
@@ -734,9 +747,18 @@ the one-day expiry error. What remains:
 - A screen still logs an entry on **every** heartbeat, not only on transitions. That is
   intentional telemetry; retention bounds it.
 - Retention ships disabled, so an operator who never configures it gets unbounded
-  growth. `ops:status` warns; Phase 15 must set real values.
+  growth. `ops:status` warns. **Still an open product decision** — Phase 15 recorded
+  recommended ranges and left the choice to the owner rather than inventing a
+  proof-of-play retention period. See
+  [`../production-env.md`](../production-env.md#9-data-retention--requires-a-business-decision).
 - `MAIL_MAILER` defaults to `log`, so alerts go nowhere real until a transport is
-  configured.
-- No queue worker supervision, and no alerting on `failed_jobs` depth — Phase 15.
-- `CheckScreenHealthJob` loads all stale screens in one query with no chunking. Fine at
-  current fleet sizes; revisit for thousands of screens.
+  configured. Documented as a launch requirement in
+  [`../production-launch-checklist.md`](../production-launch-checklist.md).
+- Queue worker supervision and `failed_jobs` handling are documented in
+  [`../production-deployment.md`](../production-deployment.md#2-queue-worker-supervision);
+  a `failed_jobs` **depth alarm** is still an unbuilt post-launch improvement.
+- ~~`CheckScreenHealthJob` loads all stale screens in one query with no chunking.~~
+  **Fixed in Phase 15:** the sweep uses `lazyById()`, so a fleet-wide outage streams in
+  id-ordered pages instead of hydrating every stale screen at once. It has to be
+  id-keyed — the loop makes each row stop matching the `status = online` filter, so an
+  OFFSET cursor would skip a page's worth of screens per boundary.

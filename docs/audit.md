@@ -789,6 +789,9 @@ Major mismatches:
 - README describes a functional device API; no API routes are registered.
 - Android documentation uses old endpoint paths.
 - `api-v1.md` describes OAuth2, campaigns, partner integrations, analytics, and statuses not present in code.
+  **Resolved in Phase 15:** moved to `docs/future/partner-api-v1-DRAFT.md` with a NOT IMPLEMENTED
+  banner, so it can no longer be mistaken for the current API reference. The real one is
+  `docs/android-device-api.md`.
 - Media documentation claims filesystem-disk abstraction, S3 replication, transcode jobs, signed URLs, and purge commands that do not exist.
 - QA checklist refers to media-library and processing capabilities that are absent.
 - Postman signatures, headers, and payload formats do not match request validation.

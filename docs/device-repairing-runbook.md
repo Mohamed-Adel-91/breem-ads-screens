@@ -33,20 +33,28 @@ Verify what is registered:
 php artisan schedule:list
 ```
 
-Expected — two entries:
+Expected — **three** entries:
 
 | Frequency | Task |
 |---|---|
 | `* * * * *` | Mark screens offline after 120s without a heartbeat |
 | `0 9 * * *` | Notify administrators about ads nearing their end date |
+| `30 3 * * *` | `model:prune` for `ScreenLog`, `PlaybackLog`, `Report` (a no-op until a retention value is set) |
+
+If `schedule:list` names a command you cannot run by hand, stop. Breem has shipped a
+scheduler entry for a command that did not exist, so it failed on every tick while
+still being displayed here. A test now pins both that the sweep is registered and
+that no phantom command remains.
 
 The offline sweep is idempotent, so a missed tick costs only detection latency,
 never correctness. If the scheduler has been down, screens that died during the
 outage are transitioned on the next successful run.
 
-**Also set `ADMIN_EMAIL`.** Offline notifications are built from it; with no
-recipient configured the sweep still transitions screens correctly but tells
-nobody.
+**Set `OPS_NOTIFICATION_EMAIL`.** With no recipient configured the sweep still
+transitions screens correctly but tells nobody — delivery is skipped and a warning is
+logged. `ADMIN_EMAIL` is honoured as a fallback, resolved at read time, so an older
+deployment keeps working; new deployments should set the operations key explicitly.
+`php artisan ops:status` reports which is in effect and **exits 1 when neither is**.
 
 Relevant settings:
 
@@ -54,10 +62,13 @@ Relevant settings:
 |---|---|---|
 | `SCREENS_HEARTBEAT_INTERVAL` | 60 | Cadence advertised to devices, in seconds. |
 | `SCREENS_OFFLINE_AFTER` | `interval × 2` (120) | Silence tolerated before a screen is called offline. Floored at `interval + 1`. |
-| `ADMIN_EMAIL` | — | Recipient for offline alerts. |
+| `SCREENS_PAIRING_CODE_TTL` | 900 | Pairing-code lifetime, in seconds. |
+| `OPS_NOTIFICATION_EMAIL` | — | Recipient for operational alerts. `ADMIN_EMAIL` is the fallback. |
 
 There is one queue dependency: `CheckScreenHealthJob` and the notifications it
-sends are queued, so `php artisan queue:work` must also be running.
+sends are queued, so a **supervised** worker must also be running —
+[`production-deployment.md`](production-deployment.md#2-queue-worker-supervision) has
+the systemd and Supervisor units.
 
 ---
 
@@ -109,16 +120,24 @@ Phase 10 removes.
 
 ### Deploy
 
+Follow the full sequence in
+[`production-deployment.md`](production-deployment.md#4-the-deployment-sequence). In
+outline:
+
 ```bash
-php artisan down
-git pull
-composer install --no-dev --optimize-autoloader
-php artisan migrate            # additive only; screens is not altered
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan up
+/usr/local/bin/breem-db-backup.sh && /usr/local/bin/breem-media-backup.sh
+git fetch --all --tags && git checkout <tag>
+rm -f bootstrap/cache/*.php
+composer install --no-dev --prefer-dist --optimize-autoloader
+php artisan migrate --force    # additive only; screens is not altered
+php artisan config:cache && php artisan route:cache && php artisan view:cache
+php artisan queue:restart      # or the worker keeps running the old code
 ```
+
+**These migrations do not need `php artisan down`.** They are additive and run in
+milliseconds, and maintenance mode returns 503 for `/api/v1/*` too — so the fleet stops
+heartbeating while the offline sweep keeps running, and you generate the very offline
+alerts you were trying to avoid.
 
 The migrations create `screen_device_credentials`, `screen_pairing_codes` and
 `screen_request_nonces`. None of them alter an existing table, so a rollback of
@@ -170,13 +189,27 @@ queries above are the authoritative answer to "is this screen paired".
 
 ### Rollback
 
-Application rollback works: revert the code, restore the previous `.env`
-including `SCREENS_HMAC_SECRET`, and the old scheme resumes — devices still hold
-their `device_uid`, which is untouched.
+> **There is no route back to the fleet-secret scheme.** An earlier version of this
+> runbook said you could restore `SCREENS_HMAC_SECRET` and "the old scheme resumes".
+> That is no longer true and following it would waste an outage: the shared-secret
+> authentication path was removed from the codebase, and Phases 11–15 built
+> server-authoritative heartbeats, offline detection, playlist cache boundaries and the
+> approval workflow on top of per-device credentials. Rolling back far enough to restore
+> it would roll back all of that too.
+>
+> `SCREENS_HMAC_SECRET` is read by nothing. Delete it from `.env`.
 
-Leave the three new tables in place during a rollback. Dropping them destroys any
-credentials already issued to screens you re-paired, forcing those screens
-through the whole process again when you roll forward.
+To roll back the **application code** to another post-Phase-10 release, follow
+[`production-deployment.md` §5](production-deployment.md#5-rollback). Two rules specific
+to pairing:
+
+1. **Leave the three credential tables in place.** Dropping them destroys every
+   credential already issued, forcing every re-paired screen through the whole process
+   again when you roll forward. They are additive; old code ignores them.
+2. **Never change `APP_KEY` as part of a rollback.** `hmac_secret` is stored with an
+   `encrypted` cast, so a different key makes every device's secret undecryptable and
+   the **entire fleet** must be re-paired by hand. If `APP_KEY` has already been changed,
+   restoring the previous value is the only non-manual fix.
 
 ### Routine operations after migration
 
@@ -189,6 +222,45 @@ through the whole process again when you roll forward.
 
 Resetting one screen affects only that screen. There is no fleet-wide secret, so
 there is nothing fleet-wide to rotate.
+
+### Pairing and playback failures — what the device is telling you
+
+Every `401`/`403` from the Device API carries a machine-readable `error` field. Read it
+before touching anything; each one has a different cause and a different fix. The full
+contract is in [`android-device-api.md`](android-device-api.md).
+
+| `error` | Status | What it actually means | Fix |
+|---|---|---|---|
+| `invalid_pairing` | 401 | Unknown screen code, wrong code, or an expired one. Deliberately one response for all three, so the endpoint cannot be used to enumerate screens. | Generate a fresh code and use it promptly. Check the **screen code** as well as the pairing code. |
+| `already_paired` | 409 | The screen already holds a live credential. | **Reset device** first, then generate a new code. |
+| `missing_token` | 401 | No `Authorization` header. On an existing screen after the Phase 10 deploy this is the expected state — it has never been paired. | Pair it. |
+| `invalid_token` | 401 | The token is not recognised. | Re-pair. It cannot be recovered. |
+| `revoked_token` | 401 | An administrator reset the screen. | Generate a code and re-pair. |
+| `expired_token` | 401 | `expires_at` has passed. Pairing leaves it null, so this only appears if one was set deliberately. | Re-pair. |
+| `screen_mismatch` | 403 | The device is addressing a screen that is not its own. A client bug, not a configuration problem. | Fix the player's screen reference. |
+| `stale_timestamp` | 401 | The device clock is more than `SCREENS_SIGNATURE_LEEWAY` (300 s) out. | Enable NTP on the device. This is the single most common field failure. |
+| `invalid_signature` | 401 | The canonical message does not match. Almost always an HTTP client serialising an empty GET body as `{}` or `[]` — which hashes differently from `""` — or an unsorted query string. | Fix the player's signing code. |
+| `replayed_request` | 401 | The nonce was already used. | Never retry a stored request verbatim: re-sign with a **fresh** nonce and a current timestamp. |
+| `429` | — | Rate limited. 10/min per IP on the handshake, 120/min per credential after. | Pace the work; see *Limitations*. |
+
+Recovery paths that need no intervention:
+
+- **A screen that was marked offline comes back on its own.** The first valid heartbeat
+  transitions it back to online and records the recovery in the log stream. Nobody has to
+  clear anything in the admin panel, and there is deliberately no "back online" email —
+  recovery is visible in Monitoring.
+- **A device that loses network keeps playing its cached playlist** and resumes
+  heartbeating when the network returns.
+
+Failures that do need intervention:
+
+- **A paired screen that never appears online.** Check `last_used_at` on its credential
+  (see the queries above). Null means the server has never seen a signed request from it —
+  suspect the device's stored credentials, its clock, or its network, not the pairing.
+- **Repeated `invalid_signature` from one device only.** A player build problem. Compare
+  against the worked example in [`android-device-api.md`](android-device-api.md).
+- **Every device failing at once after a deploy.** Check `APP_KEY` first. If it changed,
+  every `hmac_secret` is undecryptable and the whole fleet needs re-pairing.
 
 ### Limitations
 

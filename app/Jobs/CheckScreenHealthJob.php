@@ -52,6 +52,17 @@ class CheckScreenHealthJob implements ShouldQueue
      * duplicate log, no second notification — happens on the next tick.
      * HeartbeatService::markOffline() re-checks eligibility, so a screen that
      * heartbeated between the query and the write is left alone and not notified.
+     *
+     * STREAMED, NOT LOADED. `lazyById()` walks the fleet in id-ordered pages instead
+     * of hydrating every stale screen — with its `place` — into one collection. A
+     * whole-site power cut makes every screen in the fleet stale on the same tick, so
+     * the result set is bounded by fleet size, not by how many screens usually fail,
+     * and this job has a 55-second timeout to finish inside.
+     *
+     * It must be `lazyById()` and not `lazy()`/`chunk()`: the loop makes each row stop
+     * matching the `status = online` filter, and an OFFSET-paged cursor would then
+     * skip a page's worth of screens on every page boundary. Keying on the id keeps
+     * every screen visited exactly once.
      */
     public function handle(HeartbeatService $heartbeatService): void
     {
@@ -60,7 +71,7 @@ class CheckScreenHealthJob implements ShouldQueue
             ->where('status', ScreenStatus::Online)
             ->whereNotNull('last_heartbeat')
             ->where('last_heartbeat', '<', ScreenHealth::offlineThreshold())
-            ->get();
+            ->lazyById();
 
         foreach ($screens as $screen) {
             $lastHeartbeat = $screen->last_heartbeat;

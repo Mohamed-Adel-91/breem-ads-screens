@@ -36,7 +36,16 @@ class ReportController extends Controller
 
     public function index(string $lang, Request $request): View
     {
-        $query = Report::query()->with('generator')->latest('created_at');
+        // Only the columns the table actually renders. `reports.data` is the whole
+        // snapshot — every aggregated row of every listed report — and the index shows
+        // none of it, so selecting it read the entire page's payloads out of the
+        // database and JSON-decoded them through the `array` cast for nothing.
+        // `generated_by` is here because the `generator` relation is the foreign key.
+        // Anything needing `data` (show, download) loads the model in full.
+        $query = Report::query()
+            ->select(['id', 'name', 'type', 'generated_by', 'created_at'])
+            ->with('generator')
+            ->latest('created_at');
 
         if ($request->filled('type')) {
             $query->where('type', $request->input('type'));

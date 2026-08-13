@@ -144,6 +144,10 @@ return [
     'url' => 'صيغة الرابط :attribute غير صحيحة',
     'uuid' => 'الحقل :attribute يجب ان ايكون رقم UUID صحيح',
 
+    // Application rule, not a framework one: the report period ceiling enforced by
+    // GenerateReportRequest. See config/reports.php.
+    'report_period_too_long' => 'لا يمكن أن تزيد فترة التقرير عن :max يوم. يُرجى تضييق نطاق التاريخ وإعادة إنشاء التقرير.',
+
 
     /*
     |--------------------------------------------------------------------------

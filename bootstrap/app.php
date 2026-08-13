@@ -44,6 +44,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\SetLocaleFromRequest::class,
+            // Browser-surface hardening only. The Device API is consumed by a native
+            // Android client, where these headers mean nothing.
+            \App\Http\Middleware\AddSecurityHeaders::class,
         ]);
         $middleware->alias([
             'auth'               => \App\Http\Middleware\Authenticate::class,

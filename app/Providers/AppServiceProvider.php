@@ -54,10 +54,32 @@ class AppServiceProvider extends ServiceProvider
             return "<?php echo e(\\App\\Support\\Lang::t($expression)); ?>";
         });
         View::share(ComponentHelper::generalComponents());
+        // Shared view data for EVERY view. `'*'` means every template AND every
+        // partial, layout and Blade component a page renders, so this closure runs
+        // dozens to hundreds of times per request — a page listing 100 screens renders
+        // 100 option components and ran this 100 times.
+        //
+        // The SEO lookup is keyed on the current route name, which cannot change
+        // within a request, so every one of those calls issued the identical
+        // `select * from seo_metas where page = ?`. Phase 15's fleet-scale smoke test
+        // measured 100 of them on a single admin page. It is resolved once per route
+        // per request now.
+        //
+        // Memoised in the CONTAINER, not in a `static`: the container is rebuilt for
+        // each request and for each test, whereas a static closure variable would
+        // survive both and hand one test the previous test's SEO row. The value is
+        // wrapped in an array because `bound()` is an isset() check and a legitimately
+        // null result would otherwise never be seen as memoised — the miss case, and
+        // therefore the repeated query, is exactly the common one.
         View::composer('*', function ($view) {
             $routeName = Route::currentRouteName();
-            $meta = SeoMeta::where('page', $routeName)->first();
-            $view->with('meta', $meta);
+            $key = 'breem.seo_meta.'.($routeName ?? '');
+
+            if (! app()->bound($key)) {
+                app()->instance($key, ['meta' => SeoMeta::where('page', $routeName)->first()]);
+            }
+
+            $view->with('meta', app($key)['meta']);
             $view->with('currentLocale', app()->getLocale());
         });
 

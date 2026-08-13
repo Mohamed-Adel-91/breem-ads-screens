@@ -3,9 +3,14 @@
 Running Breem's background work: the scheduler, the queue worker, data retention,
 operational alerting and report generation.
 
-Scoped to the operational layer. Device pairing and re-pairing has its own document —
-see [`device-repairing-runbook.md`](device-repairing-runbook.md) — and production
-deployment hardening is Phase 15.
+Scoped to the operational layer:
+
+| Topic | Document |
+|---|---|
+| Every production configuration value | [`production-env.md`](production-env.md) |
+| Deploy sequence, worker/scheduler supervision, backup, restore, rollback | [`production-deployment.md`](production-deployment.md) |
+| Pre-launch sign-off gate | [`production-launch-checklist.md`](production-launch-checklist.md) |
+| Pairing and re-pairing a physical screen | [`device-repairing-runbook.md`](device-repairing-runbook.md) |
 
 ---
 
@@ -62,7 +67,10 @@ alert is ever delivered.** Check depth with:
 php artisan queue:monitor database --max=100
 ```
 
-Supervising the worker (systemd, Supervisor, Horizon) is Phase 15.
+**The worker must be supervised, and must be restarted on every deploy** — a
+long-running worker holds the old code in memory. systemd and Supervisor units, the
+tuned flags and the reasoning behind each are in
+[`production-deployment.md`](production-deployment.md#2-queue-worker-supervision).
 
 ---
 
@@ -237,11 +245,13 @@ QUEUE_CONNECTION=database
 
 ## Before going live
 
-Phase 15 owns production hardening, but these are the operational prerequisites:
+The operational prerequisites. The full gate — infrastructure, TLS, backups, uploads,
+physical screens — is [`production-launch-checklist.md`](production-launch-checklist.md).
 
 - [ ] `php artisan ops:status` exits 0
 - [ ] cron runs `schedule:run` every minute
-- [ ] a supervised queue worker is running
+- [ ] a supervised queue worker is running, and starts at boot
+- [ ] `php artisan queue:restart` is part of the deploy sequence
 - [ ] `MAIL_MAILER` is a real transport (it defaults to `log`)
 - [ ] retention values chosen, previewed with `--pretend`, then enabled
-- [ ] `failed_jobs` is monitored
+- [ ] `failed_jobs` is monitored, and never flushed on a schedule

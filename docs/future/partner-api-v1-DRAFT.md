@@ -1,15 +1,28 @@
-# Ads API v1 Reference
+# Ads API v1 Reference — DRAFT, NOT IMPLEMENTED
 
-> **⚠️ This document does not describe the API this repository implements.**
+> ## ⚠️ NOT IMPLEMENTED — NOT A PRODUCTION CONTRACT
 >
-> It specifies a partner-facing product — OAuth 2.0 bearer tokens from a separate
-> auth service, a hosted `api.breemads.com`, and campaign/manifest resources —
-> none of which exist in this codebase. The endpoints, identifiers, headers and
-> authentication scheme below do **not** match `routes/api.php`.
+> **Nothing in this document exists in Breem.** It is a product design sketch for a
+> future partner-facing API: OAuth 2.0 bearer tokens from a separate auth service, a
+> hosted `api.breemads.com`, and campaign/manifest resources. No endpoint, header,
+> identifier or authentication scheme below appears in `routes/api.php`, and no test
+> covers any of it.
 >
-> For the API this repository actually serves, read
-> [android-device-api.md](android-device-api.md). Kept here only as a record of
-> the intended partner integration; do not implement or test against it.
+> **Do not implement against it. Do not test against it. Do not quote it to a
+> partner or a client as an available integration.**
+>
+> The API Breem actually serves is the device-facing one, documented in
+> [../android-device-api.md](../android-device-api.md): per-device bearer token plus
+> per-device HMAC over a canonical message, with timestamp and nonce replay
+> protection. It is a different design for a different consumer.
+>
+> This file lives under `docs/future/` for exactly that reason. It is retained as a
+> record of intended product direction — Phase 15 kept it rather than deleting design
+> material — and moved out of `docs/` so that nobody browsing the documentation can
+> mistake a filename like `api-v1.md` for the current API reference.
+>
+> If this API is ever built, it gets its own phase, its own routes and its own tests,
+> and this document moves back with the banner removed.
 
 ## Base URL
 

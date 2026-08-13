@@ -536,8 +536,16 @@ class AdController extends Controller
             return $currentDuration;
         }
 
+        // Reaching here means a video needs a duration and nothing has supplied one:
+        // no positive `duration_seconds` from the operator, and no usable value already
+        // on the row. `$fallback` is therefore zero or negative, and a video of zero
+        // seconds is not a shorter advertisement — it is an unplayable one that the
+        // playlist would still hand to a device. So probing is the only remaining
+        // source, and when it is switched off there is no source at all: that is the
+        // same "duration required and unavailable" outcome as a broken binary, and it
+        // is reported the same way instead of silently writing a zero.
         if (! config('ads.try_ffprobe', true)) {
-            return $fallback;
+            return null;
         }
 
         // Deliberately outside any database transaction: ffprobe shells out to an

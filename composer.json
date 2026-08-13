@@ -7,17 +7,17 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "bensampo/laravel-enum": "*",
+        "bensampo/laravel-enum": "^6.14",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.2",
         "laravel/slack-notification-channel": "^3.6",
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.29",
         "maatwebsite/excel": "^3.1",
-        "phpoffice/phpspreadsheet": "*",
+        "phpoffice/phpspreadsheet": "^1.30.6",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-permission": "^6.21",
-        "spatie/laravel-translatable": "*"
+        "spatie/laravel-translatable": "^6.14"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -100,13 +100,26 @@ Admin login is throttled with `throttle:10,1`.
 
 ## Operations endpoints
 
-`routes/artisan.php` exposes cache-clear, migrate and seed over HTTP. These were
+`routes/artisan.php` exposes cache-clear and migrate over HTTP. These were once
 publicly reachable with no authentication — `clear-cache` ran `migrate --force`
 for anyone, and the `day{NN}` check is guessable in at most 31 attempts. They are
-now behind `auth:admin` + `role:super-admin`.
+now behind `auth:admin` + `role:super-admin`, and pinned by tests in
+`tests/Feature/Operations/ProductionGateTest.php`.
 
-`run-seeder` still re-seeds real CMS content when invoked. Treat it as destructive
-and consider removing it in favour of a CLI-only workflow.
+**Phase 15 removed `run-seeder` entirely, and removed `migrate --force` from
+`clear-cache`.** `db:seed` against a live database is destructive three ways over:
+`AdminUserSeeder` resets the super admin's password, `DemoSeeder` writes a demo screen
+with the fixed code `SCR-001`, and `ReportsAndLogsSeeder` writes fabricated playback
+logs — into proof-of-play. None of that may be one authenticated GET away. Seed a new
+environment from the CLI with named classes; see
+[`../production-deployment.md`](../production-deployment.md#8-first-install-only).
+
+What remains are state-changing **GET** routes, so Laravel's CSRF middleware — which
+verifies POST/PUT/PATCH/DELETE only — does not cover them. `SESSION_SAME_SITE=lax`
+stops a cross-site subresource from firing them, but a top-level navigation a
+signed-in super-admin follows would. The remaining actions are a cache clear and a
+forward-only `migrate --force`, so the impact is availability at worst; converting them
+to POST is the recorded follow-up.
 
 ## Mass assignment
 

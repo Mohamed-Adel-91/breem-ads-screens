@@ -56,6 +56,11 @@ application.
 | What to run and how to report it | [`docs/ai/testing.md`](docs/ai/testing.md) |
 | The order of operations for any task | [`docs/ai/workflow.md`](docs/ai/workflow.md) |
 | Scheduler, queue worker, retention, alert recipients, pruning | [`docs/operations-runbook.md`](docs/operations-runbook.md) |
+| Every production env key, and what breaks without it | [`docs/production-env.md`](docs/production-env.md) |
+| Deploy sequence, worker/scheduler supervision, backup, restore, rollback | [`docs/production-deployment.md`](docs/production-deployment.md) |
+| Pre-launch sign-off gate | [`docs/production-launch-checklist.md`](docs/production-launch-checklist.md) |
+| The device contract as implemented | [`docs/android-device-api.md`](docs/android-device-api.md) |
+| Pairing and re-pairing a physical screen | [`docs/device-repairing-runbook.md`](docs/device-repairing-runbook.md) |
 
 Agent entry point: [`AGENTS.md`](AGENTS.md).
 
