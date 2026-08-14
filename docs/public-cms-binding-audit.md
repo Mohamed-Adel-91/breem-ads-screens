@@ -71,8 +71,8 @@ orphaned logo settings** and a handful of SEO and translation defects.
 | 7 | `social.links.twitter` was rendered by the footer and seeded, but not editable | **Fixed** |
 | 8 | `header.logo` and `footer.logo` settings exist and are **ignored** by navbar and footer | **Fixed** (§12) |
 | 9 | `sidebar.icons` holds four real social URLs; the floating sidebar renders four `href="#"` dead links | **Fixed** (§12) |
-| 10 | Every page emits a second `<meta name="description" content="description">` | **P1** |
-| 11 | `<meta name="author" content="NextSolve">` — stale, contradicts the footer credit | **P2** |
+| 10 | Every page emits a second `<meta name="description" content="description">` | **Fixed** (§13) |
+| 11 | `<meta name="author" content="NextSolve">` — stale, contradicts the footer credit | **Fixed** by the owner in `c5a65a7` |
 | 12 | `site.lang_switch` — **first assessed as orphaned; that was wrong.** It is on the Device API allow-list | **Fixed** (§12) |
 | 13 | 5 runtime CDN dependencies, 3 without SRI, 1 floating version | **P2** |
 | 14 | Footer phone/email rendered in Bootstrap's default link blue on the dark panel | **Fixed** (§12) |
@@ -80,7 +80,9 @@ orphaned logo settings** and a handful of SEO and translation defects.
 | 16 | TikTok, Snapchat and WhatsApp were not supported at all | **Fixed** (§12) |
 | 17 | Clearing a social field did not clear it — `setTranslations()` merges, so the old URL survived | **Fixed** (§12) |
 | 18 | Sidebar brand hover colours were keyed to `:nth-child()`, i.e. to icon position | **Fixed** (§12) |
-| 19 | Navbar phone is still `href="#"` — not dialable | **P1** |
+| 19 | Navbar phone is still `href="#"` — not dialable | **Fixed** (§13) |
+| 20 | The "Download brochure" button renders `href="#"` when no brochure file is configured | **P2** — newly found |
+| 21 | No seeder creates `seo_metas`, so a fresh install serves the layout's hardcoded fallback description on every page | **P2** — newly found |
 
 ---
 
@@ -317,14 +319,17 @@ test for the footer.
 
 ## 10. Recommended future CMS work, in order
 
-Items 1, 2 and the logo/sidebar bindings have since been done — see §12. What remains:
+Items 1, 2 and the logo/sidebar bindings have since been done — see §12. The navbar phone
+and the duplicate description are done too — see §13. **There are no P1 items left.** What
+remains:
 
-1. **P1** — Give the navbar phone a `tel:` href, as the footer now has.
-   *(`WebResponsiveLayoutTest::test_arabic_numerals_are_still_localised` locates the phone
-   by matching `<a class="nav-link" href="#">`, so that regex has to change in the same
-   commit or the test will stop finding the number it is asserting on.)*
-2. **P1** — Delete the `@push('meta')<meta name="description" content="description">` from
-   the three page views. It emits a second, meaningless description on every page.
+1. **P2** — Hide the "Download brochure" button when no brochure file is configured. It
+   currently renders `href="#"` — the same dead-link pattern fixed for the social icons and
+   the phone, but with a different cause: the CMS field is empty and the view falls back to
+   `'#'`. Either hide the button or make the brochure required.
+2. **P2** — Seed or configure `seo_metas`. No seeder creates the table, so a fresh
+   installation serves the layout's hardcoded `Default Description` / `بريم` fallbacks on
+   every page. The production database has three rows; a new environment has none.
 3. **P2** — Decide the Settings-vs-CMS contact duplication (§5).
 4. **P2** — Decide the Locations-vs-Places contract (§6).
 5. **P2** — Self-host the CDN dependencies; pin SweetAlert2 to an exact version.
@@ -443,3 +448,81 @@ safe here, because these values are locale-resolved (a shared container serves o
 language's address to the other) and mutable (an admin save followed by a read returns the
 stale copy). Both failure modes were caught by the existing tests. The cost of correctness
 is three extra reads of an already-warm cache.
+
+---
+
+## 13. Final P1 cleanup — navbar phone and SEO description
+
+### The navbar phone
+
+| Locale | Stored | Visible navbar | `href` | Visible footer | Machine safe |
+|---|---|---|---|---|---|
+| EN | `+99654334` | `+99654334` | `tel:+99654334` | `+99654334` | ✅ ASCII |
+| AR | `+99654334` | `+٩٩٦٥٤٣٣٤` | `tel:+99654334` | `+٩٩٦٥٤٣٣٤` | ✅ ASCII |
+| AR, `+` typed at the visual end (`99654334+`) | `99654334+` | `٩٩٦٥٤٣٣٤+` | `tel:+99654334` | same | ✅ sign moved to the front |
+| AR, Arabic-Indic input (`٩٦٦٥٠٠١١٢٢٣٣+`) | as typed | as typed | `tel:+966500112233` | same | ✅ mapped back to ASCII |
+| Empty / unset | — | **element absent** | **no anchor at all** | absent | n/a |
+
+**Root cause:** the value was never the problem. The navbar already received
+`$layoutSettings` from the layout composer and already ran `localized_digits()` — only the
+`href` was hardcoded to `#`, and the `<li>` rendered unconditionally. So the number in the
+header was the one place on the site a visitor could read it and not call it.
+
+**Fix:** consume `$layoutSettings['phone_link']`, the ASCII value
+`LayoutService::telHref()` already produces for the footer. No second phone source, no
+second normalisation, no new setting key. The whole `<li>` is conditional, and
+`.site-navbar__meta`'s flex/gap rules already handle the language switch being the only
+child at every width.
+
+### The SEO description
+
+| Route | Locale | Titles | Descriptions | Source | Placeholder |
+|---|---|---:|---:|---|---|
+| `/ar` | ar | 1 | **1** | `seo_metas.web.home` | no |
+| `/en` | en | 1 | **1** | `seo_metas.web.home` | no |
+| `/ar/whoweare` | ar | 1 | **1** | `seo_metas.web.whoweare` | no |
+| `/en/whoweare` | en | 1 | **1** | `seo_metas.web.whoweare` | no |
+| `/ar/contact-us` | ar | 1 | **1** | `seo_metas.web.contactUs` | no |
+| `/en/contact-us` | en | 1 | **1** | `seo_metas.web.contactUs` | no |
+
+Every route also renders exactly one `<title>` and one `<link rel="canonical">`.
+
+**Root cause:** all three page views carried
+`@push('meta')<meta name="description" content="description">@endpush` — the literal word
+as the description — which the layout's `@stack('meta')` appended *after* the real tag from
+`seo_metas`. Two descriptions per page, the second meaningless.
+
+**Fix:** the three pushes are deleted. `@stack('meta')` stays as the extension point for a
+page that genuinely needs an extra tag; a description is not that, because the layout owns
+it.
+
+**SEO caching is safe.** `AppServiceProvider` memoises the SEO lookup in the container
+keyed by route name, but it stores the **row**, not resolved text — the description is
+resolved per locale at render time. That is why it does not have the locale-leak the layout
+settings cache once had, and it is now pinned by a test.
+
+**Fallback, unchanged:** with no `seo_metas` row the layout's `@else` branch emits
+`Default Description` and the title `بريم`. Still exactly one tag, still not the
+placeholder. That the fallback is a single hardcoded pair for both languages is reported as
+SEO debt (§10 item 2), not changed — choosing what an unconfigured page should say is a
+content decision.
+
+### A stale test that would have gone quiet
+
+`WebResponsiveLayoutTest::test_arabic_numerals_are_still_localised` located the phone by
+matching `<a class="nav-link" href="#">` and called `markTestSkipped()` when it did not
+match. Fixing the href therefore turned six data sets **green-but-skipped** rather than
+red — the numeral contract would have stopped being tested with nothing to show for it.
+This was observed live: a suite run that overlapped the first edit reported
+`926 passed, 6 skipped` instead of `932 passed`.
+
+Both that test and `LocalizedNumeralsTest::test_the_arabic_phone_label_is_localized_but_never_a_dial_target`
+now assert the real contract. The second was also **renamed** — its old name recorded the
+defect as though it were the specification.
+
+### hreflang
+
+**ABSENT.** No `<link rel="alternate" hreflang="…">` is emitted; the single `hreflang`
+attribute on the page belongs to the language-switch anchor, which is a different thing.
+Informational only — not added, since nothing in the existing SEO architecture suggests it
+was intended. Still listed as P2 in §10.

@@ -783,14 +783,34 @@ class WebResponsiveLayoutTest extends TestCase
     #[DataProvider('publicPageProvider')]
     public function test_arabic_numerals_are_still_localised(string $path): void
     {
+        /*
+         * The header phone used to be located by matching `<a class="nav-link" href="#">`,
+         * because that is what the navbar rendered. When the number became dialable that
+         * selector stopped matching — and because the miss branch called
+         * markTestSkipped(), this test went GREEN-BUT-SKIPPED rather than red. Six data
+         * sets quietly stopped asserting anything about localisation.
+         *
+         * So the selector is now the contract itself: a phone link is an anchor with a
+         * `tel:` href, and its absence is a failure rather than a reason to skip. The
+         * seeders configure a number on every page this provider covers.
+         */
         $isArabic = str_starts_with($path, '/ar');
         $html = $this->get($path)->getContent();
 
-        if (! preg_match('/<a class="nav-link" href="#">([^<]+)<\/a>/', $html, $m)) {
-            $this->markTestSkipped('No phone number configured for this page.');
-        }
+        $this->assertSame(
+            1,
+            preg_match('/<a class="nav-link site-navbar__phone"\s+href="tel:([^"]+)">\s*([^<]+?)\s*<\/a>/s', $html, $m),
+            "[{$path}] renders no dialable header phone."
+        );
 
-        $phone = trim($m[1]);
+        // The machine value, first: ASCII only, whatever the visible text does.
+        $this->assertDoesNotMatchRegularExpression(
+            '/[\x{0660}-\x{0669}]/u',
+            $m[1],
+            "[{$path}] put localized digits in a tel: target."
+        );
+
+        $phone = trim($m[2]);
 
         if ($isArabic) {
             $this->assertMatchesRegularExpression(

@@ -137,27 +137,53 @@ class LocalizedNumeralsTest extends TestCase
 
     // ------------------------------------------------------------- public phone number
 
-    public function test_the_arabic_phone_label_is_localized_but_never_a_dial_target(): void
+    /**
+     * The Arabic phone number reads in Arabic-Indic digits and dials in ASCII.
+     *
+     * Renamed from `…_but_never_a_dial_target`. That name recorded a DEFECT as though it
+     * were the contract: the header phone rendered `href="#"`, so the one place a visitor
+     * saw the number was the one place they could not call it. The number is now dialable
+     * on both surfaces, and the real rule — presentation is localized, machine values are
+     * not — is what is asserted.
+     */
+    public function test_the_arabic_phone_is_localized_on_screen_and_ascii_in_the_dial_target(): void
     {
         $this->seedPublicPages();
 
         $html = $this->get('/ar')->assertOk()->getContent();
 
-        // The header phone is rendered through the formatter, so if the layout settings
-        // carry a number the visible text must not be Western.
-        preg_match_all('~<a class="nav-link" href="#">([^<]*)</a>~u', $html, $links);
+        // Every visible phone label on the page: the header and the footer both show one.
+        preg_match_all(
+            '~<a class="nav-link site-navbar__phone"\s+href="tel:[^"]*">\s*([^<]+?)\s*</a>'
+            . '|<a class="footer-contact-link" href="tel:[^"]*">\s*([^<]+?)\s*</a>~su',
+            $html,
+            $labels,
+            PREG_SET_ORDER
+        );
 
-        foreach (array_map('trim', $links[1]) as $label) {
+        $this->assertCount(2, $labels, 'The Arabic page must show a header phone and a footer phone.');
+
+        foreach ($labels as $match) {
+            $label = trim(($match[1] ?? '') !== '' ? $match[1] : ($match[2] ?? ''));
+
+            $this->assertNotSame('', $label, 'A phone link rendered with no visible number.');
             $this->assertDoesNotMatchRegularExpression(
                 '/\d/',
                 $label,
-                "Arabic header link [{$label}] still shows Western digits."
+                "Arabic phone label [{$label}] still shows Western digits."
+            );
+            $this->assertMatchesRegularExpression(
+                '/[٠-٩]/u',
+                $label,
+                "Arabic phone label [{$label}] shows no Arabic-Indic digits at all."
             );
         }
 
         // And no tel: href anywhere may carry a localized digit — a dialler cannot parse
         // Arabic-Indic numerals.
         preg_match_all('~href="tel:([^"]*)"~u', $html, $tel);
+
+        $this->assertNotEmpty($tel[1], 'The Arabic page renders no dialable phone at all.');
 
         foreach ($tel[1] as $target) {
             $this->assertDoesNotMatchRegularExpression(

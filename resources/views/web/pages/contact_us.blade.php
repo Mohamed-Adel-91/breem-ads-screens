@@ -1,8 +1,6 @@
 @extends('web.layouts.master')
 
-@push('meta')
-    <meta name="description" content="description" />
-@endpush
+{{-- SEO comes from the `seo_metas` record via the layout — see web/pages/index.blade.php. --}}
 
 @section('content')
     <main>
