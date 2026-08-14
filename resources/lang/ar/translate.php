@@ -8,6 +8,10 @@ return [
     'layout' => [
         'switch_language' => 'التبديل إلى الإنجليزية',
         'toggle_navigation' => 'إظهار القائمة',
+        // Accessible name for the footer's embedded map.
+        'map_title' => 'موقعنا على الخريطة',
+        // Accessible name for a social link.
+        'social_link' => 'بريم على :platform',
     ],
 
     'homepage' => [

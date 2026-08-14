@@ -272,6 +272,31 @@ return [
             ],
         ],
     ],
+    /*
+     * Settings had no sidebar entry at all — the page existed and was routed, but the
+     * only way to reach it was to type the URL. It is now where the public site's
+     * address, phone, email, map and social links are edited, so it needs a way in.
+     */
+    [
+        'key' => 'site_settings',
+        'icon' => 'fas fa-sliders-h',
+        'title' => 'admin.sidebar.site_settings',
+        'permission' => 'settings.edit',
+        'active' => [
+            'admin.settings.*',
+        ],
+        'children' => [
+            [
+                'key' => 'site_settings_general',
+                'title' => 'admin.sidebar.general_settings',
+                'route' => 'admin.settings.edit',
+                'permission' => 'settings.edit',
+                'active' => [
+                    'admin.settings.*',
+                ],
+            ],
+        ],
+    ],
     [
         'key' => 'contact_submissions',
         'icon' => 'fas fa-inbox',

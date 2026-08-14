@@ -97,7 +97,26 @@ class AppServiceProvider extends ServiceProvider
             'web.layouts.components.transparent-header',
             'web.layouts.components.solid-header',
             'web.layouts.components.footer',
+            // The floating social rail is included by the layout directly rather than by
+            // a header, so it inherits nothing and needs its own entry. Without it the
+            // rail sees no $layoutSettings and silently renders no links at all.
+            'web.layouts.components.sidebar',
         ], function ($view) {
+            /*
+             * Resolved per view, deliberately, and NOT memoised in the container the way
+             * the SEO lookup above is.
+             *
+             * That memoisation was tried and reverted. It is safe for SEO because a route
+             * name cannot change within a request. It is NOT safe here for two reasons:
+             * the values are locale-resolved, so a container shared across requests serves
+             * one language's address to the other — the exact bug LayoutService's
+             * per-locale cache key exists to prevent — and they are mutable, so an admin
+             * save followed by a read in the same lifetime returns the stale copy.
+             *
+             * The cost of getting it right is three extra reads of an already-warm cache,
+             * which are only queries at all because this environment uses the database
+             * cache store. LayoutService::getSettings() is one bounded query on a miss.
+             */
             $layoutService = app(LayoutService::class);
 
             $view->with([

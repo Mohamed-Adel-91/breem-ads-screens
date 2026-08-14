@@ -8,6 +8,13 @@ return [
     'layout' => [
         'switch_language' => 'Switch language to Arabic',
         'toggle_navigation' => 'Toggle navigation',
+        // Accessible name for the footer's embedded map. An <iframe> with no title is
+        // announced as "frame" by a screen reader; the destination itself is configured
+        // in Settings, so only the label belongs here.
+        'map_title' => 'Our location on the map',
+        // Accessible name for a social link. The icon is aria-hidden, so this is the only
+        // thing a screen reader announces for it.
+        'social_link' => 'Breem on :platform',
     ],
 
     'homepage' => [

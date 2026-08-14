@@ -5,7 +5,8 @@
     <nav class="navbar navbar-expand-lg site-navbar">
         <div class="site-container site-navbar__inner">
             <a class="navbar-brand site-navbar__brand" href="{{ url($locale) }}">
-                <img src="img/logo.png" alt="Breem">
+                <img src="{{ $layoutSettings['header_logo']['src'] }}"
+                     alt="{{ $layoutSettings['header_logo']['alt'] }}">
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"

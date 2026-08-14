@@ -63,8 +63,20 @@ Route::group([
 
         Route::resource('permissions', PermissionController::class)->middleware('role:super-admin');
         Route::resource('roles', RoleController::class)->middleware('role:super-admin');
-        Route::get('/settings/edit', [SettingController::class, 'edit'])->name('settings.edit');
-        Route::put('/settings/update', [SettingController::class, 'update'])->name('settings.update');
+        /*
+         * The `settings.edit` / `settings.update` permissions already existed and are
+         * already granted to super-admin and admin — they were simply never applied here,
+         * so the page was reachable by any authenticated admin including `viewer`, which
+         * holds `settings.view` alone. Now that this screen owns the public site's
+         * address, phone, email, map and social links, that gap is the difference between
+         * a read-only account and one that can change what the website says.
+         */
+        Route::get('/settings/edit', [SettingController::class, 'edit'])
+            ->name('settings.edit')
+            ->middleware('permission:settings.edit');
+        Route::put('/settings/update', [SettingController::class, 'update'])
+            ->name('settings.update')
+            ->middleware('permission:settings.update');
         Route::prefix('users')->as('users.')->middleware('permission:users.view')->group(function () {
             Route::get('/', [UserController::class, 'index'])->name('index');
             Route::get('/create', [UserController::class, 'create'])->name('create');

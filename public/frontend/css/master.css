@@ -548,45 +548,58 @@ header .pages li a:hover::after {
 .sidebar ul li a svg {
   width: 30px;
   height: 30px;
-  /* fill: #41A8A6; */
-  transition: fill 0.3s;
+  transition: color 0.3s;
 }
 
-/* ألوان الهوفر لكل أيقونة */
-.sidebar ul li:nth-child(1):hover {
+/*
+ * The rail's resting colour. `color`, not `fill`, because the glyphs are drawn with
+ * `fill: currentColor` so one property themes them on both surfaces — teal here, white in
+ * the footer.
+ */
+.sidebar ul li a {
+  color: #41A8A6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * ألوان الهوفر لكل أيقونة — brand hover colours, keyed by PLATFORM rather than position.
+ *
+ * These were `:nth-child(1..4)`, which encoded "Facebook is always first". That held only
+ * while all four channels were configured; the rail is driven by Settings now, so leaving
+ * Facebook blank used to hand its blue to whichever platform moved up into slot one. The
+ * colours themselves are unchanged.
+ */
+.sidebar__item--facebook:hover {
   background: #3b5998;
-  /* فيسبوك */
 }
 
-.sidebar ul li:nth-child(1):hover svg {
-  fill: #fff;
-}
-
-.sidebar ul li:nth-child(2):hover {
+.sidebar__item--x:hover {
   background: #000;
-  /* X (تويتر الجديد) */
 }
 
-.sidebar ul li:nth-child(2):hover svg {
-  fill: #fff;
-}
-
-.sidebar ul li:nth-child(3):hover {
+.sidebar__item--youtube:hover {
   background: #ff0000;
-  /* يوتيوب */
 }
 
-.sidebar ul li:nth-child(3):hover svg {
-  fill: #41A8A6;
-}
-
-.sidebar ul li:nth-child(4):hover {
+.sidebar__item--tiktok:hover {
   background: #010101;
-  /* تيك توك */
 }
 
-.sidebar ul li:nth-child(4):hover svg {
-  fill: #fff;
+.sidebar__item:hover a {
+  color: #fff;
+}
+
+/*
+ * Keyboard parity: the rail was hover-only, so a keyboard user got no indication of which
+ * icon they were on.
+ */
+.sidebar ul li a:focus-visible {
+  outline: 2px solid #41A8A6;
+  outline-offset: -4px;
 }
 
 /*
@@ -947,6 +960,87 @@ footer .footer .linkss a {
 footer .footer .linkss img {
   max-width: 100%;
   height: auto;
+}
+
+/*
+ * THE FOOTER'S CONTACT LINKS.
+ *
+ * The phone number and email address are real `tel:`/`mailto:` anchors. Bootstrap styles
+ * every bare `a` with `--bs-link-color`, and that wins over the `color: #fff` the footer
+ * sets on its container — inheritance does not reach an anchor that has its own colour.
+ * So they rendered in default link blue on the dark teal panel.
+ *
+ * `color: inherit` puts them back on the footer's own colour. It is deliberately not a
+ * hardcoded #fff: if the footer's text colour is ever retuned, these follow it.
+ *
+ * The underline appears on interaction rather than at rest. At rest the surrounding
+ * paragraph already reads as contact details; on hover and on keyboard focus the
+ * underline plus the brand tint is what says "this is actionable".
+ */
+footer .footer .footer-contact-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+footer .footer .footer-contact-link:hover,
+footer .footer .footer-contact-link:focus-visible {
+  color: #9FD8D6;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+/* Never invisible to a keyboard user, whatever the hover colour does. */
+footer .footer .footer-contact-link:focus-visible {
+  outline: 2px solid #9FD8D6;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/*
+ * The social row. The icons are inline SVG filled with `currentColor`, so one `color`
+ * declaration themes all eight — the footer draws them white, the floating rail draws
+ * them teal, from the same component.
+ */
+footer .footer .footer-social {
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* A tap target before it is decoration. */
+  min-width: 44px;
+  min-height: 44px;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+footer .footer .footer-social svg {
+  width: 26px;
+  height: 26px;
+}
+
+footer .footer .footer-social:hover,
+footer .footer .footer-social:focus-visible {
+  color: #9FD8D6;
+  transform: translateY(-2px);
+}
+
+footer .footer .footer-social:focus-visible {
+  outline: 2px solid #9FD8D6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  footer .footer .footer-contact-link,
+  footer .footer .footer-social {
+    transition: none;
+  }
+
+  footer .footer .footer-social:hover,
+  footer .footer .footer-social:focus-visible {
+    transform: none;
+  }
 }
 
 /* أوفرلاي */

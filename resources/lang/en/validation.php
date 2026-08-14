@@ -13,7 +13,10 @@ return [
     |
     */
     'real_email' => 'The :attribute must be a valid email address with a real domain.',
-    'strong_password' => 'The :attribute must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.',
+    'map_embed_url' => 'The :attribute must be an https Google Maps embed link (it should start with https://www.google.com/maps/embed).',
+    'setting_key_reserved' => 'The setting ":key" is managed by the labelled fields above and cannot be edited here.',
+    'whatsapp_link' => 'The :attribute must be a WhatsApp click-to-chat link, for example https://wa.me/966500000000.',
+    'strong_password' =>'The :attribute must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.',
     'unique_career_email' => 'You have already applied for this career within the last month.',
     'accepted' => 'The :attribute must be accepted.',
     'accepted_if' => 'The :attribute must be accepted when :other is :value.',

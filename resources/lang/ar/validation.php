@@ -13,7 +13,10 @@ return [
     |
     */
     'real_email' => 'يجب أن يكون :attribute عنوان بريد إلكتروني صالح مع مجال حقيقي',
-    'strong_password' => 'يجب أن يكون :attribute على الأقل 8 حرفًا ويحتوي على حرف كبير وحرف صغير ورقم ورمز',
+    'map_embed_url' => 'يجب أن يكون :attribute رابط تضمين خرائط Google يبدأ بـ https://www.google.com/maps/embed',
+    'setting_key_reserved' => 'الإعداد ":key" يُدار من الحقول المُعنونة بالأعلى ولا يمكن تعديله من هنا.',
+    'whatsapp_link' => 'يجب أن يكون :attribute رابط محادثة واتساب، مثال https://wa.me/966500000000.',
+    'strong_password' =>'يجب أن يكون :attribute على الأقل 8 حرفًا ويحتوي على حرف كبير وحرف صغير ورقم ورمز',
     'accepted' => 'يجب قبول الحقل :attribute',
     'accepted_if' => 'الحقل :attribute مقبول في حال ما إذا كان :other يساوي :value',
     'active_url' => 'الحقل :attribute لا يُمثّل رابطًا صحيحًا',

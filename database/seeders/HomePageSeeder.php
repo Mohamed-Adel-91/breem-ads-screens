@@ -83,32 +83,18 @@ class HomePageSeeder extends Seeder
 
             /** ------------------------------------------------
              *  Sidebar (social icons)
-             * ------------------------------------------------*/
-            Setting::updateOrCreate(
-                ['key' => 'sidebar.icons'],
-                ['value' => [
-                    [
-                        'svg_fill' => '#41A8A6',
-                        'title'    => ['ar' => 'فيسبوك', 'en' => 'Facebook'],
-                        'url'      => 'https://facebook.com/breem',
-                    ],
-                    [
-                        'svg_fill' => '#41A8A6',
-                        'title'    => ['ar' => 'تويتر', 'en' => 'Twitter/X'],
-                        'url'      => 'https://x.com/breem',
-                    ],
-                    [
-                        'svg_fill' => '#41A8A6',
-                        'title'    => ['ar' => 'يوتيوب', 'en' => 'YouTube'],
-                        'url'      => 'https://youtube.com/@breem',
-                    ],
-                    [
-                        'svg_fill' => '#41A8A6',
-                        'title'    => ['ar' => 'لينكدإن', 'en' => 'LinkedIn'],
-                        'url'      => 'https://linkedin.com/company/breem',
-                    ],
-                ]]
-            );
+             * ------------------------------------------------
+             *
+             *  DELIBERATELY NOT SEEDED ANY MORE. `sidebar.icons` held a second copy of the
+             *  social URLs for the floating rail, which meant two places to change a link
+             *  and no way to tell which one the site used — in practice neither, because
+             *  the rail rendered `href="#"` and read nothing at all.
+             *
+             *  The rail reads `social.links` now, like the footer does. Seeding this key
+             *  into a fresh installation would create a row nothing reads and that the
+             *  Settings screen deliberately hides. Existing rows in existing databases are
+             *  left exactly as they are — see LayoutService::LEGACY_KEYS.
+             */
 
             /** ------------------------------------------------
              *  Section: Banner (video)
@@ -378,11 +364,48 @@ class HomePageSeeder extends Seeder
                 ['value' => ['image_path' => 'img/whitelogo.png', 'alt' => ['ar' => 'بريم', 'en' => 'Breem']]]
             );
 
+            /**
+             * Footer contact details.
+             *
+             * These two keys are new to the seeder, not new to the product: the address
+             * and the email address were hardcoded in the footer Blade template, Arabic
+             * only, with no English counterpart and no way for an operator to change
+             * either. They are business content, so they belong in Settings alongside the
+             * phone number that was already here.
+             *
+             * The Arabic string is the one that was in the template verbatim; the English
+             * one is its translation and should be confirmed by the business before
+             * launch.
+             */
+            Setting::updateOrCreate(
+                ['key' => 'address'],
+                ['value' => [
+                    'ar' => 'شارع بني تميم متفرع من الملك فهد – حي المروج، مبنى رقم 2174، الدور الخامس الرمز البريدي 12282 – الرياض، المملكة العربية السعودية.',
+                    'en' => 'Bani Tamim Street, off King Fahd Road – Al Murooj District, Building 2174, 5th Floor, P.O. 12282 – Riyadh, Saudi Arabia.',
+                ]]
+            );
+
+            Setting::updateOrCreate(
+                ['key' => 'email'],
+                ['value' => ['ar' => 'info@breem.com', 'en' => 'info@breem.com']]
+            );
+
+            /**
+             * The one social source, on canonical keys.
+             *
+             * `x`, not `twitter`. Databases seeded before the rename still hold `twitter`
+             * and keep working — App\Support\SocialPlatforms maps the old key onto the new
+             * one on read, and the Settings form rewrites it the first time it is saved.
+             *
+             * Instagram, TikTok, Snapchat and WhatsApp are supported but NOT seeded with
+             * invented URLs: an unconfigured channel is simply hidden, which is also the
+             * behaviour worth demonstrating on a fresh installation.
+             */
             Setting::updateOrCreate(
                 ['key' => 'social.links'],
                 ['value' => [
                     'facebook' => 'https://facebook.com/breem',
-                    'twitter'  => 'https://x.com/breem',
+                    'x'        => 'https://x.com/breem',
                     'youtube'  => 'https://youtube.com/@breem',
                     'linkedin' => 'https://linkedin.com/company/breem',
                 ]]
